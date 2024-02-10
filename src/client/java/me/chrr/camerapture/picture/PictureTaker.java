@@ -1,10 +1,10 @@
 package me.chrr.camerapture.picture;
 
+import me.chrr.camerapture.ByteCollector;
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.ThreadManager;
-import me.chrr.camerapture.net.PicturePacket;
+import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -16,17 +16,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
-public class ClientPictureTaker {
-    public static final int MAX_IMAGE_SIZE = 1280;
-
+public class PictureTaker {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ClientPictureTaker INSTANCE = new ClientPictureTaker();
+    private static final PictureTaker INSTANCE = new PictureTaker();
 
     private boolean hudHidden = false;
     private UUID takeUuid;
 
-    private ClientPictureTaker() {
+    private PictureTaker() {
     }
 
     public void takePicture(UUID uuid) {
@@ -57,12 +54,12 @@ public class ClientPictureTaker {
 
     private void sendPicture(UUID uuid, BufferedImage image) {
         try {
-            BufferedImage picture = ImageUtil.clampSize(image, MAX_IMAGE_SIZE);
+            BufferedImage picture = ImageUtil.clampSize(image, Camerapture.MAX_IMAGE_SIZE);
 
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoJpg(picture, factor);
 
-            while (bytes.length > ServerImageStore.MAX_BYTES) {
+            while (bytes.length > Camerapture.MAX_IMAGE_BYTES) {
                 if (factor < 0.1f) {
                     throw new IOException("image too big, even at 10% compression (" + bytes.length + " bytes)");
                 }
@@ -72,7 +69,8 @@ public class ClientPictureTaker {
             }
 
             LOGGER.debug("sending picture (" + bytes.length + " bytes, " + (int) (factor * 100f) + "%)");
-            ClientPlayNetworking.send(new PicturePacket(uuid, bytes));
+            ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
+                    ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
             ClientPictureStore.getInstance().cacheImage(uuid, image);
         } catch (IOException e) {
@@ -80,7 +78,7 @@ public class ClientPictureTaker {
         }
     }
 
-    public static ClientPictureTaker getInstance() {
+    public static PictureTaker getInstance() {
         return INSTANCE;
     }
 }

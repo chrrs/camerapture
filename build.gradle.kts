@@ -22,6 +22,17 @@ base {
 repositories {
 }
 
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        create("camerapture") {
+            sourceSet(sourceSets["main"])
+            sourceSet(sourceSets["client"])
+        }
+    }
+}
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft("com.mojang:minecraft:$minecraftVersion")

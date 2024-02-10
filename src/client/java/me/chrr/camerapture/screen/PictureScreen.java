@@ -1,8 +1,6 @@
 package me.chrr.camerapture.screen;
 
 import me.chrr.camerapture.picture.ClientPictureStore;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.client.gui.screen.Screen;
@@ -10,7 +8,6 @@ import net.minecraft.text.Text;
 
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
 public class PictureScreen extends Screen {
     public static final int BORDER_WIDTH = 30;
 

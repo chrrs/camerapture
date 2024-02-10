@@ -1,7 +1,7 @@
 package me.chrr.camerapture.mixin;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.picture.ClientPictureTaker;
+import me.chrr.camerapture.picture.PictureTaker;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -40,6 +40,6 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "TAIL"))
     private void onRenderTickEnd(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
-        ClientPictureTaker.getInstance().renderTickEnd();
+        PictureTaker.getInstance().renderTickEnd();
     }
 }

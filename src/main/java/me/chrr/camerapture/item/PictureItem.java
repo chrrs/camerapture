@@ -1,13 +1,14 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.screen.PictureScreen;
-import net.minecraft.client.MinecraftClient;
+import me.chrr.camerapture.net.ShowPicturePacket;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -33,8 +34,8 @@ public class PictureItem extends Item {
         NbtCompound nbt = stack.getOrCreateNbt();
 
         if (nbt.contains("uuid")) {
-            if (world.isClient()) {
-                MinecraftClient.getInstance().setScreen(new PictureScreen(nbt.getUuid("uuid")));
+            if (!world.isClient) {
+                ServerPlayNetworking.send((ServerPlayerEntity) user, new ShowPicturePacket(nbt.getUuid("uuid")));
             }
 
             return TypedActionResult.success(stack);

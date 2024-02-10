@@ -1,5 +1,6 @@
 package me.chrr.camerapture.picture;
 
+import me.chrr.camerapture.Camerapture;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 
@@ -9,8 +10,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ServerImageStore {
-    public static final int MAX_BYTES = 200_000;
-
     private static final ServerImageStore INSTANCE = new ServerImageStore();
 
     private final List<UUID> reservedUuids = new ArrayList<>();
@@ -30,8 +29,8 @@ public class ServerImageStore {
             throw new IOException("UUID not reserved");
         }
 
-        if (image.bytes().length > MAX_BYTES) {
-            throw new IOException("image larger than " + MAX_BYTES + " bytes");
+        if (image.bytes().length > Camerapture.MAX_IMAGE_BYTES) {
+            throw new IOException("image larger than " + Camerapture.MAX_IMAGE_BYTES + " bytes");
         }
 
         imageCache.put(uuid, image);

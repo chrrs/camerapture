@@ -3,16 +3,12 @@ package me.chrr.camerapture;
 import me.chrr.camerapture.block.PictureFrameBlock;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.net.PictureErrorPacket;
-import me.chrr.camerapture.net.PicturePacket;
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.net.TakePicturePacket;
-import me.chrr.camerapture.picture.ClientPictureStore;
-import me.chrr.camerapture.picture.ClientPictureTaker;
 import me.chrr.camerapture.picture.ServerImageStore;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -35,9 +31,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Camerapture implements ModInitializer {
+    public static final int MAX_IMAGE_BYTES = 200_000;
+    public static final int MAX_IMAGE_SIZE = 1280;
+    public static final int SECTION_SIZE = 30_000;
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static final Block PICTURE_FRAME = new PictureFrameBlock(FabricBlockSettings.copyOf(Blocks.OAK_PLANKS));
@@ -53,18 +55,6 @@ public class Camerapture implements ModInitializer {
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
-        ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-            if (isCameraActive(player)) {
-                ClientPlayNetworking.send(new TakePicturePacket());
-                return true;
-            } else {
-                return false;
-            }
-        });
-
-        ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, ((packet, player, sender) ->
-                ClientPictureTaker.getInstance().takePicture(packet.uuid())));
-
         ServerPlayNetworking.registerGlobalReceiver(TakePicturePacket.TYPE, (packet, player, sender) -> {
             Pair<Hand, ItemStack> activeCamera = findActiveCamera(player);
             if (activeCamera == null) {
@@ -79,35 +69,38 @@ public class Camerapture implements ModInitializer {
             ServerPlayNetworking.send(player, new RequestPicturePacket(uuid));
         });
 
-        ServerPlayNetworking.registerGlobalReceiver(PicturePacket.TYPE, (packet, player, sender) ->
+        Map<UUID, ByteCollector> collectors = new HashMap<>();
+        ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
+            ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
+                collectors.remove(uuid);
                 ThreadManager.getInstance().run(() -> {
                     try {
-                        ServerImageStore.getInstance().put(player.getServer(), packet.uuid(), new ServerImageStore.Image(packet.bytes()));
-                        ItemStack picture = PictureItem.create(player.getName().getString(), packet.uuid());
+                        ServerImageStore.getInstance().put(player.getServer(), uuid, new ServerImageStore.Image(bytes));
+                        ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
                         player.getInventory().offerOrDrop(picture);
                     } catch (Exception e) {
                         LOGGER.error("failed to save picture from " + player.getName().getString(), e);
                         player.sendMessage(Text.translatable("text.camerapture.picture_failed").formatted(Formatting.RED));
                     }
-                }));
+                });
+            }));
 
-        ServerPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
-                ThreadManager.getInstance().run(() -> {
-                    try {
-                        ServerImageStore.Image image = ServerImageStore.getInstance().get(player.getServer(), packet.uuid());
-                        ServerPlayNetworking.send(player, new PicturePacket(packet.uuid(), image.bytes()));
-                    } catch (Exception e) {
-                        LOGGER.error("failed to load picture for " + player.getName().getString(), e);
-                        ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
-                    }
-                }));
+            if (!collector.push(packet.bytes(), packet.bytesLeft())) {
+                LOGGER.error("received malformed byte section from " + player.getName().getString());
+            }
+        });
 
-        ClientPlayNetworking.registerGlobalReceiver(PicturePacket.TYPE, (packet, player, sender) ->
-                ThreadManager.getInstance().run(() ->
-                        ClientPictureStore.getInstance().processReceivedBytes(packet.uuid(), packet.bytes())));
+        ServerPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) -> {
+            try {
+                ServerImageStore.Image image = ServerImageStore.getInstance().get(player.getServer(), packet.uuid());
 
-        ClientPlayNetworking.registerGlobalReceiver(PictureErrorPacket.TYPE, (packet, player, sender) ->
-                ClientPictureStore.getInstance().processReceivedError(packet.uuid()));
+                ByteCollector.split(image.bytes(), SECTION_SIZE, (section, bytesLeft) ->
+                        ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
+            } catch (Exception e) {
+                LOGGER.error("failed to load picture for " + player.getName().getString(), e);
+                ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
+            }
+        });
     }
 
     @Nullable

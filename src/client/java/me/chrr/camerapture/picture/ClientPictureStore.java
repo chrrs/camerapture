@@ -2,8 +2,6 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.AbstractTexture;
@@ -21,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
 public class ClientPictureStore {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
