@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "id": "camerapture",
+    "version": "${version}",
+    "name": "Camerapture",
+    "description": "Take photos and display pictures in Minecraft",
+    "authors": [
+        "chrrrs"
+    ],
+    "contact": {
+        "repo": "https://github.com/chrrs/Camerapture"
+    },
+    "license": "MIT",
+    "icon": "assets/camerapture/icon.png",
+    "mixins": [
+        "camerapture.mixins.json"
+    ],
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "me.chrr.camerapture.Camerapture"
+        ]
+    },
+    "depends": {
+        "fabricloader": ">=${loader_version}",
+        "fabric": "*",
+        "minecraft": "${minecraft_version}"
+    }
+}
