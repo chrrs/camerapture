@@ -41,7 +41,7 @@ public class CameraptureClient implements ClientModInitializer {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
                 System.out.println("received all! " + bytes.length);
-                ThreadManager.getInstance().run(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
+                ThreadPooler.run(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
             }));
 
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {

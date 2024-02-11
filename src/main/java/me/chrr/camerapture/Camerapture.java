@@ -73,7 +73,7 @@ public class Camerapture implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
-                ThreadManager.getInstance().run(() -> {
+                ThreadPooler.run(() -> {
                     try {
                         ServerImageStore.getInstance().put(player.getServer(), uuid, new ServerImageStore.Image(bytes));
                         ItemStack picture = PictureItem.create(player.getName().getString(), uuid);

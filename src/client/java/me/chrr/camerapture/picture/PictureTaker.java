@@ -2,7 +2,7 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.ByteCollector;
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.ThreadManager;
+import me.chrr.camerapture.ThreadPooler;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -48,7 +48,7 @@ public class PictureTaker {
         BufferedImage image;
         try (NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer())) {
             image = ImageUtil.fromNativeImage(nativeImage, false);
-            ThreadManager.getInstance().run(() -> sendPicture(uuid, image));
+            ThreadPooler.run(() -> sendPicture(uuid, image));
         }
     }
 
