@@ -5,6 +5,7 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.screen.PictureScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.minecraft.client.MinecraftClient;
@@ -53,5 +54,8 @@ public class CameraptureClient implements ClientModInitializer {
             ClientPictureStore.getInstance().processReceivedError(packet.uuid());
             collectors.remove(packet.uuid());
         });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                ClientPictureStore.getInstance().clearCache());
     }
 }

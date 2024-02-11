@@ -10,10 +10,17 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ServerImageStore {
+    private static final int CACHE_SIZE = 200;
+
     private static final ServerImageStore INSTANCE = new ServerImageStore();
 
     private final List<UUID> reservedUuids = new ArrayList<>();
-    private final Map<UUID, Image> imageCache = new HashMap<>();
+    private final Map<UUID, Image> imageCache = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<UUID, Image> eldest) {
+            return size() > CACHE_SIZE;
+        }
+    };
 
     private ServerImageStore() {
     }
@@ -35,11 +42,9 @@ public class ServerImageStore {
 
         imageCache.put(uuid, image);
 
-        Path dataFolder = server.getSavePath(WorldSavePath.ROOT).resolve("camerapture");
-        //noinspection ResultOfMethodCallIgnored
-        dataFolder.toFile().mkdirs();
-
-        Files.write(dataFolder.resolve(uuid + ".jpg"), image.bytes);
+        Path path = getFilePath(server, uuid);
+        Files.createDirectories(path.getParent());
+        Files.write(path, image.bytes);
     }
 
     public Image get(MinecraftServer server, UUID uuid) throws IOException {
@@ -47,8 +52,7 @@ public class ServerImageStore {
             return imageCache.get(uuid);
         }
 
-        Path dataFolder = server.getSavePath(WorldSavePath.ROOT).resolve("camerapture");
-        Path path = dataFolder.resolve(uuid + ".jpg");
+        Path path = getFilePath(server, uuid);
 
         if (!Files.exists(path)) {
             return null;
@@ -57,6 +61,11 @@ public class ServerImageStore {
         Image image = new Image(Files.readAllBytes(path));
         imageCache.put(uuid, image);
         return image;
+    }
+
+    private Path getFilePath(MinecraftServer server, UUID uuid) {
+        Path dataFolder = server.getSavePath(WorldSavePath.ROOT).resolve("camerapture");
+        return dataFolder.resolve(uuid + ".jpg");
     }
 
     public static ServerImageStore getInstance() {

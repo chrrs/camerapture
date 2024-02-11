@@ -28,6 +28,10 @@ public class ClientPictureStore {
     private ClientPictureStore() {
     }
 
+    public void clearCache() {
+        uuidPictures.clear();
+    }
+
     public void processReceivedError(UUID uuid) {
         Picture picture = uuidPictures.get(uuid);
         if (picture == null) {
