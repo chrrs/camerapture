@@ -10,12 +10,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ServerImageStore {
-    private static final int CACHE_SIZE = 200;
+    private static final int CACHE_SIZE = 100;
 
     private static final ServerImageStore INSTANCE = new ServerImageStore();
 
     private final List<UUID> reservedUuids = new ArrayList<>();
-    private final Map<UUID, Image> imageCache = new LinkedHashMap<>() {
+    private final Map<UUID, Image> imageCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<UUID, Image> eldest) {
             return size() > CACHE_SIZE;
