@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
-import me.chrr.camerapture.block.PictureFrameBlock;
+import me.chrr.camerapture.block.DisplayBlock;
+import me.chrr.camerapture.block.DisplayBlockEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.PartialPicturePacket;
@@ -13,8 +14,9 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -42,14 +44,18 @@ public class Camerapture implements ModInitializer {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static final Block PICTURE_FRAME = new PictureFrameBlock(FabricBlockSettings.copyOf(Blocks.OAK_PLANKS));
+    public static final Block DISPLAY = new DisplayBlock(FabricBlockSettings.create().nonOpaque());
+    public static final BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY = FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY).build();
+
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
     @Override
     public void onInitialize() {
-        Registry.register(Registries.BLOCK, new Identifier("camerapture", "picture_frame"), PICTURE_FRAME);
-        Registry.register(Registries.ITEM, new Identifier("camerapture", "picture_frame"), new BlockItem(PICTURE_FRAME, new FabricItemSettings()));
+        Registry.register(Registries.BLOCK, new Identifier("camerapture", "display"), DISPLAY);
+        Registry.register(Registries.BLOCK_ENTITY_TYPE, new Identifier("camerapture", "display_block_entity"), DISPLAY_BLOCK_ENTITY);
+        Registry.register(Registries.ITEM, new Identifier("camerapture", "display"), new BlockItem(DISPLAY, new FabricItemSettings()));
+
         Registry.register(Registries.ITEM, new Identifier("camerapture", "camera"), CAMERA);
         Registry.register(Registries.ITEM, new Identifier("camerapture", "picture"), PICTURE);
 

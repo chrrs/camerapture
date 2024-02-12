@@ -1,9 +1,10 @@
 {
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
+    "block.camerapture.display": "Display",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",
     "item.camerapture.picture.timestamp_tooltip": "on %s",
     "text.camerapture.picture_failed": "Could not save picture, try again later.",
     "text.camerapture.fetching_picture": "Fetching picture...",
-    "text.camerapture.fetching_failed": "Could not fetch picture, try again later."
+    "text.camerapture.fetching_failed": "Could not fetch picture."
 }

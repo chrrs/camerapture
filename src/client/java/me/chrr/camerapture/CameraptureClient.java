@@ -3,12 +3,14 @@ package me.chrr.camerapture;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
+import me.chrr.camerapture.render.DisplayRenderer;
 import me.chrr.camerapture.screen.PictureScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +23,8 @@ public class CameraptureClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        BlockEntityRendererFactories.register(Camerapture.DISPLAY_BLOCK_ENTITY, DisplayRenderer::new);
+
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
             if (Camerapture.isCameraActive(player)) {
                 ClientPlayNetworking.send(new TakePicturePacket());
