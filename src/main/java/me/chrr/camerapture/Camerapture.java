@@ -9,6 +9,7 @@ import me.chrr.camerapture.net.PictureErrorPacket;
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.net.TakePicturePacket;
 import me.chrr.camerapture.picture.ServerImageStore;
+import me.chrr.camerapture.screen.DisplayScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -24,6 +25,8 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -46,18 +49,20 @@ public class Camerapture implements ModInitializer {
 
     public static final Block DISPLAY = new DisplayBlock(FabricBlockSettings.create().strength(2f).nonOpaque());
     public static final BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY = FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY).build();
+    public static final ScreenHandlerType<DisplayScreenHandler> DISPLAY_SCREEN_HANDLER = new ScreenHandlerType<>(DisplayScreenHandler::new, FeatureFlags.VANILLA_FEATURES);
 
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
     @Override
     public void onInitialize() {
-        Registry.register(Registries.BLOCK, new Identifier("camerapture", "display"), DISPLAY);
-        Registry.register(Registries.BLOCK_ENTITY_TYPE, new Identifier("camerapture", "display_block_entity"), DISPLAY_BLOCK_ENTITY);
-        Registry.register(Registries.ITEM, new Identifier("camerapture", "display"), new BlockItem(DISPLAY, new FabricItemSettings()));
+        Registry.register(Registries.BLOCK, id("display"), DISPLAY);
+        Registry.register(Registries.BLOCK_ENTITY_TYPE, id("display"), DISPLAY_BLOCK_ENTITY);
+        Registry.register(Registries.ITEM, id("display"), new BlockItem(DISPLAY, new FabricItemSettings()));
+        Registry.register(Registries.SCREEN_HANDLER, id("display"), DISPLAY_SCREEN_HANDLER);
 
-        Registry.register(Registries.ITEM, new Identifier("camerapture", "camera"), CAMERA);
-        Registry.register(Registries.ITEM, new Identifier("camerapture", "picture"), PICTURE);
+        Registry.register(Registries.ITEM, id("camera"), CAMERA);
+        Registry.register(Registries.ITEM, id("picture"), PICTURE);
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
@@ -127,5 +132,9 @@ public class Camerapture implements ModInitializer {
 
     public static boolean isCameraActive(PlayerEntity player) {
         return findActiveCamera(player) != null;
+    }
+
+    public static Identifier id(String path) {
+        return new Identifier("camerapture", path);
     }
 }

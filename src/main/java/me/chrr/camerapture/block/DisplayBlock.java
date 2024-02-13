@@ -50,25 +50,32 @@ public class DisplayBlock extends HorizontalFacingBlock implements Waterloggable
             return ActionResult.PASS;
         }
 
-        if (!blockEntity.isEmpty()) {
-            ItemStack stack = blockEntity.removeStack();
+        if (!player.isSneaking()) {
+            if (!blockEntity.isEmpty()) {
+                ItemStack stack = blockEntity.removeStack();
 
-            if (stackInHand.isEmpty()) {
-                player.setStackInHand(hand, stack);
-            } else {
-                player.getInventory().offerOrDrop(stack);
+                if (stackInHand.isEmpty()) {
+                    player.setStackInHand(hand, stack);
+                } else {
+                    player.getInventory().offerOrDrop(stack);
+                }
+
+                return ActionResult.SUCCESS;
             }
 
-            return ActionResult.SUCCESS;
+            if (DisplayBlockEntity.canInsert(stackInHand)) {
+                player.setStackInHand(hand, ItemStack.EMPTY);
+                blockEntity.setStack(stackInHand);
+                return ActionResult.SUCCESS;
+            }
         }
 
-        if (DisplayBlockEntity.canInsert(stackInHand)) {
-            player.setStackInHand(hand, ItemStack.EMPTY);
-            blockEntity.setStack(stackInHand);
-            return ActionResult.SUCCESS;
+        if (!world.isClient) {
+            player.openHandledScreen(blockEntity);
+            return ActionResult.CONSUME;
         }
 
-        return ActionResult.PASS;
+        return ActionResult.SUCCESS;
     }
 
     @SuppressWarnings("deprecation")

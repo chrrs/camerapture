@@ -1,5 +1,6 @@
 package me.chrr.camerapture.picture;
 
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -105,7 +106,7 @@ public class ClientPictureStore {
         }
 
         public Picture(UUID uuid) {
-            this(new Identifier("camerapture", "pictures/" + uuid));
+            this(Camerapture.id("pictures/" + uuid));
         }
 
         public Identifier getIdentifier() {
