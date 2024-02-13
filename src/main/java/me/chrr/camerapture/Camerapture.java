@@ -44,7 +44,7 @@ public class Camerapture implements ModInitializer {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static final Block DISPLAY = new DisplayBlock(FabricBlockSettings.create().nonOpaque());
+    public static final Block DISPLAY = new DisplayBlock(FabricBlockSettings.create().strength(2f).nonOpaque());
     public static final BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY = FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY).build();
 
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));

@@ -41,10 +41,10 @@ public class PictureScreen extends Screen {
                 int maxWidth = width - BORDER_WIDTH * 2;
                 int maxHeight = height - BORDER_WIDTH * 2;
 
-                float scaleWidth = (float) maxWidth / picture.getWidth();
+                float scaledWidth = (float) maxWidth / picture.getWidth();
                 float scaleHeight = (float) maxHeight / picture.getHeight();
 
-                float scale = Math.min(scaleWidth, scaleHeight);
+                float scale = Math.min(scaledWidth, scaleHeight);
 
                 int newWidth = (int) (picture.getWidth() * scale);
                 int newHeight = (int) (picture.getHeight() * scale);

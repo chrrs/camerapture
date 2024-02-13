@@ -74,4 +74,14 @@ public class PictureItem extends Item {
             ).formatted(Formatting.DARK_GRAY));
         }
     }
+
+    @Nullable
+    public static UUID getUuid(ItemStack stack) {
+        NbtCompound nbt = stack.getOrCreateNbt();
+        if (nbt.contains("uuid")) {
+            return nbt.getUuid("uuid");
+        } else {
+            return null;
+        }
+    }
 }

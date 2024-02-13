@@ -2,17 +2,24 @@ package me.chrr.camerapture.block;
 
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.Properties;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 
 public class DisplayBlock extends HorizontalFacingBlock implements Waterloggable, BlockEntityProvider {
@@ -31,6 +38,50 @@ public class DisplayBlock extends HorizontalFacingBlock implements Waterloggable
                 .getDefaultState()
                 .with(FACING, Direction.NORTH)
                 .with(WATERLOGGED, false));
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+        ItemStack stackInHand = player.getStackInHand(hand);
+        DisplayBlockEntity blockEntity = (DisplayBlockEntity) world.getBlockEntity(pos);
+
+        if (blockEntity == null) {
+            return ActionResult.PASS;
+        }
+
+        if (!blockEntity.isEmpty()) {
+            ItemStack stack = blockEntity.removeStack();
+
+            if (stackInHand.isEmpty()) {
+                player.setStackInHand(hand, stack);
+            } else {
+                player.getInventory().offerOrDrop(stack);
+            }
+
+            return ActionResult.SUCCESS;
+        }
+
+        if (DisplayBlockEntity.canInsert(stackInHand)) {
+            player.setStackInHand(hand, ItemStack.EMPTY);
+            blockEntity.setStack(stackInHand);
+            return ActionResult.SUCCESS;
+        }
+
+        return ActionResult.PASS;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.isOf(newState.getBlock())) {
+            BlockEntity blockEntity = world.getBlockEntity(pos);
+            if (blockEntity instanceof DisplayBlockEntity display) {
+                ItemScatterer.spawn(world, pos, display);
+            }
+
+            super.onStateReplaced(state, world, pos, newState, moved);
+        }
     }
 
     @Override
