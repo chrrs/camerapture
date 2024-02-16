@@ -1,13 +1,17 @@
 package me.chrr.camerapture.screen;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.ResizeDisplayPacket;
+import me.chrr.camerapture.picture.ClientPictureStore;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -62,13 +66,33 @@ public class DisplayScreen extends HandledScreen<DisplayScreenHandler> {
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
 
-        context.drawText(textRenderer, "Picture OK", 35, 12, 0x00ff00, false);
+        Text status = Text.translatable("text.camerapture.display.insert_image")
+                .formatted(Formatting.RED);
 
-        context.drawText(textRenderer, "Size", 29, 29, 0x404040, false);
+        ClientPictureStore.Picture picture = null;
+        ItemStack stack = handler.getSlot(0).getStack();
+        if (stack.isOf(Camerapture.PICTURE)) {
+            picture = ClientPictureStore.getInstance().getServerPicture(PictureItem.getUuid(stack));
+        }
+
+        if (picture != null) {
+            status = switch (picture.getStatus()) {
+                case FETCHING -> Text.translatable("text.camerapture.display.fetching")
+                        .formatted(Formatting.WHITE);
+                case SUCCESS -> Text.translatable("text.camerapture.display.picture_ok")
+                        .formatted(Formatting.GREEN);
+                case ERROR -> Text.translatable("text.camerapture.display.fetching_failed")
+                        .formatted(Formatting.RED);
+            };
+        }
+
+        context.drawText(textRenderer, status, 35, 12, 0x00ff00, false);
+
+        context.drawText(textRenderer, Text.translatable("text.camerapture.display.size"), 29, 29, 0x404040, false);
         context.drawText(textRenderer, "X:", 15, 40, 0x404040, false);
         context.drawText(textRenderer, "Y:", 15, 52, 0x404040, false);
 
-        context.drawText(textRenderer, "Offset", 102, 29, 0x404040, false);
+        context.drawText(textRenderer, Text.translatable("text.camerapture.display.offset"), 102, 29, 0x404040, false);
         context.drawText(textRenderer, "X:", 88, 40, 0x404040, false);
         context.drawText(textRenderer, "Y:", 88, 52, 0x404040, false);
 

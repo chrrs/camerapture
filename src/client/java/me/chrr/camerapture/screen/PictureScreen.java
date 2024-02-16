@@ -26,6 +26,10 @@ public class PictureScreen extends Screen {
 
         ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
+        if (picture == null) {
+            return;
+        }
+
         switch (picture.getStatus()) {
             case FETCHING -> {
                 String loading = LoadingDisplay.get(System.currentTimeMillis());

@@ -30,11 +30,11 @@ public class DisplayRenderer implements BlockEntityRenderer<DisplayBlockEntity> 
         BlockState state = entity.getCachedState();
         UUID uuid = entity.getPictureUuid();
 
-        if (uuid == null) {
+        ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
+
+        if (picture == null) {
             return;
         }
-
-        ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
         matrices.push();
 

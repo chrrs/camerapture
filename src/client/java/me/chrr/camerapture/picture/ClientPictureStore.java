@@ -12,6 +12,7 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -69,7 +70,12 @@ public class ClientPictureStore {
         }
     }
 
+    @Nullable
     public Picture ensureServerPicture(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+
         Picture picture = uuidPictures.get(uuid);
         if (picture == null || picture.getStatus() == Status.ERROR) {
             picture = new Picture(uuid);
@@ -81,7 +87,12 @@ public class ClientPictureStore {
         return picture;
     }
 
+    @Nullable
     public Picture getServerPicture(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+
         Picture picture = uuidPictures.get(uuid);
         if (picture == null) {
             return ensureServerPicture(uuid);
