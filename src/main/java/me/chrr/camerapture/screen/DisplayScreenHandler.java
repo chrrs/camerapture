@@ -7,14 +7,30 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.math.BlockPos;
 
 public class DisplayScreenHandler extends ScreenHandler {
     private final Inventory inventory;
 
-    public DisplayScreenHandler(int syncId, PlayerInventory playerInventory) {
+    public BlockPos pos = BlockPos.ORIGIN;
+
+    public float initialOffsetX = 0f;
+    public float initialOffsetY = 0f;
+    public float initialWidth = 3f;
+    public float initialHeight = 3f;
+
+    public DisplayScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
         this(syncId, playerInventory, new SimpleInventory(1));
+
+        this.pos = buf.readBlockPos();
+
+        this.initialOffsetX = buf.readFloat();
+        this.initialOffsetY = buf.readFloat();
+        this.initialWidth = buf.readFloat();
+        this.initialHeight = buf.readFloat();
     }
 
     public DisplayScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
@@ -32,12 +48,12 @@ public class DisplayScreenHandler extends ScreenHandler {
 
         for (int x = 0; x < 9; x++) {
             for (int y = 0; y < 3; y++) {
-                this.addSlot(new Slot(playerInventory, 9 + x + y * 9, 8 + x * 18, 84 + y * 18));
+                this.addSlot(new Slot(playerInventory, 9 + x + y * 9, 8 + x * 18, 94 + y * 18));
             }
         }
 
         for (int x = 0; x < 9; x++) {
-            this.addSlot(new Slot(playerInventory, x, 8 + x * 18, 142));
+            this.addSlot(new Slot(playerInventory, x, 8 + x * 18, 152));
         }
     }
 

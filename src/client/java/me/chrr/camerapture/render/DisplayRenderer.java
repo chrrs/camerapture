@@ -44,8 +44,8 @@ public class DisplayRenderer implements BlockEntityRenderer<DisplayBlockEntity> 
         matrices.translate(0f, 0f, 6.5f / 16f);
 
         if (picture.getStatus() == ClientPictureStore.Status.SUCCESS) {
-            float frameWidth = 3f;
-            float frameHeight = 3f;
+            float frameWidth = entity.getWidth();
+            float frameHeight = entity.getHeight();
 
             float scaledWidth = frameWidth / picture.getWidth();
             float scaleHeight = frameHeight / picture.getHeight();
@@ -55,10 +55,11 @@ public class DisplayRenderer implements BlockEntityRenderer<DisplayBlockEntity> 
             float width = picture.getWidth() * scale;
             float height = picture.getHeight() * scale;
 
-            float x1 = -width / 2f;
-            float x2 = width / 2f;
-            float y1 = -height / 2f;
-            float y2 = height / 2f;
+            // Invert X, we've probably rotated the matrix the wrong way but this works too.
+            float x1 = -entity.getOffsetX() - width / 2f;
+            float x2 = -entity.getOffsetX() + width / 2f;
+            float y1 = entity.getOffsetY() - height / 2f;
+            float y2 = entity.getOffsetY() + height / 2f;
 
             MatrixStack.Entry matrix = matrices.peek();
             VertexConsumer buffer = vertexConsumers.getBuffer(RenderLayer.getEntityAlpha(picture.getIdentifier()));

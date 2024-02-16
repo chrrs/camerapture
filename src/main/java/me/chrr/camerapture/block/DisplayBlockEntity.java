@@ -3,6 +3,7 @@ package me.chrr.camerapture.block;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.screen.DisplayScreenHandler;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -15,11 +16,12 @@ import net.minecraft.inventory.SingleStackInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
@@ -28,10 +30,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public class DisplayBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, SingleStackInventory, SidedInventory {
+public class DisplayBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory, SingleStackInventory, SidedInventory {
+    public static final float MAX_DIM = 16f;
+    public static final float MAX_OFFSET = 8f;
+
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(1, ItemStack.EMPTY);
 
     private UUID pictureUuid;
+
+    private float offsetX = 0f;
+    private float offsetY = 0f;
+    private float width = 3f;
+    private float height = 3f;
 
     public DisplayBlockEntity(BlockPos pos, BlockState state) {
         super(Camerapture.DISPLAY_BLOCK_ENTITY, pos, state);
@@ -44,11 +54,21 @@ public class DisplayBlockEntity extends BlockEntity implements NamedScreenHandle
         if (nbt.contains("picture", NbtElement.COMPOUND_TYPE)) {
             this.setStack(ItemStack.fromNbt(nbt.getCompound("picture")));
         }
+
+        this.offsetX = nbt.contains("offsetX") ? nbt.getFloat("offsetX") : 0f;
+        this.offsetY = nbt.contains("offsetY") ? nbt.getFloat("offsetY") : 0f;
+        this.width = nbt.contains("width") ? nbt.getFloat("width") : 3f;
+        this.height = nbt.contains("height") ? nbt.getFloat("height") : 3f;
     }
 
     @Override
     protected void writeNbt(NbtCompound nbt) {
         nbt.put("picture", this.getStack().writeNbt(new NbtCompound()));
+        nbt.putFloat("offsetX", this.offsetX);
+        nbt.putFloat("offsetY", this.offsetY);
+        nbt.putFloat("width", this.width);
+        nbt.putFloat("height", this.height);
+
         super.writeNbt(nbt);
     }
 
@@ -69,6 +89,15 @@ public class DisplayBlockEntity extends BlockEntity implements NamedScreenHandle
     public void setStack(int slot, ItemStack stack) {
         this.inventory.set(slot, stack);
         this.updateUuid();
+        this.sync();
+    }
+
+    public void resize(float offsetX, float offsetY, float width, float height) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.width = width;
+        this.height = height;
+
         this.sync();
     }
 
@@ -96,6 +125,22 @@ public class DisplayBlockEntity extends BlockEntity implements NamedScreenHandle
 
     public UUID getPictureUuid() {
         return pictureUuid;
+    }
+
+    public float getOffsetX() {
+        return offsetX;
+    }
+
+    public float getOffsetY() {
+        return offsetY;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public float getHeight() {
+        return height;
     }
 
     @Override
@@ -126,6 +171,15 @@ public class DisplayBlockEntity extends BlockEntity implements NamedScreenHandle
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
         return new DisplayScreenHandler(syncId, playerInventory, this);
+    }
+
+    @Override
+    public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
+        buf.writeBlockPos(pos);
+        buf.writeFloat(this.offsetX);
+        buf.writeFloat(this.offsetY);
+        buf.writeFloat(this.width);
+        buf.writeFloat(this.height);
     }
 
     @Nullable
