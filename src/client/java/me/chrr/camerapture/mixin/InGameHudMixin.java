@@ -7,7 +7,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.GameOptions;
+import net.minecraft.item.Items;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,9 +19,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
 public abstract class InGameHudMixin {
+    @Unique
+    private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat("yyyy/MM/dd");
+
     @Shadow
     @Final
     private MinecraftClient client;
@@ -39,10 +47,31 @@ public abstract class InGameHudMixin {
         drawViewFinder(context, 10, 10, width - 10, height - 10, 2, 30);
         drawViewFinder(context, width / 2 - 20, height / 2 - 20, width / 2 + 20, height / 2 + 20, 1, 10);
 
-        if (System.currentTimeMillis() % 1000 < 500) {
-            int x = width / 2 - getTextRenderer().getWidth("NO PAPER") / 2;
-            int y = height / 2 + 32;
-            context.drawText(getTextRenderer(), "NO PAPER", x, y, 0xffff0000, false);
+        int fh = getTextRenderer().fontHeight;
+        int textX = 25;
+        int textY = height - 25;
+
+        context.drawText(getTextRenderer(), "DATE: " + SDF_DATE.format(new Date()), textX, textY - fh, 0xffffffff, false);
+
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null) {
+            return;
+        }
+
+        int paper = player.getInventory().count(Items.PAPER);
+        if (paper == 0) {
+            if (System.currentTimeMillis() % 1000 < 500) {
+                int w = getTextRenderer().getWidth("NO PAPER");
+                int x = width / 2 - w / 2;
+                int y = height / 2 + 32;
+                context.drawText(getTextRenderer(), "NO PAPER", x, y, 0xffff0000, false);
+            }
+        } else {
+            String text = paper + " PAPER AVAILABLE";
+            int w = getTextRenderer().getWidth(text);
+            int x = width - 25 - w;
+            int y = height - 25 - fh;
+            context.drawText(getTextRenderer(), text, x, y, 0xffffffff, false);
         }
     }
 
