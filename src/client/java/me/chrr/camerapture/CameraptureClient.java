@@ -47,7 +47,6 @@ public class CameraptureClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
-                System.out.println("received all! " + bytes.length);
                 ThreadPooler.run(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
             }));
 

@@ -5,7 +5,7 @@ import me.chrr.camerapture.block.DisplayBlockEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
-import me.chrr.camerapture.picture.ServerImageStore;
+import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.screen.DisplayScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -74,7 +74,7 @@ public class Camerapture implements ModInitializer {
             player.getItemCooldownManager().set(activeCamera.getRight().getItem(), 20 * 3);
             player.swingHand(activeCamera.getLeft(), true);
 
-            UUID uuid = ServerImageStore.getInstance().reserveUuid();
+            UUID uuid = ServerPictureStore.getInstance().reserveUuid();
             ServerPlayNetworking.send(player, new RequestPicturePacket(uuid));
         });
 
@@ -84,7 +84,7 @@ public class Camerapture implements ModInitializer {
                 collectors.remove(uuid);
                 ThreadPooler.run(() -> {
                     try {
-                        ServerImageStore.getInstance().put(player.getServer(), uuid, new ServerImageStore.Image(bytes));
+                        ServerPictureStore.getInstance().put(player.getServer(), uuid, new ServerPictureStore.Picture(bytes));
                         ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
                         player.getInventory().offerOrDrop(picture);
                     } catch (Exception e) {
@@ -101,9 +101,9 @@ public class Camerapture implements ModInitializer {
 
         ServerPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) -> {
             try {
-                ServerImageStore.Image image = ServerImageStore.getInstance().get(player.getServer(), packet.uuid());
+                ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
-                ByteCollector.split(image.bytes(), SECTION_SIZE, (section, bytesLeft) ->
+                ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
                         ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for " + player.getName().getString(), e);
