@@ -37,12 +37,15 @@ public class CameraptureClient implements ClientModInitializer {
             }
         });
 
+        // Server requests to show picture on screen, most likely by right-clicking a picture item
         ClientPlayNetworking.registerGlobalReceiver(ShowPicturePacket.TYPE, (packet, player, sender) ->
                 MinecraftClient.getInstance().setScreen(new PictureScreen(packet.uuid())));
 
+        // Server requests to take a picture, most likely by using a camera
         ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
                 PictureTaker.getInstance().takePicture(packet.uuid()));
 
+        // Server sends back a picture following a picture request by UUID
         Map<UUID, ByteCollector> collectors = new HashMap<>();
         ClientPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
@@ -56,6 +59,7 @@ public class CameraptureClient implements ClientModInitializer {
             }
         });
 
+        // Server sends back an error following a picture request by UUID
         ClientPlayNetworking.registerGlobalReceiver(PictureErrorPacket.TYPE, (packet, player, sender) -> {
             ClientPictureStore.getInstance().processReceivedError(packet.uuid());
             collectors.remove(packet.uuid());

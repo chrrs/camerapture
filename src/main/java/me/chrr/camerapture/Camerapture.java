@@ -62,6 +62,7 @@ public class Camerapture implements ModInitializer {
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
+        // Client right-clicked with a camera
         ServerPlayNetworking.registerGlobalReceiver(TakePicturePacket.TYPE, (packet, player, sender) -> {
             Pair<Hand, ItemStack> activeCamera = findActiveCamera(player);
             if (activeCamera == null) {
@@ -80,6 +81,7 @@ public class Camerapture implements ModInitializer {
             ServerPlayNetworking.send(player, new RequestPicturePacket(uuid));
         });
 
+        // Client sends back a picture following a take-picture request
         Map<UUID, ByteCollector> collectors = new HashMap<>();
         ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
@@ -101,6 +103,7 @@ public class Camerapture implements ModInitializer {
             }
         });
 
+        // Client requests a picture with a certain UUID
         ServerPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) -> {
             try {
                 ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
@@ -113,6 +116,7 @@ public class Camerapture implements ModInitializer {
             }
         });
 
+        // Client changes display size
         ServerPlayNetworking.registerGlobalReceiver(ResizeDisplayPacket.TYPE, (packet, player, sender) -> {
             BlockEntity blockEntity = player.getServerWorld().getBlockEntity(packet.pos());
             if (blockEntity instanceof DisplayBlockEntity display && display.canPlayerUse(player)) {
