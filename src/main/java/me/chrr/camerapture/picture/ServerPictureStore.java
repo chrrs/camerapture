@@ -3,6 +3,7 @@ package me.chrr.camerapture.picture;
 import me.chrr.camerapture.Camerapture;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,6 +56,7 @@ public class ServerPictureStore {
         Files.write(path, picture.bytes);
     }
 
+    @Nullable
     public Picture get(MinecraftServer server, UUID uuid) throws IOException {
         if (imageCache.containsKey(uuid)) {
             return imageCache.get(uuid);

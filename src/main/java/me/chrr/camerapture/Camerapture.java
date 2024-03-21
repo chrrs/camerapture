@@ -85,7 +85,7 @@ public class Camerapture implements ModInitializer {
         Map<UUID, ByteCollector> collectors = new HashMap<>();
         ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             if (!ServerPictureStore.getInstance().isReserved(packet.uuid())) {
-                LOGGER.warn(player.getName().toString() + " tried to send a byte section for an unreserved UUID");
+                LOGGER.error(player.getName().toString() + " tried to send a byte section for an unreserved UUID");
                 return;
             }
 
@@ -121,8 +121,13 @@ public class Camerapture implements ModInitializer {
             try {
                 ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
-                ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
-                        ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
+                if (picture == null) {
+                    LOGGER.warn(player.getName().getString() + " requested a picture with an unknown UUID");
+                    ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
+                } else {
+                    ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
+                            ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
+                }
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for " + player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
