@@ -2,6 +2,7 @@
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
     "block.camerapture.display": "Display",
+    "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",
     "item.camerapture.picture.timestamp_tooltip": "on %s",
     "text.camerapture.picture_failed": "Could not save picture, try again later.",

@@ -23,6 +23,8 @@ import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.stat.StatFormatter;
+import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -50,6 +52,8 @@ public class Camerapture implements ModInitializer {
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
+    public static final Identifier PICTURES_TAKEN = id("pictures_taken");
+
     @Override
     public void onInitialize() {
         Registry.register(Registries.BLOCK, id("display"), DISPLAY);
@@ -58,9 +62,12 @@ public class Camerapture implements ModInitializer {
         Registry.register(Registries.SCREEN_HANDLER, id("display"), DISPLAY_SCREEN_HANDLER);
 
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
+
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
 
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
+        Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
+        Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
 
         // Client right-clicked with a camera
         ServerPlayNetworking.registerGlobalReceiver(TakePicturePacket.TYPE, (packet, player, sender) -> {
@@ -76,6 +83,8 @@ public class Camerapture implements ModInitializer {
             CameraItem.setActive(activeCamera.getRight(), false);
             player.getItemCooldownManager().set(activeCamera.getRight().getItem(), 20 * 3);
             player.swingHand(activeCamera.getLeft(), true);
+
+            player.incrementStat(PICTURES_TAKEN);
 
             UUID uuid = ServerPictureStore.getInstance().reserveUuid();
             ServerPlayNetworking.send(player, new RequestPicturePacket(uuid));

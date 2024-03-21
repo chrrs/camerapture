@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -37,6 +38,8 @@ public class PictureItem extends Item {
             if (!world.isClient) {
                 ServerPlayNetworking.send((ServerPlayerEntity) user, new ShowPicturePacket(nbt.getUuid("uuid")));
             }
+
+            user.incrementStat(Stats.USED.getOrCreateStat(Camerapture.PICTURE));
 
             return TypedActionResult.success(stack);
         } else {
