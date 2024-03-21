@@ -17,7 +17,7 @@ public class ByteCollector {
             this.bytes = new byte[bytes.length + bytesLeft];
         }
 
-        if (offset + bytes.length > this.bytes.length) {
+        if (offset + bytes.length + bytesLeft != this.bytes.length) {
             return false;
         }
 

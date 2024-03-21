@@ -84,6 +84,17 @@ public class Camerapture implements ModInitializer {
         // Client sends back a picture following a take-picture request
         Map<UUID, ByteCollector> collectors = new HashMap<>();
         ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
+            if (!ServerPictureStore.getInstance().isReserved(packet.uuid())) {
+                LOGGER.warn(player.getName().toString() + " tried to send a byte section for an unreserved UUID");
+                return;
+            }
+
+            if (packet.bytesLeft() > Camerapture.MAX_IMAGE_BYTES) {
+                LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
+                collectors.remove(packet.uuid());
+                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
+            }
+
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
                 ThreadPooler.run(() -> {
@@ -99,7 +110,9 @@ public class Camerapture implements ModInitializer {
             }));
 
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                LOGGER.error("received malformed byte section from " + player.getName().getString());
+                LOGGER.error(player.getName().getString() + "sent a malformed byte section");
+                collectors.remove(packet.uuid());
+                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
         });
 

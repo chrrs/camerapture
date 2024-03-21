@@ -14,7 +14,7 @@ public class ServerPictureStore {
 
     private static final ServerPictureStore INSTANCE = new ServerPictureStore();
 
-    private final List<UUID> reservedUuids = new ArrayList<>();
+    private final Set<UUID> reservedUuids = new HashSet<>();
     private final Map<UUID, Picture> imageCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<UUID, Picture> eldest) {
@@ -31,8 +31,16 @@ public class ServerPictureStore {
         return uuid;
     }
 
+    public boolean unreserveUuid(UUID uuid) {
+        return reservedUuids.remove(uuid);
+    }
+
+    public boolean isReserved(UUID uuid) {
+        return reservedUuids.contains(uuid);
+    }
+
     public void put(MinecraftServer server, UUID uuid, Picture picture) throws IOException {
-        if (!reservedUuids.remove(uuid)) {
+        if (!unreserveUuid(uuid)) {
             throw new IOException("UUID not reserved");
         }
 
