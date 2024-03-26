@@ -75,7 +75,7 @@ public class ServerPictureStore {
 
     private Path getFilePath(MinecraftServer server, UUID uuid) {
         Path dataFolder = server.getSavePath(WorldSavePath.ROOT).resolve("camerapture");
-        return dataFolder.resolve(uuid + ".jpg");
+        return dataFolder.resolve(uuid + ".webp");
     }
 
     public static ServerPictureStore getInstance() {

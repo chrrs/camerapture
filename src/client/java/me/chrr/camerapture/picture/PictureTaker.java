@@ -57,7 +57,7 @@ public class PictureTaker {
             BufferedImage picture = ImageUtil.clampSize(image, Camerapture.MAX_IMAGE_SIZE);
 
             float factor = 1.0f;
-            byte[] bytes = ImageUtil.compressIntoJpg(picture, factor);
+            byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
             while (bytes.length > Camerapture.MAX_IMAGE_BYTES) {
                 if (factor < 0.1f) {
@@ -65,7 +65,7 @@ public class PictureTaker {
                 }
 
                 factor -= 0.05f;
-                bytes = ImageUtil.compressIntoJpg(picture, factor);
+                bytes = ImageUtil.compressIntoWebP(picture, factor);
             }
 
             LOGGER.debug("sending picture (" + bytes.length + " bytes, " + (int) (factor * 100f) + "%)");

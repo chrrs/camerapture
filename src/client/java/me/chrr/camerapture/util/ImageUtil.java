@@ -1,10 +1,11 @@
 package me.chrr.camerapture.util;
 
+import com.luciad.imageio.webp.CompressionType;
+import com.luciad.imageio.webp.WebPWriteParam;
 import net.minecraft.client.texture.NativeImage;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
@@ -61,17 +62,19 @@ public class ImageUtil {
             height = maxDimension;
         }
 
-        BufferedImage scaledImage = new BufferedImage(width, height, image.getType());
+        BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = scaledImage.createGraphics();
         g.drawImage(image.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, width, height, null);
         g.dispose();
         return scaledImage;
     }
 
-    public static byte[] compressIntoJpg(BufferedImage image, float quality) throws IOException {
-        ImageWriter imageWriter = ImageIO.getImageWritersByFormatName("jpg").next();
-        ImageWriteParam writeParam = imageWriter.getDefaultWriteParam();
-        writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+    public static byte[] compressIntoWebP(BufferedImage image, float quality) throws IOException {
+        ImageWriter imageWriter = ImageIO.getImageWritersByMIMEType("image/webp").next();
+
+        WebPWriteParam writeParam = ((WebPWriteParam) imageWriter.getDefaultWriteParam());
+        writeParam.setCompressionType(CompressionType.Lossy);
+        writeParam.setAlphaCompressionAlgorithm(1);
         writeParam.setCompressionQuality(quality);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
