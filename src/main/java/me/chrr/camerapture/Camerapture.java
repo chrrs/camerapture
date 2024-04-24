@@ -2,6 +2,7 @@ package me.chrr.camerapture;
 
 import me.chrr.camerapture.block.DisplayBlock;
 import me.chrr.camerapture.block.DisplayBlockEntity;
+import me.chrr.camerapture.entity.PictureEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
@@ -13,10 +14,14 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.*;
@@ -52,6 +57,12 @@ public class Camerapture implements ModInitializer {
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
+    public static final EntityType<PictureEntity> PICTURE_ENTITY =
+            FabricEntityTypeBuilder.<PictureEntity>create(SpawnGroup.MISC, PictureEntity::new)
+                    .dimensions(new EntityDimensions(0.5f, 0.5f, false))
+                    .trackRangeChunks(10)
+                    .build();
+
     public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 
     @Override
@@ -65,6 +76,8 @@ public class Camerapture implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
+
+        Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_ENTITY);
 
         Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
         Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);

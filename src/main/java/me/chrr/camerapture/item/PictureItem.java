@@ -1,20 +1,27 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.entity.PictureEntity;
 import me.chrr.camerapture.net.ShowPicturePacket;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
@@ -40,11 +47,50 @@ public class PictureItem extends Item {
             }
 
             user.incrementStat(Stats.USED.getOrCreateStat(Camerapture.PICTURE));
-
             return TypedActionResult.success(stack);
         } else {
             return TypedActionResult.pass(stack);
         }
+    }
+
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        PlayerEntity player = context.getPlayer();
+        if (player == null || !player.isSneaking()) {
+            return ActionResult.PASS;
+        }
+
+        World world = context.getWorld();
+        Direction facing = context.getSide();
+        BlockPos pos = context.getBlockPos().offset(facing);
+        ItemStack itemStack = context.getStack();
+
+        // Pictures can only be placed on walls.
+        if (facing.getAxis().isVertical() || !player.canPlaceOn(pos, facing, itemStack)) {
+            return ActionResult.PASS;
+        }
+
+        PictureEntity pictureEntity = new PictureEntity(world, pos, facing);
+        if (!pictureEntity.canStayAttached()) {
+            return ActionResult.PASS;
+        }
+
+        // Correctly handle (+NBT) items
+        NbtCompound nbtCompound = itemStack.getNbt();
+        if (nbtCompound != null) {
+            EntityType.loadFromEntityNbt(world, player, pictureEntity, nbtCompound);
+        }
+
+        pictureEntity.setItemStack(itemStack.copyWithCount(1));
+
+        if (!world.isClient) {
+            pictureEntity.onPlace();
+            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureEntity.getPos());
+            world.spawnEntity(pictureEntity);
+        }
+
+        itemStack.decrement(1);
+        return ActionResult.success(world.isClient);
     }
 
     public static ItemStack create(String creator, UUID uuid) {

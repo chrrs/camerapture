@@ -4,11 +4,13 @@ import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.DisplayRenderer;
+import me.chrr.camerapture.render.PictureEntityRenderer;
 import me.chrr.camerapture.screen.DisplayScreen;
 import me.chrr.camerapture.screen.PictureScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
@@ -27,6 +29,8 @@ public class CameraptureClient implements ClientModInitializer {
     public void onInitializeClient() {
         BlockEntityRendererFactories.register(Camerapture.DISPLAY_BLOCK_ENTITY, DisplayRenderer::new);
         HandledScreens.register(Camerapture.DISPLAY_SCREEN_HANDLER, DisplayScreen::new);
+
+        EntityRendererRegistry.register(Camerapture.PICTURE_ENTITY, PictureEntityRenderer::new);
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
             if (Camerapture.isCameraActive(player)) {
