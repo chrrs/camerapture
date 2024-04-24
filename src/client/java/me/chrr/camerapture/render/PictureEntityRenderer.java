@@ -56,7 +56,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
             } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
                 renderFetching(matrices, vertexConsumers);
             } else {
-                renderPicture(matrices, vertexConsumers, picture, (float) entity.getWidthPixels(), (float) entity.getHeightPixels(), light);
+                renderPicture(matrices, vertexConsumers, picture, (float) entity.getWidthPixels(), (float) entity.getHeightPixels(), entity.getPictureGlowing(), light);
             }
         }
 
@@ -65,7 +65,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, float frameWidth, float frameHeight, int light) {
+    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, float frameWidth, float frameHeight, boolean glowing, int light) {
         float scaledWidth = frameWidth / picture.getWidth();
         float scaleHeight = frameHeight / picture.getHeight();
 
@@ -80,8 +80,12 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
         float y1 = -height / 2f;
         float y2 = height / 2f;
 
+        RenderLayer renderLayer = glowing
+                ? RenderLayer.getEntityAlpha(picture.getIdentifier())
+                : RenderLayer.getEntityCutout(picture.getIdentifier());
+
         MatrixStack.Entry matrix = matrices.peek();
-        VertexConsumer buffer = vertexConsumers.getBuffer(RenderLayer.getEntityAlpha(picture.getIdentifier()));
+        VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
         pushVertex(buffer, matrix, x1, y1, 1f, 1f, light);
         pushVertex(buffer, matrix, x1, y2, 1f, 0f, light);

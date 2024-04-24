@@ -27,6 +27,7 @@ public class PictureEntity extends AbstractDecorationEntity {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Integer> WIDTH_PIXELS = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> HEIGHT_PIXELS = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     public PictureEntity(EntityType<? extends PictureEntity> entityType, World world) {
         super(entityType, world);
@@ -42,6 +43,7 @@ public class PictureEntity extends AbstractDecorationEntity {
         this.getDataTracker().startTracking(ITEM_STACK, ItemStack.EMPTY);
         this.getDataTracker().startTracking(WIDTH_PIXELS, 16);
         this.getDataTracker().startTracking(HEIGHT_PIXELS, 16);
+        this.getDataTracker().startTracking(GLOWING, false);
     }
 
     public void setWidthPixels(int width) {
@@ -88,6 +90,14 @@ public class PictureEntity extends AbstractDecorationEntity {
         this.getDataTracker().set(ITEM_STACK, itemStack);
     }
 
+    public boolean getPictureGlowing() {
+        return this.getDataTracker().get(GLOWING);
+    }
+
+    public void setPictureGlowing(boolean glowing) {
+        this.getDataTracker().set(GLOWING, glowing);
+    }
+
     @Override
     public void onTrackedDataSet(TrackedData<?> data) {
         if (data.equals(ITEM_STACK)) {
@@ -121,6 +131,7 @@ public class PictureEntity extends AbstractDecorationEntity {
         nbt.putByte("Facing", (byte) this.facing.getId());
         nbt.putInt("Width", this.getWidthPixels());
         nbt.putInt("Height", this.getHeightPixels());
+        nbt.putBoolean("PictureGlowing", this.getPictureGlowing());
     }
 
     @Override
@@ -146,6 +157,8 @@ public class PictureEntity extends AbstractDecorationEntity {
         if (nbt.contains("Height")) {
             this.setHeightPixels(nbt.getInt("Height"));
         }
+
+        this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
     }
 
     @Override
