@@ -1,33 +1,29 @@
 package me.chrr.camerapture;
 
-import me.chrr.camerapture.block.DisplayBlock;
-import me.chrr.camerapture.block.DisplayBlockEntity;
 import me.chrr.camerapture.entity.PictureEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
-import me.chrr.camerapture.net.*;
+import me.chrr.camerapture.net.PartialPicturePacket;
+import me.chrr.camerapture.net.PictureErrorPacket;
+import me.chrr.camerapture.net.RequestPicturePacket;
+import me.chrr.camerapture.net.TakePicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
-import me.chrr.camerapture.screen.DisplayScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroups;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
@@ -50,10 +46,6 @@ public class Camerapture implements ModInitializer {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static final Block DISPLAY = new DisplayBlock(FabricBlockSettings.create().strength(2f).nonOpaque());
-    public static final BlockEntityType<DisplayBlockEntity> DISPLAY_BLOCK_ENTITY = FabricBlockEntityTypeBuilder.create(DisplayBlockEntity::new, DISPLAY).build();
-    public static final ScreenHandlerType<DisplayScreenHandler> DISPLAY_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(DisplayScreenHandler::new);
-
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
@@ -67,11 +59,6 @@ public class Camerapture implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        Registry.register(Registries.BLOCK, id("display"), DISPLAY);
-        Registry.register(Registries.BLOCK_ENTITY_TYPE, id("display"), DISPLAY_BLOCK_ENTITY);
-        Registry.register(Registries.ITEM, id("display"), new BlockItem(DISPLAY, new FabricItemSettings()));
-        Registry.register(Registries.SCREEN_HANDLER, id("display"), DISPLAY_SCREEN_HANDLER);
-
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
@@ -153,19 +140,6 @@ public class Camerapture implements ModInitializer {
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for " + player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
-            }
-        });
-
-        // Client changes display size
-        ServerPlayNetworking.registerGlobalReceiver(ResizeDisplayPacket.TYPE, (packet, player, sender) -> {
-            BlockEntity blockEntity = player.getServerWorld().getBlockEntity(packet.pos());
-            if (blockEntity instanceof DisplayBlockEntity display && display.canPlayerUse(player)) {
-                float offsetX = Math.min(Math.max(packet.offsetX(), -DisplayBlockEntity.MAX_OFFSET), DisplayBlockEntity.MAX_OFFSET);
-                float offsetY = Math.min(Math.max(packet.offsetY(), -DisplayBlockEntity.MAX_OFFSET), DisplayBlockEntity.MAX_OFFSET);
-                float width = Math.min(Math.max(packet.width(), 1f), DisplayBlockEntity.MAX_DIM);
-                float height = Math.min(Math.max(packet.height(), 1f), DisplayBlockEntity.MAX_DIM);
-
-                display.resize(offsetX, offsetY, width, height);
             }
         });
     }

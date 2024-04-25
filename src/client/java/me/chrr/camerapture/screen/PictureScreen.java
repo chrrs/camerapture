@@ -62,13 +62,4 @@ public class PictureScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
     }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (this.client != null && this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
-            this.close();
-        }
-
-        return true;
-    }
 }

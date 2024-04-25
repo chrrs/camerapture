@@ -1,17 +1,10 @@
 {
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
-    "block.camerapture.display": "Display",
     "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",
     "item.camerapture.picture.timestamp_tooltip": "on %s",
     "text.camerapture.picture_failed": "Could not save picture, try again later.",
     "text.camerapture.fetching_picture": "Fetching picture...",
-    "text.camerapture.fetching_failed": "Could not fetch picture.",
-    "text.camerapture.display.insert_image": "Please insert image...",
-    "text.camerapture.display.fetching": "Fetching...",
-    "text.camerapture.display.picture_ok": "Picture OK",
-    "text.camerapture.display.fetching_failed": "Could not fetch image.",
-    "text.camerapture.display.size": "Size",
-    "text.camerapture.display.offset": "Offset"
+    "text.camerapture.fetching_failed": "Could not fetch picture."
 }
