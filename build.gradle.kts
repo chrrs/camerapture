@@ -42,7 +42,7 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
 
-    include(implementation("com.github.usefulness:webp-imageio:0.7.0")!!)
+    include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
 
 tasks {
