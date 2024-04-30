@@ -1,5 +1,6 @@
 package me.chrr.camerapture.render;
 
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
@@ -45,6 +46,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
+                    && !Camerapture.isCameraActive(client.player)
                     && client.crosshairTarget instanceof EntityHitResult hitResult
                     && hitResult.getEntity() == entity) {
                 renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
