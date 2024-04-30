@@ -1,5 +1,6 @@
 package me.chrr.camerapture.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
@@ -16,10 +17,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
@@ -81,17 +82,59 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         float y1 = -height / 2f;
         float y2 = height / 2f;
 
-        RenderLayer renderLayer = glowing
-                ? RenderLayer.getEntityAlpha(picture.getIdentifier())
-                : RenderLayer.getEntitySolid(picture.getIdentifier());
+        if (glowing) {
+            Tessellator tessellator = Tessellator.getInstance();
 
-        MatrixStack.Entry matrix = matrices.peek();
-        VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
+            RenderSystem.enableBlend();
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(true);
 
-        pushVertex(buffer, matrix, x1, y1, 1f, 1f, light);
-        pushVertex(buffer, matrix, x1, y2, 1f, 0f, light);
-        pushVertex(buffer, matrix, x2, y2, 0f, 0f, light);
-        pushVertex(buffer, matrix, x2, y1, 0f, 1f, light);
+            RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
+            RenderSystem.setShaderTexture(0, picture.getIdentifier());
+
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+
+            MatrixStack.Entry matrix = matrices.peek();
+            pushGlowingVertex(buffer, matrix, x1, y1, 1f, 1f);
+            pushGlowingVertex(buffer, matrix, x1, y2, 1f, 0f);
+            pushGlowingVertex(buffer, matrix, x2, y2, 0f, 0f);
+            pushGlowingVertex(buffer, matrix, x2, y1, 0f, 1f);
+
+            tessellator.draw();
+            RenderSystem.disableDepthTest();
+            RenderSystem.disableBlend();
+        } else {
+            RenderLayer renderLayer = RenderLayer.getEntityCutout(picture.getIdentifier());
+            VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
+
+            MatrixStack.Entry matrix = matrices.peek();
+            pushCutoutVertex(buffer, matrix, x1, y1, 1f, 1f, light);
+            pushCutoutVertex(buffer, matrix, x1, y2, 1f, 0f, light);
+            pushCutoutVertex(buffer, matrix, x2, y2, 0f, 0f, light);
+            pushCutoutVertex(buffer, matrix, x2, y1, 0f, 1f, light);
+        }
+    }
+
+    private void pushGlowingVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v) {
+        Matrix4f matrix4f = matrix.getPositionMatrix();
+        buffer.vertex(matrix4f, x, y, 0f)
+                .color(0xffffffff)
+                .texture(u, v)
+                .light(0xf000f0)
+                .normal(0f, 0f, -1f)
+                .next();
+    }
+
+    private void pushCutoutVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v, int light) {
+        Matrix4f matrix4f = matrix.getPositionMatrix();
+        buffer.vertex(matrix4f, x, y, 0f)
+                .color(0xffffffff)
+                .texture(u, v)
+                .overlay(OverlayTexture.DEFAULT_UV)
+                .light(light)
+                .normal(0f, 0f, -1f)
+                .next();
     }
 
     public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
@@ -113,19 +156,6 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         drawCenteredText(getTextRenderer(), text, 0f, -getTextRenderer().fontHeight / 2f, 0xffffff, matrices, vertexConsumers);
     }
 
-    private void pushVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v, int light) {
-        Matrix4f matrix4f = matrix.getPositionMatrix();
-        Matrix3f normal = matrix.getNormalMatrix();
-
-        buffer.vertex(matrix4f, x, y, 0f)
-                .color(0xffffffff)
-                .texture(u, v)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(normal, 0f, 0f, -1f)
-                .next();
-    }
-
     private void drawCenteredText(TextRenderer textRenderer, Text text, float x, float y, int color, MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
         float width = textRenderer.getWidth(text);
         textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0x7f000000, 0xf000f0);
@@ -134,5 +164,10 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     @Override
     public Identifier getTexture(PictureFrameEntity entity) {
         return null;
+    }
+
+    @Override
+    protected int getBlockLight(PictureFrameEntity entity, BlockPos pos) {
+        return entity.isPictureGlowing() ? 15 : super.getBlockLight(entity, pos);
     }
 }
