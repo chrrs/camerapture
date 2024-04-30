@@ -1,7 +1,11 @@
 package me.chrr.camerapture;
 
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import me.chrr.camerapture.net.*;
+import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.net.PartialPicturePacket;
+import me.chrr.camerapture.net.PictureErrorPacket;
+import me.chrr.camerapture.net.RequestPicturePacket;
+import me.chrr.camerapture.net.TakePicturePacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
@@ -13,8 +17,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,10 +44,6 @@ public class CameraptureClient implements ClientModInitializer {
                 return false;
             }
         });
-
-        // Server requests to show picture on screen, most likely by right-clicking a picture item
-        ClientPlayNetworking.registerGlobalReceiver(ShowPicturePacket.TYPE, (packet, player, sender) ->
-                MinecraftClient.getInstance().setScreen(new PictureScreen(packet.uuid())));
 
         // Server requests to take a picture, most likely by using a camera
         ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
@@ -69,11 +72,25 @@ public class CameraptureClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
                 ClientPictureStore.getInstance().clearCache());
 
+        UseItemCallback.EVENT.register((player, world, hand) -> {
+            ItemStack stack = player.getStackInHand(hand);
+            if (stack.isOf(Camerapture.PICTURE)) {
+                UUID uuid = PictureItem.getUuid(stack);
+                if (uuid != null) {
+                    MinecraftClient.getInstance().submit(() ->
+                            MinecraftClient.getInstance().setScreen(new PictureScreen(uuid)));
+                    return TypedActionResult.success(stack);
+                }
+            }
+
+            return TypedActionResult.pass(stack);
+        });
+
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (player.isSneaking() && entity instanceof PictureFrameEntity picture) {
                 MinecraftClient.getInstance().submit(() ->
                         MinecraftClient.getInstance().setScreen(new EditPictureFrameScreen(picture)));
-                
+
                 return ActionResult.SUCCESS;
             }
 

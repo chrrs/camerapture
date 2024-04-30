@@ -2,8 +2,6 @@ package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import me.chrr.camerapture.net.ShowPicturePacket;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -11,13 +9,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -34,23 +28,6 @@ public class PictureItem extends Item {
 
     public PictureItem(Settings settings) {
         super(settings);
-    }
-
-    @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        ItemStack stack = user.getStackInHand(hand);
-        NbtCompound nbt = stack.getOrCreateNbt();
-
-        if (nbt.contains("uuid")) {
-            if (!world.isClient) {
-                ServerPlayNetworking.send((ServerPlayerEntity) user, new ShowPicturePacket(nbt.getUuid("uuid")));
-            }
-
-            user.incrementStat(Stats.USED.getOrCreateStat(Camerapture.PICTURE));
-            return TypedActionResult.success(stack);
-        } else {
-            return TypedActionResult.pass(stack);
-        }
     }
 
     @Override
