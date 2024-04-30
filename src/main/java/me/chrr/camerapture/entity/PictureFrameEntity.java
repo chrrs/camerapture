@@ -3,65 +3,52 @@ package me.chrr.camerapture.entity;
 import me.chrr.camerapture.Camerapture;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.MovementType;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-public class PictureEntity extends AbstractDecorationEntity {
+public class PictureFrameEntity extends ResizableDecorationEntity {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
-    private static final TrackedData<Integer> WIDTH_PIXELS = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> HEIGHT_PIXELS = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+    private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
-    public PictureEntity(EntityType<? extends PictureEntity> entityType, World world) {
+    public PictureFrameEntity(EntityType<? extends PictureFrameEntity> entityType, World world) {
         super(entityType, world);
     }
 
-    public PictureEntity(World world, BlockPos pos, Direction facing) {
-        super(Camerapture.PICTURE_ENTITY, world, pos);
+    public PictureFrameEntity(World world, BlockPos pos, Direction facing) {
+        super(Camerapture.PICTURE_FRAME, world);
+
+        this.setAttachmentPos(pos);
         this.setFacing(facing);
     }
 
     @Override
     protected void initDataTracker() {
+        super.initDataTracker();
+
         this.getDataTracker().startTracking(ITEM_STACK, ItemStack.EMPTY);
-        this.getDataTracker().startTracking(WIDTH_PIXELS, 16);
-        this.getDataTracker().startTracking(HEIGHT_PIXELS, 16);
         this.getDataTracker().startTracking(GLOWING, false);
-    }
-
-    public void setWidthPixels(int width) {
-        this.getDataTracker().set(WIDTH_PIXELS, width);
-    }
-
-    public void setHeightPixels(int height) {
-        this.getDataTracker().set(HEIGHT_PIXELS, height);
-    }
-
-    @Override
-    public int getWidthPixels() {
-        return this.getDataTracker().get(WIDTH_PIXELS);
-    }
-
-    @Override
-    public int getHeightPixels() {
-        return this.getDataTracker().get(HEIGHT_PIXELS);
+        this.getDataTracker().startTracking(FIXED, false);
     }
 
     @Override
@@ -90,7 +77,7 @@ public class PictureEntity extends AbstractDecorationEntity {
         this.getDataTracker().set(ITEM_STACK, itemStack);
     }
 
-    public boolean getPictureGlowing() {
+    public boolean isPictureGlowing() {
         return this.getDataTracker().get(GLOWING);
     }
 
@@ -98,8 +85,18 @@ public class PictureEntity extends AbstractDecorationEntity {
         this.getDataTracker().set(GLOWING, glowing);
     }
 
+    public boolean isFixed() {
+        return this.getDataTracker().get(FIXED);
+    }
+
+    public void setFixed(boolean fixed) {
+        this.getDataTracker().set(FIXED, fixed);
+    }
+
     @Override
     public void onTrackedDataSet(TrackedData<?> data) {
+        super.onTrackedDataSet(data);
+
         if (data.equals(ITEM_STACK)) {
             ItemStack itemStack = getItemStack();
             if (itemStack != null) {
@@ -109,8 +106,78 @@ public class PictureEntity extends AbstractDecorationEntity {
     }
 
     @Override
+    public boolean shouldRender(double distance) {
+        double d = 16.0;
+        d *= 4.0 * getRenderDistanceMultiplier();
+        return distance < d * d;
+    }
+
+    @Override
+    public void move(MovementType movementType, Vec3d movement) {
+        if (!this.isFixed()) {
+            super.move(movementType, movement);
+        }
+    }
+
+    @Override
+    public void addVelocity(double deltaX, double deltaY, double deltaZ) {
+        if (!this.isFixed()) {
+            super.addVelocity(deltaX, deltaY, deltaZ);
+        }
+    }
+
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        if (this.isFixed() && !source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isSourceCreativePlayer()) {
+            return false;
+        }
+
+        return super.damage(source, amount);
+    }
+
+    @Override
+    public boolean canStayAttached() {
+        return this.isFixed() || super.canStayAttached();
+    }
+
+    public void resize(ResizeDirection direction, boolean shrink) {
+        boolean success = switch (direction) {
+            case UP, DOWN -> tryAddHeight(shrink ? -1 : 1);
+            case LEFT, RIGHT -> tryAddWidth(shrink ? -1 : 1);
+        };
+
+        if (success) {
+            int i = shrink ? 1 : -1;
+            switch (direction) {
+                case DOWN -> setAttachmentPos(getAttachmentPos().offset(Direction.UP, i));
+                case LEFT -> setAttachmentPos(getAttachmentPos().offset(getFacing().rotateYCounterclockwise(), i));
+            }
+        }
+    }
+
+    private boolean tryAddWidth(int n) {
+        int width = getFrameWidth();
+        if (width >= 1 - n && width <= 16 - n) {
+            setFrameWidth(width + n);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean tryAddHeight(int n) {
+        int height = getFrameHeight();
+        if (height >= 1 - n && height <= 16 - n) {
+            setFrameHeight(height + n);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public Packet<ClientPlayPacketListener> createSpawnPacket() {
-        return new EntitySpawnS2CPacket(this, this.facing.getId(), this.getDecorationBlockPos());
+        return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
     }
 
     @Override
@@ -128,10 +195,8 @@ public class PictureEntity extends AbstractDecorationEntity {
             nbt.put("Item", itemStack.writeNbt(new NbtCompound()));
         }
 
-        nbt.putByte("Facing", (byte) this.facing.getId());
-        nbt.putInt("Width", this.getWidthPixels());
-        nbt.putInt("Height", this.getHeightPixels());
-        nbt.putBoolean("PictureGlowing", this.getPictureGlowing());
+        nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
+        nbt.putBoolean("Fixed", this.isFixed());
     }
 
     @Override
@@ -148,17 +213,8 @@ public class PictureEntity extends AbstractDecorationEntity {
             this.setItemStack(itemStack);
         }
 
-        this.setFacing(Direction.byId(nbt.getByte("Facing")));
-
-        if (nbt.contains("Width")) {
-            this.setWidthPixels(nbt.getInt("Width"));
-        }
-
-        if (nbt.contains("Height")) {
-            this.setHeightPixels(nbt.getInt("Height"));
-        }
-
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
+        this.setFixed(nbt.getBoolean("Fixed"));
     }
 
     @Override
@@ -169,5 +225,9 @@ public class PictureEntity extends AbstractDecorationEntity {
         } else {
             return itemStack.copy();
         }
+    }
+
+    public enum ResizeDirection {
+        UP, DOWN, LEFT, RIGHT
     }
 }

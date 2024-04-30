@@ -1,18 +1,16 @@
 package me.chrr.camerapture;
 
-import me.chrr.camerapture.entity.PictureEntity;
+import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
-import me.chrr.camerapture.net.PartialPicturePacket;
-import me.chrr.camerapture.net.PictureErrorPacket;
-import me.chrr.camerapture.net.RequestPicturePacket;
-import me.chrr.camerapture.net.TakePicturePacket;
+import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
@@ -49,8 +47,8 @@ public class Camerapture implements ModInitializer {
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
-    public static final EntityType<PictureEntity> PICTURE_ENTITY =
-            FabricEntityTypeBuilder.<PictureEntity>create(SpawnGroup.MISC, PictureEntity::new)
+    public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
+            FabricEntityTypeBuilder.<PictureFrameEntity>create(SpawnGroup.MISC, PictureFrameEntity::new)
                     .dimensions(new EntityDimensions(0.5f, 0.5f, false))
                     .trackRangeChunks(10)
                     .build();
@@ -64,7 +62,7 @@ public class Camerapture implements ModInitializer {
 
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
 
-        Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_ENTITY);
+        Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
 
         Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
         Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
@@ -140,6 +138,29 @@ public class Camerapture implements ModInitializer {
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for " + player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
+            }
+        });
+
+        // Client resizes picture frame
+        ServerPlayNetworking.registerGlobalReceiver(ResizePictureFramePacket.TYPE, (packet, player, sender) -> {
+            Entity entity = player.getServerWorld().getEntity(packet.uuid());
+            if (entity instanceof PictureFrameEntity frameEntity
+                    && player.canModifyAt(player.getServerWorld(), frameEntity.getBlockPos())) {
+                frameEntity.resize(packet.direction(), packet.shrink());
+            } else {
+                LOGGER.warn(player.getName().getString() + " failed to resize picture frame " + packet.uuid());
+            }
+        });
+
+        // Client edits picture frame
+        ServerPlayNetworking.registerGlobalReceiver(EditPictureFramePacket.TYPE, (packet, player, sender) -> {
+            Entity entity = player.getServerWorld().getEntity(packet.uuid());
+            if (entity instanceof PictureFrameEntity frameEntity
+                    && player.canModifyAt(player.getServerWorld(), frameEntity.getBlockPos())) {
+                frameEntity.setPictureGlowing(packet.glowing());
+                frameEntity.setFixed(packet.fixed());
+            } else {
+                LOGGER.warn(player.getName().getString() + " failed to edit picture frame " + packet.uuid());
             }
         });
     }

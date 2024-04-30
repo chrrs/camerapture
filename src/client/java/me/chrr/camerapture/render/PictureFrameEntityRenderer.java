@@ -1,6 +1,6 @@
 package me.chrr.camerapture.render;
 
-import me.chrr.camerapture.entity.PictureEntity;
+import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import net.minecraft.client.MinecraftClient;
@@ -23,16 +23,17 @@ import org.joml.Matrix4f;
 
 import java.util.UUID;
 
-public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
-    public PictureEntityRenderer(EntityRendererFactory.Context ctx) {
+public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity> {
+    public PictureFrameEntityRenderer(EntityRendererFactory.Context ctx) {
         super(ctx);
     }
 
     @Override
-    public void render(PictureEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void render(PictureFrameEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
+        matrices.translate(0.5 - entity.getFrameWidth() / 2.0, -0.5 + entity.getFrameHeight() / 2.0, 0);
         matrices.scale(0.0625F, 0.0625F, 0.0625F);
 
         ItemStack itemStack = entity.getItemStack();
@@ -44,11 +45,9 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
 
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
-                    && client.player != null
-                    && client.player.isSneaking()
                     && client.crosshairTarget instanceof EntityHitResult hitResult
                     && hitResult.getEntity() == entity) {
-                renderOutline(matrices, vertexConsumers, (float) entity.getWidthPixels(), (float) entity.getHeightPixels());
+                renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
             }
 
             if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
@@ -56,7 +55,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
             } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
                 renderFetching(matrices, vertexConsumers);
             } else {
-                renderPicture(matrices, vertexConsumers, picture, (float) entity.getWidthPixels(), (float) entity.getHeightPixels(), entity.getPictureGlowing(), light);
+                renderPicture(matrices, vertexConsumers, picture, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
             }
         }
 
@@ -82,7 +81,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
 
         RenderLayer renderLayer = glowing
                 ? RenderLayer.getEntityAlpha(picture.getIdentifier())
-                : RenderLayer.getEntityCutout(picture.getIdentifier());
+                : RenderLayer.getEntitySolid(picture.getIdentifier());
 
         MatrixStack.Entry matrix = matrices.peek();
         VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
@@ -95,7 +94,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
 
     public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
         VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, 1.0);
-        WorldRenderer.drawShapeOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameWidth / 2, -0.5f, 1f, 1f, 1f, 0.5f, true);
+        WorldRenderer.drawShapeOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -0.5f, 0f, 0f, 0f, 0.4f, true);
     }
 
     public void renderFetching(MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
@@ -104,7 +103,6 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
         Text fetching = Text.translatable("text.camerapture.fetching_picture");
         drawCenteredText(getTextRenderer(), fetching, 0f, -getTextRenderer().fontHeight - 0.5f, 0xffffff, matrices, vertexConsumers);
         drawCenteredText(getTextRenderer(), Text.literal(loading), 0f, 0.5f, 0x808080, matrices, vertexConsumers);
-
     }
 
     public void renderErrorText(MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
@@ -132,7 +130,7 @@ public class PictureEntityRenderer extends EntityRenderer<PictureEntity> {
     }
 
     @Override
-    public Identifier getTexture(PictureEntity entity) {
+    public Identifier getTexture(PictureFrameEntity entity) {
         return null;
     }
 }

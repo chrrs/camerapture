@@ -1,7 +1,7 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.entity.PictureEntity;
+import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.net.ShowPicturePacket;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.item.TooltipContext;
@@ -70,23 +70,23 @@ public class PictureItem extends Item {
             return ActionResult.PASS;
         }
 
-        PictureEntity pictureEntity = new PictureEntity(world, pos, facing);
-        if (!pictureEntity.canStayAttached()) {
+        PictureFrameEntity pictureFrameEntity = new PictureFrameEntity(world, pos, facing);
+        if (!pictureFrameEntity.canStayAttached()) {
             return ActionResult.PASS;
         }
 
         // Correctly handle (+NBT) items
         NbtCompound nbtCompound = itemStack.getNbt();
         if (nbtCompound != null) {
-            EntityType.loadFromEntityNbt(world, player, pictureEntity, nbtCompound);
+            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtCompound);
         }
 
-        pictureEntity.setItemStack(itemStack.copyWithCount(1));
+        pictureFrameEntity.setItemStack(itemStack.copyWithCount(1));
 
         if (!world.isClient) {
-            pictureEntity.onPlace();
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureEntity.getPos());
-            world.spawnEntity(pictureEntity);
+            pictureFrameEntity.onPlace();
+            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureFrameEntity.getPos());
+            world.spawnEntity(pictureFrameEntity);
         }
 
         itemStack.decrement(1);

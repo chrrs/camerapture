@@ -1,16 +1,20 @@
 package me.chrr.camerapture;
 
+import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
-import me.chrr.camerapture.render.PictureEntityRenderer;
+import me.chrr.camerapture.render.PictureFrameEntityRenderer;
+import me.chrr.camerapture.screen.EditPictureFrameScreen;
 import me.chrr.camerapture.screen.PictureScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.ActionResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,7 +27,7 @@ public class CameraptureClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        EntityRendererRegistry.register(Camerapture.PICTURE_ENTITY, PictureEntityRenderer::new);
+        EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
             if (Camerapture.isCameraActive(player)) {
@@ -64,5 +68,16 @@ public class CameraptureClient implements ClientModInitializer {
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
                 ClientPictureStore.getInstance().clearCache());
+
+        UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (player.isSneaking() && entity instanceof PictureFrameEntity picture) {
+                MinecraftClient.getInstance().submit(() ->
+                        MinecraftClient.getInstance().setScreen(new EditPictureFrameScreen(picture)));
+                
+                return ActionResult.SUCCESS;
+            }
+
+            return ActionResult.PASS;
+        });
     }
 }
