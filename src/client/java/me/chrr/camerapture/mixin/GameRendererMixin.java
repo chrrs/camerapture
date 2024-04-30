@@ -9,9 +9,9 @@ import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -25,9 +25,25 @@ public abstract class GameRendererMixin {
     @Shadow
     private boolean renderHand;
 
-    @Redirect(method = "renderWorld", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/GameRenderer;renderHand:Z"))
-    private boolean shouldRenderHand(GameRenderer renderer) {
-        return !Camerapture.isCameraActive(client.player) && renderHand;
+    @Shadow
+    public abstract void setRenderHand(boolean renderHand);
+
+    @Unique
+    boolean shouldveRenderedHand;
+
+    @Inject(method = "render", at = @At(value = "HEAD"))
+    private void determineRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
+        if (Camerapture.isCameraActive(client.player)) {
+            shouldveRenderedHand = renderHand;
+            setRenderHand(false);
+        }
+    }
+
+    @Inject(method = "render", at = @At(value = "RETURN"))
+    private void resetRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
+        if (Camerapture.isCameraActive(client.player)) {
+            setRenderHand(shouldveRenderedHand);
+        }
     }
 
     @Inject(method = "shouldRenderBlockOutline", at = @At(value = "HEAD"), cancellable = true)
