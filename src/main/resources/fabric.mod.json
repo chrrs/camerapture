@@ -6,7 +6,9 @@
     "description": "Take photos and display pictures in Minecraft",
     "authors": ["chrrrs"],
     "contact": {
-        "repo": "https://github.com/chrrs/Camerapture"
+        "homepage": "https://modrinth.com/mod/camerapture",
+        "sources": "https://github.com/chrrs/camerapture",
+        "issues": "https://github.com/chrrs/camerapture/issues"
     },
     "license": "MIT",
     "icon": "assets/camerapture/icon.png",
