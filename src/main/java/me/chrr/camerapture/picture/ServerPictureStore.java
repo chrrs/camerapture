@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ServerPictureStore {
-    private static final int CACHE_SIZE = 100;
+    private static final int CACHE_SIZE = 250;
 
     private static final ServerPictureStore INSTANCE = new ServerPictureStore();
 
