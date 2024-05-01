@@ -25,8 +25,8 @@ import java.util.function.Consumer;
 public class EditPictureFrameScreen extends Screen {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_picture_frame.png");
 
-    private final int backgroundWidth = 158;
-    private final int backgroundHeight = 52;
+    private static final int backgroundWidth = 158;
+    private static final int backgroundHeight = 52;
 
     private final PictureFrameEntity entity;
 

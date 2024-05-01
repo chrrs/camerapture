@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +39,7 @@ public class CameraptureClient implements ClientModInitializer {
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-            if (Camerapture.isCameraActive(player)) {
+            if (Camerapture.isCameraActive(player) && paperInInventory() > 0) {
                 PictureTaker.getInstance().uploadScreenPicture();
                 return true;
             }
@@ -82,7 +83,10 @@ public class CameraptureClient implements ClientModInitializer {
                             MinecraftClient.getInstance().setScreen(new PictureScreen(uuid)));
                     return TypedActionResult.success(stack);
                 }
-            } else if (player.isSneaking() && stack.isOf(Camerapture.CAMERA) && !CameraItem.isActive(stack)) {
+            } else if (player.isSneaking()
+                    && stack.isOf(Camerapture.CAMERA)
+                    && !CameraItem.isActive(stack)
+                    && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
                 MinecraftClient.getInstance().submit(() ->
                         MinecraftClient.getInstance().setScreen(new UploadScreen()));
                 return TypedActionResult.success(stack);
@@ -101,5 +105,10 @@ public class CameraptureClient implements ClientModInitializer {
 
             return ActionResult.PASS;
         });
+    }
+
+    public static int paperInInventory() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return client.player == null ? 0 : client.player.getInventory().count(Items.PAPER);
     }
 }

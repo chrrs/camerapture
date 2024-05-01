@@ -7,8 +7,14 @@
     "text.camerapture.picture_failed": "Could not save picture, try again later.",
     "text.camerapture.fetching_picture": "Fetching picture...",
     "text.camerapture.fetching_failed": "Could not fetch picture.",
+    "text.camerapture.no_paper": "NO PAPER",
+    "text.camerapture.date": "DATE: %s",
+    "text.camerapture.paper_available": "%d PAPER AVAILABLE",
     "text.camerapture.edit_picture_frame.glowing": "Glowing",
     "text.camerapture.edit_picture_frame.fixed": "Fixed",
     "text.camerapture.edit_picture_frame.size": "Size: %d x %d",
-    "text.camerapture.edit_picture_frame.shrink_hint": "Hold SHIFT to shrink"
+    "text.camerapture.edit_picture_frame.shrink_hint": "Hold SHIFT to shrink",
+    "text.camerapture.upload_picture.title": "Upload Picture",
+    "text.camerapture.upload_picture.description": "Drag 'n drop your image here",
+    "text.camerapture.upload_picture.browse": "or browse your filesystem..."
 }

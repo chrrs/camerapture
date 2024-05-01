@@ -1,15 +1,15 @@
 package me.chrr.camerapture.mixin;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.CameraptureClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.GameOptions;
-import net.minecraft.item.Items;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,23 +51,18 @@ public abstract class InGameHudMixin {
         int textX = 25;
         int textY = height - 25;
 
-        context.drawText(getTextRenderer(), "DATE: " + SDF_DATE.format(new Date()), textX, textY - fh, 0xffffffff, false);
+        context.drawText(getTextRenderer(), Text.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh, 0xffffffff, false);
 
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player == null) {
-            return;
-        }
-
-        int paper = player.getInventory().count(Items.PAPER);
+        int paper = CameraptureClient.paperInInventory();
         if (paper == 0) {
             if (System.currentTimeMillis() % 1000 < 500) {
-                int w = getTextRenderer().getWidth("NO PAPER");
+                int w = getTextRenderer().getWidth(Text.translatable("text.camerapture.no_paper"));
                 int x = width / 2 - w / 2;
                 int y = height / 2 + 32;
-                context.drawText(getTextRenderer(), "NO PAPER", x, y, 0xffff0000, false);
+                context.drawText(getTextRenderer(), Text.translatable("text.camerapture.no_paper"), x, y, 0xffff0000, false);
             }
         } else {
-            String text = paper + " PAPER AVAILABLE";
+            Text text = Text.translatable("text.camerapture.paper_available", paper);
             int w = getTextRenderer().getWidth(text);
             int x = width - 25 - w;
             int y = height - 25 - fh;
