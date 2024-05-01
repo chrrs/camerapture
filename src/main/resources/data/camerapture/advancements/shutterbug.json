@@ -1,0 +1,28 @@
+{
+    "parent": "minecraft:adventure/root",
+    "display": {
+        "icon": {
+            "item": "camerapture:camera"
+        },
+        "title": {
+            "translate": "advancements.camerapture.shutterbug.title"
+        },
+        "description": {
+            "translate": "advancements.camerapture.shutterbug.description"
+        }
+    },
+    "criteria": {
+        "camera": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "items": [
+                            "camerapture:camera"
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
