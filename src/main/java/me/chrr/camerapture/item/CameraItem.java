@@ -1,5 +1,6 @@
 package me.chrr.camerapture.item;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -18,6 +19,13 @@ public class CameraItem extends Item {
         ItemStack stack = user.getStackInHand(hand);
         setActive(stack, !isActive(stack));
         return TypedActionResult.success(stack);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+        if (!selected) {
+            setActive(stack, false);
+        }
     }
 
     public static void setActive(ItemStack stack, boolean active) {
