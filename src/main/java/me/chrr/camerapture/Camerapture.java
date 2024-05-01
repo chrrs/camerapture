@@ -2,6 +2,7 @@ package me.chrr.camerapture;
 
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
+import me.chrr.camerapture.item.PictureCloningRecipe;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ServerPictureStore;
@@ -20,6 +21,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.stat.StatFormatter;
@@ -47,6 +49,9 @@ public class Camerapture implements ModInitializer {
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
+    public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
+            new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
+
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             FabricEntityTypeBuilder.<PictureFrameEntity>create(SpawnGroup.MISC, PictureFrameEntity::new)
                     .dimensions(new EntityDimensions(0.5f, 0.5f, false))
@@ -61,6 +66,7 @@ public class Camerapture implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
+        Registry.register(Registries.RECIPE_SERIALIZER, id("picture_cloning"), PICTURE_CLONING);
 
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
 
