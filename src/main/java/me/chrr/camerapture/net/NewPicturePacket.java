@@ -6,11 +6,11 @@ import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 
-public record TakePicturePacket() implements FabricPacket {
-    private static final Identifier ID = Camerapture.id("take_picture");
-    public static final PacketType<TakePicturePacket> TYPE = PacketType.create(ID, TakePicturePacket::new);
+public record NewPicturePacket() implements FabricPacket {
+    private static final Identifier ID = Camerapture.id("new_picture");
+    public static final PacketType<NewPicturePacket> TYPE = PacketType.create(ID, NewPicturePacket::new);
 
-    public TakePicturePacket(PacketByteBuf buf) {
+    public NewPicturePacket(PacketByteBuf buf) {
         this();
     }
 
@@ -19,7 +19,7 @@ public record TakePicturePacket() implements FabricPacket {
     }
 
     @Override
-    public PacketType<TakePicturePacket> getType() {
+    public PacketType<NewPicturePacket> getType() {
         return TYPE;
     }
 }

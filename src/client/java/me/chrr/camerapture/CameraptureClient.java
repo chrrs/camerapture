@@ -5,7 +5,6 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.net.PictureErrorPacket;
 import me.chrr.camerapture.net.RequestPicturePacket;
-import me.chrr.camerapture.net.TakePicturePacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
@@ -38,16 +37,16 @@ public class CameraptureClient implements ClientModInitializer {
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
             if (Camerapture.isCameraActive(player)) {
-                ClientPlayNetworking.send(new TakePicturePacket());
+                PictureTaker.getInstance().uploadScreenPicture();
                 return true;
-            } else {
-                return false;
             }
+
+            return false;
         });
 
-        // Server requests to take a picture, most likely by using a camera
+        // Server requests client to send over a picture, most likely from the camera
         ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
-                PictureTaker.getInstance().takePicture(packet.uuid()));
+                ThreadPooler.run(() -> PictureTaker.getInstance().sendStoredPicture(packet.uuid())));
 
         // Server sends back a picture following a picture request by UUID
         Map<UUID, ByteCollector> collectors = new HashMap<>();

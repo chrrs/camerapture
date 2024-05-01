@@ -67,10 +67,10 @@ public class Camerapture implements ModInitializer {
         Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
         Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
 
-        // Client right-clicked with a camera
-        ServerPlayNetworking.registerGlobalReceiver(TakePicturePacket.TYPE, (packet, player, sender) -> {
-            Pair<Hand, ItemStack> activeCamera = findActiveCamera(player);
-            if (activeCamera == null) {
+        // Client requests to take / upload a picture
+        ServerPlayNetworking.registerGlobalReceiver(NewPicturePacket.TYPE, (packet, player, sender) -> {
+            Pair<Hand, ItemStack> camera = findCamera(player, false);
+            if (camera == null) {
                 return;
             }
 
@@ -78,9 +78,9 @@ public class Camerapture implements ModInitializer {
                 return;
             }
 
-            CameraItem.setActive(activeCamera.getRight(), false);
-            player.getItemCooldownManager().set(activeCamera.getRight().getItem(), 20 * 3);
-            player.swingHand(activeCamera.getLeft(), true);
+            CameraItem.setActive(camera.getRight(), false);
+            player.getItemCooldownManager().set(camera.getRight().getItem(), 20 * 3);
+            player.swingHand(camera.getLeft(), true);
 
             player.incrementStat(PICTURES_TAKEN);
 
@@ -166,14 +166,14 @@ public class Camerapture implements ModInitializer {
     }
 
     @Nullable
-    public static Pair<Hand, ItemStack> findActiveCamera(PlayerEntity player) {
+    public static Pair<Hand, ItemStack> findCamera(PlayerEntity player, boolean active) {
         if (player == null) {
             return null;
         }
 
         for (Hand hand : Hand.values()) {
             ItemStack stack = player.getStackInHand(hand);
-            if (stack.isOf(Camerapture.CAMERA) && CameraItem.isActive(stack)) {
+            if (stack.isOf(Camerapture.CAMERA) && (!active || CameraItem.isActive(stack))) {
                 return new Pair<>(hand, stack);
             }
         }
@@ -182,7 +182,7 @@ public class Camerapture implements ModInitializer {
     }
 
     public static boolean isCameraActive(PlayerEntity player) {
-        return findActiveCamera(player) != null;
+        return findCamera(player, true) != null;
     }
 
     public static Identifier id(String path) {
