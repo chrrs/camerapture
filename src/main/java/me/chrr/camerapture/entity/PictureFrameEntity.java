@@ -91,6 +91,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
     public void setFixed(boolean fixed) {
         this.getDataTracker().set(FIXED, fixed);
+        resetObstructionCheckCounter();
     }
 
     @Override
@@ -153,6 +154,8 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
                 case LEFT -> setAttachmentPos(getAttachmentPos().offset(getFacing().rotateYCounterclockwise(), i));
             }
         }
+
+        resetObstructionCheckCounter();
     }
 
     private boolean tryAddWidth(int n) {

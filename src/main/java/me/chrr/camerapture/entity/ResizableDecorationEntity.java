@@ -1,10 +1,13 @@
 package me.chrr.camerapture.entity;
 
+import net.minecraft.block.AbstractRedstoneGateBlock;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -30,6 +33,8 @@ public abstract class ResizableDecorationEntity extends Entity {
     private Direction facing = Direction.SOUTH;
     private BlockPos attachmentPos;
 
+    private int obstructionCheckCounter = 0;
+
     public ResizableDecorationEntity(EntityType<?> type, World world) {
         super(type, world);
     }
@@ -44,6 +49,23 @@ public abstract class ResizableDecorationEntity extends Entity {
     public void onTrackedDataSet(TrackedData<?> data) {
         if (data.equals(FRAME_WIDTH) || data.equals(FRAME_HEIGHT)) {
             updateBoundingBox();
+        }
+    }
+
+    public void resetObstructionCheckCounter() {
+        this.obstructionCheckCounter = 0;
+    }
+
+    @Override
+    public void tick() {
+        if (!this.getWorld().isClient) {
+            if (this.obstructionCheckCounter++ == 100) {
+                this.obstructionCheckCounter = 0;
+                if (!this.canStayAttached() && !this.isRemoved()) {
+                    this.discard();
+                    this.onBreak(null);
+                }
+            }
         }
     }
 
@@ -120,8 +142,30 @@ public abstract class ResizableDecorationEntity extends Entity {
     }
 
     public boolean canStayAttached() {
-        // FIXME: implement
-        return true;
+        if (!this.getWorld().isSpaceEmpty(this)) {
+            return false;
+        } else {
+            BlockPos blockPos = this.attachmentPos.offset(this.facing.getOpposite());
+            Direction direction = this.facing.rotateYCounterclockwise();
+            BlockPos.Mutable mutable = new BlockPos.Mutable();
+
+            for (int x = 0; x < this.getFrameWidth(); ++x) {
+                for (int y = 0; y < this.getFrameHeight(); ++y) {
+                    mutable.set(blockPos).move(direction, x).move(Direction.UP, y);
+                    BlockState blockState = this.getWorld().getBlockState(mutable);
+
+                    //noinspection deprecation
+                    if (!blockState.isSolid() && !AbstractRedstoneGateBlock.isRedstoneGate(blockState)) {
+                        return false;
+                    }
+                }
+            }
+
+            return this.getWorld()
+                    .getOtherEntities(this, this.getBoundingBox(), (entity) ->
+                            entity instanceof AbstractDecorationEntity || entity instanceof ResizableDecorationEntity)
+                    .isEmpty();
+        }
     }
 
     @Override
