@@ -16,8 +16,10 @@ import net.minecraft.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 public class PictureTaker {
@@ -40,6 +42,17 @@ public class PictureTaker {
         this.takePicture = true;
         this.hudHidden = MinecraftClient.getInstance().options.hudHidden;
         MinecraftClient.getInstance().options.hudHidden = true;
+    }
+
+    public boolean tryUpload(Path filePath) {
+        try {
+            BufferedImage image = ImageIO.read(filePath.toFile());
+            uploadPicture(image);
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("failed to read picture from file", e);
+            return false;
+        }
     }
 
     public void uploadPicture(BufferedImage picture) {

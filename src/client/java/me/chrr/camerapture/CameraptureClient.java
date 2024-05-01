@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.net.PictureErrorPacket;
@@ -10,6 +11,7 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.screen.EditPictureFrameScreen;
 import me.chrr.camerapture.screen.PictureScreen;
+import me.chrr.camerapture.screen.UploadScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -80,6 +82,10 @@ public class CameraptureClient implements ClientModInitializer {
                             MinecraftClient.getInstance().setScreen(new PictureScreen(uuid)));
                     return TypedActionResult.success(stack);
                 }
+            } else if (player.isSneaking() && stack.isOf(Camerapture.CAMERA) && !CameraItem.isActive(stack)) {
+                MinecraftClient.getInstance().submit(() ->
+                        MinecraftClient.getInstance().setScreen(new UploadScreen()));
+                return TypedActionResult.success(stack);
             }
 
             return TypedActionResult.pass(stack);
