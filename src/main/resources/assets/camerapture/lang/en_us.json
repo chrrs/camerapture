@@ -18,5 +18,6 @@
     "text.camerapture.upload_picture.description": "Drag 'n drop your image here",
     "text.camerapture.upload_picture.browse": "or browse your filesystem...",
     "advancements.camerapture.shutterbug.title": "Shutterbug",
-    "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you"
+    "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you",
+    "sound.camerapture.camera_shutter": "Camera shutters"
 }

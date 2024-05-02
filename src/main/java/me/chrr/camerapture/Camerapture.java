@@ -24,6 +24,8 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
@@ -49,6 +51,8 @@ public class Camerapture implements ModInitializer {
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
 
+    public static final SoundEvent CAMERA_SHUTTER = SoundEvent.of(id("camera_shutter"));
+
     public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
             new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
 
@@ -64,6 +68,8 @@ public class Camerapture implements ModInitializer {
     public void onInitialize() {
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
+
+        Registry.register(Registries.SOUND_EVENT, CAMERA_SHUTTER.getId(), CAMERA_SHUTTER);
 
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
         Registry.register(Registries.RECIPE_SERIALIZER, id("picture_cloning"), PICTURE_CLONING);
@@ -82,6 +88,10 @@ public class Camerapture implements ModInitializer {
 
             if (Inventories.remove(player.getInventory(), (stack) -> stack.isOf(Items.PAPER), 1, false) != 1) {
                 return;
+            }
+
+            if (CameraItem.isActive(camera.getRight())) {
+                player.playSound(CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
             }
 
             CameraItem.setActive(camera.getRight(), false);
