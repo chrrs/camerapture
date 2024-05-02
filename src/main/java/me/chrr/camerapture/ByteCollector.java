@@ -12,6 +12,10 @@ public class ByteCollector {
         this.callback = callback;
     }
 
+    public int getCurrentLength() {
+        return offset;
+    }
+
     public boolean push(byte[] bytes, int bytesLeft) {
         if (this.bytes == null) {
             this.bytes = new byte[bytes.length + bytesLeft];

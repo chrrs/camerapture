@@ -137,6 +137,12 @@ public class Camerapture implements ModInitializer {
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
+
+            if (collector.getCurrentLength() > Camerapture.MAX_IMAGE_BYTES) {
+                LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
+                collectors.remove(packet.uuid());
+                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
+            }
         });
 
         // Client requests a picture with a certain UUID
