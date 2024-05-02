@@ -91,7 +91,7 @@ public class Camerapture implements ModInitializer {
             }
 
             if (CameraItem.isActive(camera.getRight())) {
-                player.playSound(CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
+                player.getServerWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
             }
 
             CameraItem.setActive(camera.getRight(), false);
