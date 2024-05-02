@@ -170,4 +170,28 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     protected int getBlockLight(PictureFrameEntity entity, BlockPos pos) {
         return entity.isPictureGlowing() ? 15 : super.getBlockLight(entity, pos);
     }
+
+    @Override
+    protected boolean hasLabel(PictureFrameEntity entity) {
+        if (MinecraftClient.isHudEnabled()
+                && entity.getItemStack() != null
+                && entity.getItemStack().hasCustomName()
+                && MinecraftClient.getInstance().crosshairTarget instanceof EntityHitResult hitResult
+                && hitResult.getEntity() == entity) {
+            double d = this.dispatcher.getSquaredDistanceToCamera(entity);
+            return d < 64f * 64f;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    protected void renderLabelIfPresent(PictureFrameEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        matrices.push();
+        matrices.translate(0f, entity.getFrameHeight() - 1f, -((float) entity.getFrameWidth() - 1f) / 2f);
+
+        //noinspection DataFlowIssue
+        super.renderLabelIfPresent(entity, entity.getItemStack().getName(), matrices, vertexConsumers, light);
+        matrices.pop();
+    }
 }
