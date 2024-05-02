@@ -75,23 +75,25 @@ public class UploadScreen extends Screen {
     }
 
     private void browseFile() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer filter = stack.mallocPointer(1);
-            filter.put(stack.UTF8("*"));
-            filter.flip();
+        new Thread(() -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                PointerBuffer filter = stack.mallocPointer(1);
+                filter.put(stack.UTF8("*"));
+                filter.flip();
 
-            String path = TinyFileDialogs.tinyfd_openFileDialog("Open Image", "", filter, "Image File", false);
-            if (path == null) {
-                return;
-            }
-
-            try {
-                if (tryUpload(Path.of(path))) {
-                    this.close();
+                String path = TinyFileDialogs.tinyfd_openFileDialog("Open Image", "", filter, "Image File", false);
+                if (path == null) {
+                    return;
                 }
-            } catch (InvalidPathException ignored) {
+
+                try {
+                    if (tryUpload(Path.of(path))) {
+                        this.close();
+                    }
+                } catch (InvalidPathException ignored) {
+                }
             }
-        }
+        }).start();
     }
 
     private boolean tryUpload(Path path) {
