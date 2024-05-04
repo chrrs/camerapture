@@ -1,4 +1,4 @@
-This folder contains two Python script to help clear up some space in your world, by finding and deleting all pictures that have no alive references in the world anymore. It does this by checking all block entities, entities and players and searching their NBT for picture items, and extracting their UUID's.
+This folder contains two Python scripts to help clear up some space in your world, by finding and deleting all pictures that have no alive references in the world anymore. It does this by checking all block entities, entities and players and searching their NBT for picture items, and extracting their UUID's.
 
 0. Before starting, make sure to install all the requirements listed in `requirements.txt`.
 
