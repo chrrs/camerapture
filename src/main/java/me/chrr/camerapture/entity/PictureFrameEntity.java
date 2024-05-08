@@ -15,6 +15,7 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -23,6 +24,8 @@ import net.minecraft.world.event.GameEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PictureFrameEntity extends ResizableDecorationEntity {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -225,6 +228,17 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         } else {
             return itemStack.copy();
         }
+    }
+
+    @Override
+    public boolean hasCustomName() {
+        return getItemStack() != null && getItemStack().hasCustomName();
+    }
+
+    @Nullable
+    @Override
+    public Text getCustomName() {
+        return hasCustomName() ? Objects.requireNonNull(getItemStack()).getName() : null;
     }
 
     public enum ResizeDirection {

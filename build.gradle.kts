@@ -11,6 +11,7 @@ val mavenGroup: String by project
 val archivesBase: String by project
 
 val fabricVersion: String by project
+val jadeVersionId: String by project
 
 group = mavenGroup
 version = "$modVersion+mc$minecraftVersion"
@@ -20,6 +21,11 @@ base {
 }
 
 repositories {
+    maven("https://www.cursemaven.com") {
+        content {
+            includeGroup("curse.maven")
+        }
+    }
 }
 
 loom {
@@ -34,13 +40,14 @@ loom {
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
+    // To change the versions, see the gradle.properties file
+
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$yarnMappings:v2")
     modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    modCompileOnly("curse.maven:jade-324717:$jadeVersionId")
 
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }

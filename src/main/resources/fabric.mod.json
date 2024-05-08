@@ -19,7 +19,8 @@
     "environment": "*",
     "entrypoints": {
         "client": ["me.chrr.camerapture.CameraptureClient"],
-        "main": ["me.chrr.camerapture.Camerapture"]
+        "main": ["me.chrr.camerapture.Camerapture"],
+        "jade": ["me.chrr.camerapture.compat.JadePlugin"]
     },
     "depends": {
         "fabricloader": ">=${loader_version}",
