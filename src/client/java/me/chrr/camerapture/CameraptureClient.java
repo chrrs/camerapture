@@ -76,19 +76,22 @@ public class CameraptureClient implements ClientModInitializer {
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player != player) {
+                return TypedActionResult.pass(stack);
+            }
+
             if (stack.isOf(Camerapture.PICTURE)) {
                 UUID uuid = PictureItem.getUuid(stack);
                 if (uuid != null) {
-                    MinecraftClient.getInstance().submit(() ->
-                            MinecraftClient.getInstance().setScreen(new PictureScreen(uuid)));
+                    client.submit(() -> client.setScreen(new PictureScreen(uuid)));
                     return TypedActionResult.success(stack);
                 }
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
-                MinecraftClient.getInstance().submit(() ->
-                        MinecraftClient.getInstance().setScreen(new UploadScreen()));
+                client.submit(() -> client.setScreen(new UploadScreen()));
                 return TypedActionResult.success(stack);
             }
 
@@ -96,9 +99,9 @@ public class CameraptureClient implements ClientModInitializer {
         });
 
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (player.isSneaking() && entity instanceof PictureFrameEntity picture) {
-                MinecraftClient.getInstance().submit(() ->
-                        MinecraftClient.getInstance().setScreen(new EditPictureFrameScreen(picture)));
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == player && player.isSneaking() && entity instanceof PictureFrameEntity picture) {
+                client.submit(() -> client.setScreen(new EditPictureFrameScreen(picture)));
 
                 return ActionResult.SUCCESS;
             }
