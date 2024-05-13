@@ -1,0 +1,25 @@
+name: Bug Report
+description: Found an issue? Submit a report!
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: What's the issue?
+      description: What's the problem? Please be specific and describe what happened, what you expected to happen and what you were doing when it happened.
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Pictures say more than words! This is optional, but if applicable, please add some screenshots to make the issue more understandable.
+      placeholder: You can upload them using the image button in this text editor.
+  - type: input
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: Mod and Minecraft version
+      description: Don't know them? Please check either the filename of the mod, or look in your in-game mod menu.
+      placeholder: ex. Camerapture 1.1.4 on Minecraft 1.20.1
