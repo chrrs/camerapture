@@ -23,8 +23,8 @@
         "jade": ["me.chrr.camerapture.compat.JadePlugin"]
     },
     "depends": {
-        "fabricloader": ">=${loader_version}",
+        "fabricloader": ">=${loaderVersion}",
         "fabric": "*",
-        "minecraft": "${minecraft_version}"
+        "minecraft": "${minecraftDependency}"
     }
 }

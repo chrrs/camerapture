@@ -10,9 +10,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
@@ -57,10 +55,10 @@ public class Camerapture implements ModInitializer {
             new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
 
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
-            FabricEntityTypeBuilder.<PictureFrameEntity>create(SpawnGroup.MISC, PictureFrameEntity::new)
-                    .dimensions(new EntityDimensions(0.5f, 0.5f, false))
-                    .trackRangeChunks(10)
-                    .build();
+            EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
+                    .setDimensions(0.5f, 0.5f)
+                    .maxTrackingRange(10)
+                    .build("picture_frame");
 
     public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 

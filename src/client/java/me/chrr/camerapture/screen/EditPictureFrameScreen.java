@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -22,7 +21,7 @@ import java.util.function.Consumer;
 //        Forge camera mod. It's far from perfect, I don't know if I like
 //        it, but I can't think of anything better right now.
 //        => https://www.curseforge.com/minecraft/mc-mods/camera-mod
-public class EditPictureFrameScreen extends Screen {
+public class EditPictureFrameScreen extends InGameScreen {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_picture_frame.png");
 
     private static final int backgroundWidth = 158;
@@ -93,14 +92,10 @@ public class EditPictureFrameScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
-
+    public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
         context.drawTexture(TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0, 0, backgroundWidth, backgroundHeight);
         context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), width / 2, height / 2 - backgroundHeight / 2 + 7, 0xffffff);
         context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), width / 2, height / 2 - backgroundHeight / 2 + 7 + textRenderer.fontHeight + 2, 0xa0a0a0);
-
-        super.render(context, mouseX, mouseY, delta);
     }
 
     private void resizeRemotePicture(PictureFrameEntity.ResizeDirection direction, boolean shrink) {
@@ -197,7 +192,11 @@ public class EditPictureFrameScreen extends Screen {
         }
 
         @Override
+        /*? if >=1.20.4 { */
+        protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            /*? } else { *//*
         protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+            *//*? } */
             MinecraftClient minecraftClient = MinecraftClient.getInstance();
             TextRenderer textRenderer = minecraftClient.textRenderer;
 
