@@ -1,16 +1,18 @@
 plugins {
-    id("fabric-loom") version "1.5-SNAPSHOT"
+    id("fabric-loom") version "1.6-SNAPSHOT"
 }
 
-val minecraftVersion: String by project
-val yarnMappings: String by project
-val loaderVersion: String by project
+val minecraftVersion = stonecutter.current.version
+val minecraftDependency: String by project
 
 val modVersion: String by project
 val mavenGroup: String by project
 val archivesBase: String by project
 
+val yarnMappings: String by project
 val fabricVersion: String by project
+
+val fabricApiVersion: String by project
 val jadeVersionId: String by project
 
 group = mavenGroup
@@ -37,17 +39,22 @@ loom {
             sourceSet(sourceSets["client"])
         }
     }
+
+    runConfigs["client"].runDir = "../../run"
+    runConfigs["server"].runDir = "../../run/server"
+
+    if (stonecutter.current.isActive) {
+        runConfigs.all { ideConfigGenerated(true) }
+    }
 }
 
 dependencies {
-    // To change the versions, see the gradle.properties file
-
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$yarnMappings:v2")
-    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
+    modImplementation("net.fabricmc:fabric-loader:$fabricVersion")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
-    modCompileOnly("curse.maven:jade-324717:$jadeVersionId")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
+    modImplementation("curse.maven:jade-324717:$jadeVersionId")
 
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
@@ -56,10 +63,10 @@ tasks {
     processResources {
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
-            expand(mutableMapOf(
-                "version" to project.version,
-                "loader_version" to loaderVersion,
-                "minecraft_version" to minecraftVersion,
+            expand(mapOf(
+                "version" to modVersion,
+                "loaderVersion" to fabricVersion,
+                "minecraftDependency" to minecraftDependency
             ))
         }
     }

@@ -3,12 +3,11 @@ package me.chrr.camerapture.screen;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
 import java.util.UUID;
 
-public class PictureScreen extends Screen {
+public class PictureScreen extends InGameScreen {
     public static final int BORDER_WIDTH = 30;
 
     private final UUID uuid;
@@ -21,9 +20,7 @@ public class PictureScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
-
+    public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
         ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
         if (picture == null) {
@@ -59,7 +56,5 @@ public class PictureScreen extends Screen {
                 context.drawTexture(picture.getIdentifier(), x, y, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
             }
         }
-
-        super.render(context, mouseX, mouseY, delta);
     }
 }

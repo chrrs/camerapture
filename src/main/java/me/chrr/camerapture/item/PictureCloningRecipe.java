@@ -9,14 +9,19 @@ import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
 import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 public class PictureCloningRecipe extends SpecialCraftingRecipe {
-    public PictureCloningRecipe(Identifier id, CraftingRecipeCategory category) {
+    /*? if >=1.20.4 { */
+    public PictureCloningRecipe(CraftingRecipeCategory category) {
+        super(category);
+    }
+    /*? } else { *//*
+    public PictureCloningRecipe(net.minecraft.util.Identifier id, CraftingRecipeCategory category) {
         super(id, category);
     }
+    *//*? } */
 
     @Override
     public boolean matches(RecipeInputInventory inventory, World world) {
