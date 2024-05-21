@@ -6,6 +6,7 @@ plugins {
 }
 
 val minecraftVersion = stonecutter.current.version
+val compatibleVersions: String by project
 val minecraftDependency: String by project
 
 val modVersion: String by project
@@ -102,7 +103,7 @@ modrinth {
     versionType.set(if (modVersion.contains("beta")) "beta" else "release")
     changelog.set(getenv("CHANGELOG") ?: "No changelog provided.")
 
-    gameVersions.add(minecraftVersion)
+    gameVersions.addAll(compatibleVersions.split(','))
     loaders.addAll("fabric", "quilt")
 
     uploadFile.set(tasks.remapJar.get())
