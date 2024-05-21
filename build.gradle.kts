@@ -1,5 +1,8 @@
+import java.lang.System.getenv
+
 plugins {
     id("fabric-loom") version "1.6-SNAPSHOT"
+    id("com.modrinth.minotaur") version "2.+"
 }
 
 val minecraftVersion = stonecutter.current.version
@@ -79,4 +82,25 @@ tasks {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+if (stonecutter.current.isActive) {
+    modrinth {
+        token = getenv("MODRINTH_TOKEN")
+        projectId = "9dzLWnmZ"
+
+        versionName = "$modVersion - Fabric $minecraftVersion"
+        versionNumber = modVersion
+        versionType = if (modVersion.contains("beta")) "beta" else "release"
+        changelog = getenv("CHANGELOG") ?: "No changelog provided."
+
+        gameVersions.add(minecraftVersion)
+        loaders.addAll("fabric", "quilt")
+
+        uploadFile.set(tasks.remapJar)
+
+        dependencies {
+            required.project("fabric-api")
+        }
+    }
 }
