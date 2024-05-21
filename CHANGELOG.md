@@ -1,3 +1,10 @@
+## 1.1.5
+Add support for 1.20.4.
+
+Fix Jade plugin translation keys.
+
+[full changelog...](https://github.com/chrrs/camerapture/compare/v1.1.4...v1.1.5)
+
 ## 1.1.4
 Fix a bug that opened various GUI's from other players for the host when locally hosting a multiplayer world.
 
