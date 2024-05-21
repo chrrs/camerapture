@@ -5,11 +5,11 @@ plugins {
 stonecutter active "1.20.4" /* [SC] DO NOT EDIT */
 
 stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {
-    group = "build"
+    group = "project"
     ofTask("build")
 }
 
 stonecutter registerChiseled tasks.register("chiseledPublish", stonecutter.chiseled) {
-    group = "publishing"
+    group = "project"
     ofTask("modrinth")
 }

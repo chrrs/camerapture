@@ -46,8 +46,15 @@ loom {
     runConfigs["client"].runDir = "../../run"
     runConfigs["server"].runDir = "../../run/server"
 
+    runConfigs.all {
+        ideConfigGenerated(false)
+    }
+
     if (stonecutter.current.isActive) {
-        runConfigs.all { ideConfigGenerated(true) }
+        rootProject.tasks.register("runActiveClient") {
+            group = "project"
+            dependsOn(tasks.named("runClient"))
+        }
     }
 }
 
@@ -77,6 +84,8 @@ tasks {
     jar {
         from("LICENSE")
     }
+
+    modrinth.get().dependsOn(build)
 }
 
 java {
@@ -84,23 +93,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-if (stonecutter.current.isActive) {
-    modrinth {
-        token = getenv("MODRINTH_TOKEN")
-        projectId = "9dzLWnmZ"
+modrinth {
+    token.set(getenv("MODRINTH_TOKEN"))
+    projectId.set("9dzLWnmZ")
 
-        versionName = "$modVersion - Fabric $minecraftVersion"
-        versionNumber = "$version"
-        versionType = if (modVersion.contains("beta")) "beta" else "release"
-        changelog = getenv("CHANGELOG") ?: "No changelog provided."
+    versionName.set("$modVersion - Fabric $minecraftVersion")
+    versionNumber.set("$version")
+    versionType.set(if (modVersion.contains("beta")) "beta" else "release")
+    changelog.set(getenv("CHANGELOG") ?: "No changelog provided.")
 
-        gameVersions.add(minecraftVersion)
-        loaders.addAll("fabric", "quilt")
+    gameVersions.add(minecraftVersion)
+    loaders.addAll("fabric", "quilt")
 
-        uploadFile.set(tasks.remapJar)
+    uploadFile.set(tasks.remapJar.get())
 
-        dependencies {
-            required.project("fabric-api")
-        }
+    dependencies {
+        required.project("fabric-api")
     }
 }
