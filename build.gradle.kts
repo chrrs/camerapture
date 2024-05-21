@@ -16,7 +16,7 @@ val yarnMappings: String by project
 val fabricVersion: String by project
 
 val fabricApiVersion: String by project
-val jadeVersionId: String by project
+val jadeVersion: String by project
 
 group = mavenGroup
 version = "$modVersion+mc$minecraftVersion"
@@ -26,9 +26,9 @@ base {
 }
 
 repositories {
-    maven("https://www.cursemaven.com") {
+    maven("https://api.modrinth.com/maven") {
         content {
-            includeGroup("curse.maven")
+            includeGroup("maven.modrinth")
         }
     }
 }
@@ -57,7 +57,7 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:$fabricVersion")
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
-    modImplementation("curse.maven:jade-324717:$jadeVersionId")
+    modImplementation("maven.modrinth:jade:$jadeVersion")
 
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
@@ -90,7 +90,7 @@ if (stonecutter.current.isActive) {
         projectId = "9dzLWnmZ"
 
         versionName = "$modVersion - Fabric $minecraftVersion"
-        versionNumber = modVersion
+        versionNumber = "$version"
         versionType = if (modVersion.contains("beta")) "beta" else "release"
         changelog = getenv("CHANGELOG") ?: "No changelog provided."
 
