@@ -1,7 +1,7 @@
 {
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
-    "entity.camerapture.picture_frame": "Picture",
+    "entity.camerapture.picture_frame": "Picture Frame",
     "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",
     "item.camerapture.picture.timestamp_tooltip": "on %s",
@@ -20,5 +20,6 @@
     "text.camerapture.upload_picture.browse": "or browse your filesystem...",
     "advancements.camerapture.shutterbug.title": "Shutterbug",
     "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you",
-    "sound.camerapture.camera_shutter": "Camera shutters"
+    "sound.camerapture.camera_shutter": "Camera shutters",
+    "config.jade.plugin_camerapture.picture_frame": "Picture Frame"
 }
