@@ -21,10 +21,10 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
             CHANGELOG="$(awk -vver=$VERSION '/^## / { if (p) { exit }; if ($2 == ver) { p=1; next } } p' CHANGELOG.md)"
             
-            echo VERSION="$VERSION"
-            echo CHANGELOG<<EOF
-            echo $CHANGELOG
-            echo EOF
+            echo "VERSION=$VERSION"
+            echo "CHANGELOG<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
           } >> $GITHUB_ENV
 
       - name: Publish with Gradle
