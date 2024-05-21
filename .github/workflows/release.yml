@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Set environment variables
+        run: |
+          {
+            VERSION="${GITHUB_REF_NAME#v}"
+            CHANGELOG="$(awk -vver=$VERSION '/^## / { if (p) { exit }; if ($2 == ver) { p=1; next } } p' CHANGELOG.md)"
+            
+            echo VERSION="$VERSION"
+            echo CHANGELOG<<EOF
+            echo $CHANGELOG
+            echo EOF
+          } >> $GITHUB_ENV
+
+      - name: Publish with Gradle
+        run: ./gradlew chiseledPublish
+        env:
+          CHANGELOG: ${{ env.CHANGELOG }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ env.CHANGELOG }}
+          files: versions/*/build/libs/*.jar
