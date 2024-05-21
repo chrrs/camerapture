@@ -28,7 +28,9 @@ jobs:
           } >> $GITHUB_ENV
 
       - name: Publish with Gradle
-        run: ./gradlew chiseledPublish
+        uses: srz-zumix/retry-run-action@v0
+        with:
+          run: ./gradlew chiseledPublish
         env:
           CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
