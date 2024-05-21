@@ -31,7 +31,7 @@ public class JadePlugin implements IWailaPlugin {
 
         @Override
         public Identifier getUid() {
-            return Camerapture.id("jade_compat/picture_frame");
+            return Camerapture.id("picture_frame");
         }
     }
 }

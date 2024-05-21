@@ -20,5 +20,6 @@
     "text.camerapture.upload_picture.browse": "o busca en tu sistema de archivos...",
     "advancements.camerapture.shutterbug.title": "Aficionado a la Fotografía",
     "advancements.camerapture.shutterbug.description": "Obtén una Cámara y comienza a documentar el mundo que te rodea",
-    "sound.camerapture.camera_shutter": "Sonido de obturador de la cámara"
+    "sound.camerapture.camera_shutter": "Sonido de obturador de la cámara",
+    "config.jade.plugin_camerapture.picture_frame": "Marco de Imagen"
 }
