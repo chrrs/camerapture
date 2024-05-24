@@ -3,13 +3,13 @@ import dev.kikugie.stonecutter.gradle.StonecutterSettings
 pluginManagement {
     repositories {
         maven("https://maven.fabricmc.net/")
-        maven("https://maven.kikugie.dev/releases")
+        maven("https://maven.kikugie.dev/snapshots")
         gradlePluginPortal()
     }
 }
 
 plugins {
-    id("dev.kikugie.stonecutter") version "0.3.+"
+    id("dev.kikugie.stonecutter") version "0.4.0-alpha.4"
 }
 
 extensions.configure<StonecutterSettings> {

@@ -47,15 +47,8 @@ loom {
     runConfigs["client"].runDir = "../../run"
     runConfigs["server"].runDir = "../../run/server"
 
-    runConfigs.all {
-        ideConfigGenerated(false)
-    }
-
     if (stonecutter.current.isActive) {
-        rootProject.tasks.register("runActiveClient") {
-            group = "project"
-            dependsOn(tasks.named("runClient"))
-        }
+        runConfigs.all { ideConfigGenerated(true) }
     }
 }
 
