@@ -1,5 +1,6 @@
 package me.chrr.camerapture;
 
+import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureCloningRecipe;
@@ -64,6 +65,10 @@ public class Camerapture implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        if (!WebP.loadNativeLibrary()) {
+            LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
+        }
+
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
