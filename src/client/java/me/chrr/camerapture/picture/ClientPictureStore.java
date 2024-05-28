@@ -12,9 +12,7 @@ import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.DynamicTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.WorldSavePath;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -144,8 +141,8 @@ public class ClientPictureStore {
 
     private static boolean shouldCacheToDisk() {
         // We enable single-player picture caching when Replay Mod is installed.
-        return !MinecraftClient.getInstance().isConnectedToLocalServer()
-                || CameraptureClient.shouldCacheLocalWorlds;
+        return Camerapture.getConfigManager().getConfig().client.cachePictures
+                && (!MinecraftClient.getInstance().isConnectedToLocalServer() || CameraptureClient.shouldCacheLocalWorlds);
     }
 
     private Path getCacheFilePath(UUID uuid) {

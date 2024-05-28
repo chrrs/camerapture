@@ -6,27 +6,18 @@ plugins {
 }
 
 val minecraftVersion = stonecutter.current.version
-val compatibleVersions: String by project
-val minecraftDependency: String by project
 
-val modVersion: String by project
-val mavenGroup: String by project
-val archivesBase: String by project
-
-val yarnMappings: String by project
-val fabricVersion: String by project
-
-val fabricApiVersion: String by project
-val jadeVersion: String by project
-
-group = mavenGroup
-version = "$modVersion+mc$minecraftVersion"
+group = property("mod.mavenGroup") as String
+version = "${property("mod.version")}+mc$minecraftVersion"
 
 base {
-    archivesName.set(archivesBase)
+    archivesName.set(property("mod.archivesName") as String)
 }
 
 repositories {
+    maven("https://maven.shedaniel.me/")
+    maven("https://maven.terraformersmc.com/releases/")
+
     maven("https://api.modrinth.com/maven") {
         content {
             includeGroup("maven.modrinth")
@@ -54,24 +45,36 @@ loom {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$yarnMappings:v2")
-    modImplementation("net.fabricmc:fabric-loader:$fabricVersion")
+    mappings("net.fabricmc:yarn:${property("fabric.yarn")}:v2")
+    modImplementation("net.fabricmc:fabric-loader:${property("fabric.loader")}")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
-    modImplementation("maven.modrinth:jade:$jadeVersion")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabricApi")}")
+    modImplementation("maven.modrinth:jade:${property("deps.jade")}")
+
+    modImplementation("com.terraformersmc:modmenu:${property("deps.modMenu")}")
+    modApi("me.shedaniel.cloth:cloth-config-fabric:${property("deps.clothConfig")}") {
+        exclude("net.fabricmc.fabric-api")
+    }
 
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
 
+val modVersion = property("mod.version")
+val loaderVersion = property("fabric.loader")
+val minecraftDependency = property("deps.minecraft")
+
 tasks {
     processResources {
+
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
-            expand(mapOf(
-                "version" to modVersion,
-                "loaderVersion" to fabricVersion,
-                "minecraftDependency" to minecraftDependency
-            ))
+            expand(
+                mapOf(
+                    "version" to modVersion,
+                    "loaderVersion" to loaderVersion,
+                    "minecraftDependency" to minecraftDependency,
+                )
+            )
         }
     }
 
@@ -89,14 +92,16 @@ java {
 
 modrinth {
     token.set(getenv("MODRINTH_TOKEN"))
-    projectId.set("9dzLWnmZ")
+    projectId.set(property("modrinth.id") as String)
 
+    val modVersion = property("mod.version") as String
     versionName.set("$modVersion - Fabric $minecraftVersion")
-    versionNumber.set("$version")
     versionType.set(if (modVersion.contains("beta")) "beta" else "release")
+
+    versionNumber.set("$version")
     changelog.set(getenv("CHANGELOG") ?: "No changelog provided.")
 
-    gameVersions.addAll(compatibleVersions.split(','))
+    gameVersions.addAll((property("modrinth.compatibleVersions") as String).split(','))
     loaders.addAll("fabric", "quilt")
 
     uploadFile.set(tasks.remapJar.get())

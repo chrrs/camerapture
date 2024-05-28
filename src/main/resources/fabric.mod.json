@@ -20,11 +20,15 @@
     "entrypoints": {
         "client": ["me.chrr.camerapture.CameraptureClient"],
         "main": ["me.chrr.camerapture.Camerapture"],
-        "jade": ["me.chrr.camerapture.compat.JadePlugin"]
+        "jade": ["me.chrr.camerapture.compat.JadePlugin"],
+        "modmenu": ["me.chrr.camerapture.compat.ModMenuCompat"]
     },
     "depends": {
         "fabricloader": ">=${loaderVersion}",
         "fabric": "*",
         "minecraft": "${minecraftDependency}"
+    },
+    "recommends": {
+        "clothconfig2": "*"
     }
 }

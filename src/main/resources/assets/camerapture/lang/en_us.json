@@ -21,5 +21,9 @@
     "advancements.camerapture.shutterbug.title": "Shutterbug",
     "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you",
     "sound.camerapture.camera_shutter": "Camera shutters",
-    "config.jade.plugin_camerapture.picture_frame": "Picture Frame"
+    "config.jade.plugin_camerapture.picture_frame": "Picture Frame",
+    "config.camerapture.title": "Camerapture Options",
+    "config.camerapture.category.client": "Client",
+    "config.camerapture.category.server": "Server",
+    "config.camerapture.option.cache_pictures": "Cache pictures locally on disk"
 }

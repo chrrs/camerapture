@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
+import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureCloningRecipe;
@@ -36,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +48,7 @@ public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
@@ -67,6 +70,12 @@ public class Camerapture implements ModInitializer {
     public void onInitialize() {
         if (!WebP.loadNativeLibrary()) {
             LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
+        }
+
+        try {
+            CONFIG_MANAGER.load();
+        } catch (IOException e) {
+            LOGGER.error("failed to load config", e);
         }
 
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
@@ -208,6 +217,10 @@ public class Camerapture implements ModInitializer {
 
     public static boolean isCameraActive(PlayerEntity player) {
         return findCamera(player, true) != null;
+    }
+
+    public static ConfigManager getConfigManager() {
+        return CONFIG_MANAGER;
     }
 
     public static Identifier id(String path) {
