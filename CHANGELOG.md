@@ -1,3 +1,14 @@
+## 1.2.0
+Cache all images client-side when on a multiplayer world.
+
+Add some config options, along with a config screen to edit those options.
+
+Fix compatibility with Replay Mod.
+
+Various other smaller bug fixes.
+
+[full changelog...](https://github.com/chrrs/camerapture/compare/v1.1.5...v1.2.0)
+
 ## 1.1.5
 Add support for 1.20.4.
 
