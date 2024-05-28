@@ -12,7 +12,7 @@ public abstract class InGameScreen extends Screen {
         super(title);
     }
 
-    /*? if >=1.20.4 { */
+    /*? if >=1.20.4 {*/
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderInGameBackground(context);
@@ -23,14 +23,14 @@ public abstract class InGameScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
     }
-    /*? } else { *//*
+    /*?} else {*//*
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context);
         this.renderScreen(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
     }
-    *//*? } */
+    *//*?}*/
 
     public abstract void renderScreen(DrawContext context, int mouseX, int mouseY, float delta);
 }
