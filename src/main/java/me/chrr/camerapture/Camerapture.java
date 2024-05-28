@@ -47,8 +47,8 @@ import java.util.UUID;
 public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
 
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final ConfigManager CONFIG_MANAGER = new ConfigManager();
+    public static final Logger LOGGER = LogManager.getLogger();
+    public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
@@ -222,10 +222,6 @@ public class Camerapture implements ModInitializer {
 
     public static boolean isCameraActive(PlayerEntity player) {
         return findCamera(player, true) != null;
-    }
-
-    public static ConfigManager getConfigManager() {
-        return CONFIG_MANAGER;
     }
 
     public static Identifier id(String path) {

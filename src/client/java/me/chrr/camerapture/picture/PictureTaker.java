@@ -14,8 +14,6 @@ import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -24,7 +22,6 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 public class PictureTaker {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final PictureTaker INSTANCE = new PictureTaker();
 
     private boolean hudHidden = false;
@@ -54,7 +51,7 @@ public class PictureTaker {
             uploadPicture(image);
             return true;
         } catch (IOException e) {
-            LOGGER.error("failed to read picture from file", e);
+            Camerapture.LOGGER.error("failed to read picture from file", e);
             return false;
         }
     }
@@ -109,7 +106,7 @@ public class PictureTaker {
                 bytes = ImageUtil.compressIntoWebP(picture, factor);
             }
 
-            LOGGER.debug("sending picture (" + bytes.length + " bytes, " + (int) (factor * 100f) + "%)");
+            Camerapture.LOGGER.debug("sending picture ({} bytes, {}%)", bytes.length, (int) (factor * 100f));
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
                     ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
@@ -117,19 +114,19 @@ public class PictureTaker {
             ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
             this.picture = null;
         } catch (IOException e) {
-            LOGGER.error("failed to send picture to server", e);
+            Camerapture.LOGGER.error("failed to send picture to server", e);
             this.picture = null;
         }
     }
 
     public void resetConfig() {
-        Config config = Camerapture.getConfigManager().getConfig();
+        Config config = Camerapture.CONFIG_MANAGER.getConfig();
         this.maxImageBytes = config.server.maxImageBytes;
         this.maxImageResolution = config.server.maxImageResolution;
     }
 
     public void setConfig(int maxImageBytes, int maxImageResolution) {
-        LOGGER.info("setting max image size to " + maxImageBytes + " bytes, max resolution to " + maxImageResolution);
+        Camerapture.LOGGER.info("setting max image size to {} bytes, max resolution to {}", maxImageBytes, maxImageResolution);
         this.maxImageBytes = maxImageBytes;
         this.maxImageResolution = maxImageResolution;
     }

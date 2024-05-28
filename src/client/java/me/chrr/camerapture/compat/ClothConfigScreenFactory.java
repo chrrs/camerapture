@@ -9,14 +9,10 @@ import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
 public class ClothConfigScreenFactory {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private ClothConfigScreenFactory() {
     }
 
@@ -27,9 +23,9 @@ public class ClothConfigScreenFactory {
 
         builder.setSavingRunnable(() -> {
             try {
-                Camerapture.getConfigManager().save();
+                Camerapture.CONFIG_MANAGER.save();
             } catch (IOException e) {
-                LOGGER.error("could not save config", e);
+                Camerapture.LOGGER.error("could not save config", e);
             }
         });
 
@@ -43,7 +39,7 @@ public class ClothConfigScreenFactory {
     }
 
     private static SubCategoryListEntry buildClientCategory(ConfigEntryBuilder builder) {
-        Config config = Camerapture.getConfigManager().getConfig();
+        Config config = Camerapture.CONFIG_MANAGER.getConfig();
 
         SubCategoryBuilder client = builder
                 .startSubCategory(Text.translatable("config.camerapture.category.client"))
@@ -61,7 +57,7 @@ public class ClothConfigScreenFactory {
     }
 
     private static SubCategoryListEntry buildServerCategory(ConfigEntryBuilder builder) {
-        Config config = Camerapture.getConfigManager().getConfig();
+        Config config = Camerapture.CONFIG_MANAGER.getConfig();
 
         SubCategoryBuilder server = builder
                 .startSubCategory(Text.translatable("config.camerapture.category.server"))

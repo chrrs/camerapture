@@ -1,5 +1,6 @@
 package me.chrr.camerapture.entity;
 
+import me.chrr.camerapture.Camerapture;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
@@ -16,12 +17,9 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ResizableDecorationEntity extends Entity {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final double THICKNESS = 1.0 / 16.0;
 
     private static final TrackedData<Integer> FRAME_WIDTH = DataTracker.registerData(ResizableDecorationEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -219,7 +217,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public void readCustomDataFromNbt(NbtCompound nbt) {
         BlockPos blockPos = new BlockPos(nbt.getInt("TileX"), nbt.getInt("TileY"), nbt.getInt("TileZ"));
         if (!blockPos.isWithinDistance(this.getBlockPos(), 16.0)) {
-            LOGGER.error("hanging entity at invalid position: {}", blockPos);
+            Camerapture.LOGGER.error("hanging entity at invalid position: {}", blockPos);
         } else {
             this.attachmentPos = blockPos;
         }

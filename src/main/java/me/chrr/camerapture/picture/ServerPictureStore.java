@@ -47,7 +47,7 @@ public class ServerPictureStore {
             throw new IOException("UUID not reserved");
         }
 
-        int maxImageBytes = Camerapture.getConfigManager().getConfig().server.maxImageBytes;
+        int maxImageBytes = Camerapture.CONFIG_MANAGER.getConfig().server.maxImageBytes;
         if (picture.bytes().length > maxImageBytes) {
             throw new IOException("image larger than " + maxImageBytes + " bytes");
         }

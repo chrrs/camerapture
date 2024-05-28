@@ -21,15 +21,11 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class PictureFrameEntity extends ResizableDecorationEntity {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -210,7 +206,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         if (nbtCompound != null && !nbtCompound.isEmpty()) {
             ItemStack itemStack = ItemStack.fromNbt(nbtCompound);
             if (itemStack.isEmpty()) {
-                LOGGER.warn("unable to load item from: {}", nbtCompound);
+                Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
             }
 
             this.setItemStack(itemStack);

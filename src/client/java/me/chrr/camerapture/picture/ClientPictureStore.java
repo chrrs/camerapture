@@ -13,8 +13,6 @@ import net.minecraft.client.texture.DynamicTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -29,7 +27,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ClientPictureStore {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
     private final Map<UUID, Picture> uuidPictures = new HashMap<>();
@@ -48,7 +45,7 @@ public class ClientPictureStore {
         }
 
         picture.setStatus(Status.ERROR);
-        LOGGER.error("remote error for image " + uuid);
+        Camerapture.LOGGER.error("remote error for image {}", uuid);
     }
 
     private void fetchPicture(UUID uuid) {
@@ -60,7 +57,7 @@ public class ClientPictureStore {
                     processImage(uuid, image);
                     return;
                 } catch (IOException e) {
-                    LOGGER.error("could not read cached picture " + uuid, e);
+                    Camerapture.LOGGER.error("could not read cached picture {}", uuid, e);
                 }
             }
 
@@ -78,7 +75,7 @@ public class ClientPictureStore {
             Files.createDirectories(path.getParent());
             Files.write(path, bytes);
         } catch (IOException e) {
-            LOGGER.error("could not cache picture " + uuid, e);
+            Camerapture.LOGGER.error("could not cache picture {}", uuid, e);
         }
     }
 
@@ -103,7 +100,7 @@ public class ClientPictureStore {
             processImage(uuid, ImageIO.read(new ByteArrayInputStream(bytes)));
             cacheToDisk(uuid, bytes);
         } catch (Exception e) {
-            LOGGER.error("failed to decode received image bytes for image " + uuid, e);
+            Camerapture.LOGGER.error("failed to decode received image bytes for image {}", uuid, e);
             Picture picture = uuidPictures.computeIfAbsent(uuid, Picture::new);
             picture.setStatus(Status.ERROR);
         }
@@ -141,7 +138,7 @@ public class ClientPictureStore {
 
     private static boolean shouldCacheToDisk() {
         // We enable single-player picture caching when Replay Mod is installed.
-        return Camerapture.getConfigManager().getConfig().client.cachePictures
+        return Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
                 && (!MinecraftClient.getInstance().isConnectedToLocalServer() || CameraptureClient.shouldCacheLocalWorlds);
     }
 

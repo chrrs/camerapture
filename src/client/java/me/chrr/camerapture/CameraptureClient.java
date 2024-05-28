@@ -26,16 +26,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class CameraptureClient implements ClientModInitializer {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static boolean shouldCacheLocalWorlds = false;
 
     @Override
@@ -67,7 +63,7 @@ public class CameraptureClient implements ClientModInitializer {
             }));
 
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                LOGGER.error("received malformed byte section from server");
+                Camerapture.LOGGER.error("received malformed byte section from server");
                 ClientPictureStore.getInstance().processReceivedError(packet.uuid());
             }
         });
@@ -123,7 +119,7 @@ public class CameraptureClient implements ClientModInitializer {
         });
 
         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
-            LOGGER.info("Replay Mod is detected, Camerapture will cache pictures from single-player worlds");
+            Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures from single-player worlds");
             shouldCacheLocalWorlds = true;
         }
     }
