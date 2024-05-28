@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class CameraptureClient implements ClientModInitializer {
-    public static boolean shouldCacheLocalWorlds = false;
+    public static boolean replayModInstalled = false;
 
     @Override
     public void onInitializeClient() {
@@ -119,8 +119,8 @@ public class CameraptureClient implements ClientModInitializer {
         });
 
         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
-            Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures from single-player worlds");
-            shouldCacheLocalWorlds = true;
+            Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config");
+            replayModInstalled = true;
         }
     }
 
