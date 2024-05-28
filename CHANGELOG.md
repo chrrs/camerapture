@@ -1,3 +1,6 @@
+## 1.2.1
+Disable local image caching by default.
+
 ## 1.2.0
 Cache all images client-side when on a multiplayer world.
 
