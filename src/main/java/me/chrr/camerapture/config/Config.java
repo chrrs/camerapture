@@ -11,7 +11,7 @@ public class Config {
         public int version = VERSION;
 
         @SerializedName("cache_pictures")
-        public boolean cachePictures = true;
+        public boolean cachePictures = false;
 
         public void upgrade() {
             this.version = VERSION;

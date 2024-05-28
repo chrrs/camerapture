@@ -137,9 +137,14 @@ public class ClientPictureStore {
     }
 
     private static boolean shouldCacheToDisk() {
-        // We enable single-player picture caching when Replay Mod is installed.
-        return Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
-                && (!MinecraftClient.getInstance().isConnectedToLocalServer() || CameraptureClient.shouldCacheLocalWorlds);
+        boolean isLocalServer = MinecraftClient.getInstance().isConnectedToLocalServer();
+
+        if (isLocalServer) {
+            // We enable single-player picture caching when Replay Mod is installed.
+            return CameraptureClient.shouldCacheLocalWorlds;
+        } else {
+            return Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures;
+        }
     }
 
     private Path getCacheFilePath(UUID uuid) {

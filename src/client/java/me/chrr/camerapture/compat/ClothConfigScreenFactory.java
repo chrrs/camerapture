@@ -49,7 +49,7 @@ public class ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.cache_pictures"),
                         config.client.cachePictures
                 )
-                .setDefaultValue(true)
+                .setDefaultValue(false)
                 .setSaveConsumer((value) -> config.client.cachePictures = value)
                 .build());
 
