@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -33,6 +34,8 @@ import java.util.UUID;
 
 public class CameraptureClient implements ClientModInitializer {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    public static boolean shouldCacheLocalWorlds = false;
 
     @Override
     public void onInitializeClient() {
@@ -108,6 +111,11 @@ public class CameraptureClient implements ClientModInitializer {
 
             return ActionResult.PASS;
         });
+
+        if (FabricLoader.getInstance().isModLoaded("replaymod")) {
+            LOGGER.info("Replay Mod is detected, Camerapture will cache pictures from single-player worlds");
+            shouldCacheLocalWorlds = true;
+        }
     }
 
     public static int paperInInventory() {

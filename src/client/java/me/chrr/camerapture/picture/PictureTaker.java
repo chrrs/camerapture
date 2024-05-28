@@ -109,7 +109,8 @@ public class PictureTaker {
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
                     ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
-            ClientPictureStore.getInstance().cacheImage(uuid, this.picture);
+            ClientPictureStore.getInstance().processImage(uuid, this.picture);
+            ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
             this.picture = null;
         } catch (IOException e) {
             LOGGER.error("failed to send picture to server", e);
