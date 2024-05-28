@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,9 +48,5 @@ public class ConfigManager {
         return FabricLoader.getInstance()
                 .getConfigDir()
                 .resolve("camerapture." + environment + ".json");
-    }
-
-    public File getFile() {
-        return getPath("client").toFile();
     }
 }
