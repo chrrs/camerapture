@@ -2,6 +2,7 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.ByteCollector;
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.NewPicturePacket;
 import me.chrr.camerapture.net.PartialPicturePacket;
@@ -30,6 +31,9 @@ public class PictureTaker {
     private boolean takePicture = false;
 
     private BufferedImage picture;
+
+    private int maxImageBytes;
+    private int maxImageResolution;
 
     private PictureTaker() {
     }
@@ -91,12 +95,12 @@ public class PictureTaker {
         }
 
         try {
-            BufferedImage picture = ImageUtil.clampSize(this.picture, Camerapture.MAX_IMAGE_SIZE);
+            BufferedImage picture = ImageUtil.clampSize(this.picture, maxImageResolution);
 
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
-            while (bytes.length > Camerapture.MAX_IMAGE_BYTES) {
+            while (bytes.length > maxImageBytes) {
                 if (factor < 0.1f) {
                     throw new IOException("image too big, even at 10% compression (" + bytes.length + " bytes)");
                 }
@@ -116,6 +120,18 @@ public class PictureTaker {
             LOGGER.error("failed to send picture to server", e);
             this.picture = null;
         }
+    }
+
+    public void resetConfig() {
+        Config config = Camerapture.getConfigManager().getConfig();
+        this.maxImageBytes = config.server.maxImageBytes;
+        this.maxImageResolution = config.server.maxImageResolution;
+    }
+
+    public void setConfig(int maxImageBytes, int maxImageResolution) {
+        LOGGER.info("setting max image size to " + maxImageBytes + " bytes, max resolution to " + maxImageResolution);
+        this.maxImageBytes = maxImageBytes;
+        this.maxImageResolution = maxImageResolution;
     }
 
     public static PictureTaker getInstance() {

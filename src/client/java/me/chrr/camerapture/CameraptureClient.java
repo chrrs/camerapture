@@ -3,6 +3,7 @@ package me.chrr.camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.net.ConfigPacket;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.net.PictureErrorPacket;
 import me.chrr.camerapture.net.RequestPicturePacket;
@@ -39,6 +40,9 @@ public class CameraptureClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ClientPictureStore.getInstance().clearCache();
+        PictureTaker.getInstance().resetConfig();
+
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
@@ -74,8 +78,14 @@ public class CameraptureClient implements ClientModInitializer {
             collectors.remove(packet.uuid());
         });
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-                ClientPictureStore.getInstance().clearCache());
+        // Server sends over the server-side config
+        ClientPlayNetworking.registerGlobalReceiver(ConfigPacket.TYPE, (packet, player, sender) ->
+                PictureTaker.getInstance().setConfig(packet.maxImageBytes(), packet.maxImageResolution()));
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientPictureStore.getInstance().clearCache();
+            PictureTaker.getInstance().resetConfig();
+        });
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);

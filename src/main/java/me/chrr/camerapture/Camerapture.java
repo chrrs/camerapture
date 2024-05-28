@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
+import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.CameraItem;
@@ -11,6 +12,7 @@ import me.chrr.camerapture.picture.ServerPictureStore;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -43,8 +45,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Camerapture implements ModInitializer {
-    public static final int MAX_IMAGE_BYTES = 200_000;
-    public static final int MAX_IMAGE_SIZE = 1280;
     public static final int SECTION_SIZE = 30_000;
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -124,7 +124,7 @@ public class Camerapture implements ModInitializer {
                 return;
             }
 
-            if (packet.bytesLeft() > Camerapture.MAX_IMAGE_BYTES) {
+            if (packet.bytesLeft() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
                 LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
@@ -150,7 +150,7 @@ public class Camerapture implements ModInitializer {
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
 
-            if (collector.getCurrentLength() > Camerapture.MAX_IMAGE_BYTES) {
+            if (collector.getCurrentLength() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
                 LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
@@ -196,6 +196,11 @@ public class Camerapture implements ModInitializer {
             } else {
                 LOGGER.warn(player.getName().getString() + " failed to edit picture frame " + packet.uuid());
             }
+        });
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            Config config = CONFIG_MANAGER.getConfig();
+            sender.sendPacket(new ConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
         });
     }
 

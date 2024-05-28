@@ -53,6 +53,7 @@ public class ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.cache_pictures"),
                         config.client.cachePictures
                 )
+                .setDefaultValue(true)
                 .setSaveConsumer((value) -> config.client.cachePictures = value)
                 .build());
 
@@ -60,9 +61,29 @@ public class ClothConfigScreenFactory {
     }
 
     private static SubCategoryListEntry buildServerCategory(ConfigEntryBuilder builder) {
+        Config config = Camerapture.getConfigManager().getConfig();
+
         SubCategoryBuilder server = builder
                 .startSubCategory(Text.translatable("config.camerapture.category.server"))
                 .setExpanded(true);
+
+        server.add(builder.startIntField(
+                        Text.translatable("config.camerapture.option.max_image_bytes"),
+                        config.server.maxImageBytes
+                )
+                .setDefaultValue(200_000)
+                .setTooltip(Text.translatable("config.camerapture.set_by_server"))
+                .setSaveConsumer((value) -> config.server.maxImageBytes = value)
+                .build());
+
+        server.add(builder.startIntField(
+                        Text.translatable("config.camerapture.option.max_image_resolution"),
+                        config.server.maxImageResolution
+                )
+                .setDefaultValue(1280)
+                .setTooltip(Text.translatable("config.camerapture.set_by_server"))
+                .setSaveConsumer((value) -> config.server.maxImageResolution = value)
+                .build());
 
         return server.build();
     }
