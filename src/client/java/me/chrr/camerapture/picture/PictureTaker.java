@@ -113,7 +113,7 @@ public class PictureTaker {
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
                     ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
-            ClientPictureStore.getInstance().processImage(uuid, this.picture);
+            ClientPictureStore.getInstance().processImage(uuid, picture);
             ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
             this.picture = null;
         } catch (IOException e) {
