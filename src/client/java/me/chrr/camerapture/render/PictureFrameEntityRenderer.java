@@ -21,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
@@ -118,22 +119,26 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     private void pushGlowingVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
+        Matrix3f matrix3f = matrix.getNormalMatrix();
+
         buffer.vertex(matrix4f, x, y, 0f)
                 .color(0xffffffff)
                 .texture(u, v)
                 .light(0xf000f0)
-                .normal(0f, 0f, -1f)
+                .normal(matrix3f, 0f, 0f, 1f)
                 .next();
     }
 
     private void pushCutoutVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v, int light) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
+        Matrix3f matrix3f = matrix.getNormalMatrix();
+
         buffer.vertex(matrix4f, x, y, 0f)
                 .color(0xffffffff)
                 .texture(u, v)
                 .overlay(OverlayTexture.DEFAULT_UV)
                 .light(light)
-                .normal(0f, 0f, -1f)
+                .normal(matrix3f, 0f, 0f, 1f)
                 .next();
     }
 
