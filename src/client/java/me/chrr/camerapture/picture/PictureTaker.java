@@ -9,9 +9,12 @@ import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Pair;
 
@@ -116,6 +119,11 @@ public class PictureTaker {
         } catch (IOException e) {
             Camerapture.LOGGER.error("failed to send picture to server", e);
             this.picture = null;
+
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player != null) {
+                player.sendMessage(Text.translatable("text.camerapture.upload_failed").formatted(Formatting.RED));
+            }
         }
     }
 
