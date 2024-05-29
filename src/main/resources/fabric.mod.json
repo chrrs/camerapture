@@ -27,8 +27,5 @@
         "fabricloader": ">=${loaderVersion}",
         "fabric": "*",
         "minecraft": "${minecraftDependency}"
-    },
-    "recommends": {
-        "clothconfig2": "*"
     }
 }
