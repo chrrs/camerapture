@@ -1,6 +1,7 @@
 {
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
+    "item.camerapture.album": "Album",
     "entity.camerapture.picture_frame": "Picture Frame",
     "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",

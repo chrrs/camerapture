@@ -1,26 +1,33 @@
 package me.chrr.camerapture.screen;
 
+import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
 import java.util.UUID;
 
 public class PictureScreen extends InGameScreen {
     public static final int BORDER_WIDTH = 30;
 
-    private final UUID uuid;
+    private final List<ItemStack> pictures;
+    private int index = 0;
 
-    public PictureScreen(UUID uuid) {
+    public PictureScreen(List<ItemStack> pictures) {
         super(Text.translatable("item.camerapture.picture"));
+        this.pictures = pictures;
 
-        this.uuid = uuid;
-        ClientPictureStore.getInstance().ensureServerPicture(uuid);
+        forceRefresh();
     }
 
     @Override
     public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
+        ItemStack stack = pictures.get(index);
+        UUID uuid = PictureItem.getUuid(stack);
         ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
         if (picture == null) {
@@ -56,5 +63,38 @@ public class PictureScreen extends InGameScreen {
                 context.drawTexture(picture.getIdentifier(), x, y, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
             }
         }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        }
+
+        if (isSinglePicture()) {
+            return false;
+        }
+
+        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+            this.index = Math.floorMod(this.index - 1, pictures.size());
+            forceRefresh();
+            return true;
+        } else if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+            this.index = Math.floorMod(this.index + 1, pictures.size());
+            forceRefresh();
+            return true;
+        }
+
+        return false;
+    }
+
+    private void forceRefresh() {
+        ItemStack stack = pictures.get(index);
+        UUID uuid = PictureItem.getUuid(stack);
+        ClientPictureStore.getInstance().ensureServerPicture(uuid);
+    }
+
+    private boolean isSinglePicture() {
+        return pictures.size() == 1;
     }
 }

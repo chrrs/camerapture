@@ -4,11 +4,13 @@ import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureCloningRecipe;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ServerPictureStore;
+import me.chrr.camerapture.screen.AlbumScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -26,6 +28,8 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.stat.StatFormatter;
@@ -51,12 +55,15 @@ public class Camerapture implements ModInitializer {
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
-    public static final Item PICTURE = new PictureItem(new FabricItemSettings());
-
     public static final SoundEvent CAMERA_SHUTTER = SoundEvent.of(id("camera_shutter"));
 
+    public static final Item PICTURE = new PictureItem(new FabricItemSettings());
     public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
             new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
+
+    public static final Item ALBUM = new AlbumItem(new FabricItemSettings().maxCount(1));
+    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER =
+            new ScreenHandlerType<>(AlbumScreenHandler::new, FeatureSet.empty());
 
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
@@ -78,16 +85,24 @@ public class Camerapture implements ModInitializer {
             LOGGER.error("failed to load config", e);
         }
 
+        // Camera
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
         Registry.register(Registries.SOUND_EVENT, CAMERA_SHUTTER.getId(), CAMERA_SHUTTER);
 
+        // Picture
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
         Registry.register(Registries.RECIPE_SERIALIZER, id("picture_cloning"), PICTURE_CLONING);
 
+        // Album
+        Registry.register(Registries.ITEM, id("album"), ALBUM);
+        Registry.register(Registries.SCREEN_HANDLER, id("album"), ALBUM_SCREEN_HANDLER);
+
+        // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
 
+        // Pictures Taken statistic
         Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
         Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
 

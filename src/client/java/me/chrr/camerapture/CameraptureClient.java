@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.ConfigPacket;
@@ -10,6 +11,7 @@ import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
+import me.chrr.camerapture.screen.AlbumScreen;
 import me.chrr.camerapture.screen.EditPictureFrameScreen;
 import me.chrr.camerapture.screen.PictureScreen;
 import me.chrr.camerapture.screen.UploadScreen;
@@ -22,12 +24,14 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,6 +43,7 @@ public class CameraptureClient implements ClientModInitializer {
         ClientPictureStore.getInstance().clearCache();
         PictureTaker.getInstance().resetConfig();
 
+        HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
@@ -91,11 +96,14 @@ public class CameraptureClient implements ClientModInitializer {
             }
 
             if (stack.isOf(Camerapture.PICTURE)) {
-                UUID uuid = PictureItem.getUuid(stack);
-                if (uuid != null) {
-                    client.submit(() -> client.setScreen(new PictureScreen(uuid)));
+                if (PictureItem.getUuid(stack) != null) {
+                    client.submit(() -> client.setScreen(new PictureScreen(List.of(stack))));
                     return TypedActionResult.success(stack);
                 }
+            } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
+                List<ItemStack> pictures = AlbumItem.getPictures(stack);
+                client.submit(() -> client.setScreen(new PictureScreen(pictures)));
+                return TypedActionResult.success(stack);
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
