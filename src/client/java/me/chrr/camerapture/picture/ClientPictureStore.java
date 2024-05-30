@@ -107,7 +107,7 @@ public class ClientPictureStore {
     }
 
     @Nullable
-    public Picture ensureServerPicture(UUID uuid) {
+    public Picture ensureServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }
@@ -123,7 +123,7 @@ public class ClientPictureStore {
     }
 
     @Nullable
-    public Picture getServerPicture(UUID uuid) {
+    public Picture getServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }
