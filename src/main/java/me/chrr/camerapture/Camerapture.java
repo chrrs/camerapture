@@ -1,6 +1,5 @@
 package me.chrr.camerapture;
 
-import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
@@ -68,10 +67,6 @@ public class Camerapture implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        if (!WebP.loadNativeLibrary()) {
-            LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
-        }
-
         try {
             CONFIG_MANAGER.load();
         } catch (IOException e) {
