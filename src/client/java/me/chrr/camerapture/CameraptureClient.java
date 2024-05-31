@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CameraptureClient implements ClientModInitializer {
     public static boolean replayModInstalled = false;
@@ -60,7 +61,7 @@ public class CameraptureClient implements ClientModInitializer {
                 ThreadPooler.run(() -> PictureTaker.getInstance().sendStoredPicture(packet.uuid())));
 
         // Server sends back a picture following a picture request by UUID
-        Map<UUID, ByteCollector> collectors = new HashMap<>();
+        Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
         ClientPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);

@@ -56,7 +56,13 @@ dependencies {
         exclude("net.fabricmc.fabric-api")
     }
 
-    include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
+    // FIXME: I don't really want to include the whole kotlin stdlib here,
+    //        but webp-imageio is written in Kotlin, and I don't want to
+    //        add a dependency on Fabric Language Kotlin. Since webp-imageio
+    //        is already +3kB, and kotlin adds +1kB, I think the sacrifice is
+    //        worth it.
+    include(implementation(kotlin("stdlib"))!!)
+    include(implementation("com.github.usefulness:webp-imageio:0.8.0")!!)
 }
 
 val modVersion = property("mod.version")
