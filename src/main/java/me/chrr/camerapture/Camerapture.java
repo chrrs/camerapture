@@ -25,6 +25,7 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.stat.StatFormatter;
@@ -39,9 +40,9 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
@@ -112,15 +113,15 @@ public class Camerapture implements ModInitializer {
         });
 
         // Client sends back a picture following a take-picture request
-        Map<UUID, ByteCollector> collectors = new HashMap<>();
+        Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
         ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             if (!ServerPictureStore.getInstance().isReserved(packet.uuid())) {
-                LOGGER.error(player.getName().toString() + " tried to send a byte section for an unreserved UUID");
+                LOGGER.error("{} tried to send a byte section for an unreserved UUID", player.getName().toString());
                 return;
             }
 
             if (packet.bytesLeft() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
-                LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
+                LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
@@ -129,24 +130,29 @@ public class Camerapture implements ModInitializer {
                 collectors.remove(uuid);
                 ThreadPooler.run(() -> {
                     try {
-                        ServerPictureStore.getInstance().put(player.getServer(), uuid, new ServerPictureStore.Picture(bytes));
+                        MinecraftServer server = player.getServer();
+                        if (server == null) {
+                            return;
+                        }
+
+                        ServerPictureStore.getInstance().put(server, uuid, new ServerPictureStore.Picture(bytes));
                         ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
-                        player.getInventory().offerOrDrop(picture);
+                        server.execute(() -> player.getInventory().offerOrDrop(picture));
                     } catch (Exception e) {
-                        LOGGER.error("failed to save picture from " + player.getName().getString(), e);
+                        LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
                         player.sendMessage(Text.translatable("text.camerapture.picture_failed").formatted(Formatting.RED));
                     }
                 });
             }));
 
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                LOGGER.error(player.getName().getString() + "sent a malformed byte section");
+                LOGGER.error("{} sent a malformed byte section", player.getName().getString());
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
 
             if (collector.getCurrentLength() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
-                LOGGER.error(player.getName().getString() + " sent a picture exceeding the size limit");
+                LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
                 collectors.remove(packet.uuid());
                 ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
             }
@@ -158,14 +164,14 @@ public class Camerapture implements ModInitializer {
                 ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
                 if (picture == null) {
-                    LOGGER.warn(player.getName().getString() + " requested a picture with an unknown UUID");
+                    LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
                     ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
                 } else {
                     ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
                             ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
                 }
             } catch (Exception e) {
-                LOGGER.error("failed to load picture for " + player.getName().getString(), e);
+                LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
             }
         });
@@ -177,7 +183,7 @@ public class Camerapture implements ModInitializer {
                     && player.canModifyAt(player.getServerWorld(), frameEntity.getBlockPos())) {
                 frameEntity.resize(packet.direction(), packet.shrink());
             } else {
-                LOGGER.warn(player.getName().getString() + " failed to resize picture frame " + packet.uuid());
+                LOGGER.warn("{} failed to resize picture frame {}", player.getName().getString(), packet.uuid());
             }
         });
 
@@ -189,7 +195,7 @@ public class Camerapture implements ModInitializer {
                 frameEntity.setPictureGlowing(packet.glowing());
                 frameEntity.setFixed(packet.fixed());
             } else {
-                LOGGER.warn(player.getName().getString() + " failed to edit picture frame " + packet.uuid());
+                LOGGER.warn("{} failed to edit picture frame {}", player.getName().getString(), packet.uuid());
             }
         });
 
