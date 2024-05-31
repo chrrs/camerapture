@@ -14,13 +14,13 @@ public class AlbumScreenHandler extends ScreenHandler {
     private final Inventory inventory;
 
     public AlbumScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(AlbumItem.PAGES * 12));
+        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS));
     }
 
     public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
         super(Camerapture.ALBUM_SCREEN_HANDLER, syncId);
 
-        checkSize(inventory, AlbumItem.PAGES * 4);
+        checkSize(inventory, AlbumItem.SLOTS);
         this.inventory = inventory;
         inventory.onOpen(playerInventory.player);
 
@@ -56,5 +56,10 @@ public class AlbumScreenHandler extends ScreenHandler {
     @Override
     public ItemStack quickMove(PlayerEntity player, int slot) {
         return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void onClosed(PlayerEntity player) {
+        this.inventory.onClose(player);
     }
 }

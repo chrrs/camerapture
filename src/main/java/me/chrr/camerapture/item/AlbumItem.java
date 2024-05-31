@@ -3,7 +3,7 @@ package me.chrr.camerapture.item;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -20,6 +20,8 @@ import java.util.List;
 
 public class AlbumItem extends Item {
     public static int PAGES = 3;
+    public static int ITEMS_PER_PAGE = 12;
+    public static int SLOTS = PAGES * ITEMS_PER_PAGE;
 
     public AlbumItem(Settings settings) {
         super(settings);
@@ -32,15 +34,11 @@ public class AlbumItem extends Item {
         if (!world.isClient && player.isSneaking()) {
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                     (syncId, playerInventory, _player) ->
-                            new AlbumScreenHandler(syncId, playerInventory, getInventory(stack)),
+                            new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)),
                     stack.getName()));
         }
 
         return TypedActionResult.success(stack);
-    }
-
-    public static Inventory getInventory(ItemStack stack) {
-        return new AlbumInventory(stack);
     }
 
     public static List<ItemStack> getPictures(ItemStack stack) {
@@ -61,29 +59,44 @@ public class AlbumItem extends Item {
         return pictures;
     }
 
+    @Override
+    public boolean allowNbtUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
+        return false;
+    }
+
     public static class AlbumInventory extends SimpleInventory {
-        private final ItemStack stack;
+        private final Hand hand;
 
-        private AlbumInventory(ItemStack stack) {
-            super(PAGES * 12);
+        private AlbumInventory(Hand hand, ItemStack stack) {
+            super(SLOTS);
+            this.hand = hand;
 
-            this.stack = stack;
-
-            NbtCompound nbt = stack.getOrCreateNbt();
-            if (nbt.contains("Items")) {
-                readNbtList(nbt.getList("Items", NbtElement.COMPOUND_TYPE));
+            NbtCompound nbt = stack.getNbt();
+            if (nbt != null) {
+                Inventories.readNbt(nbt, this.heldStacks);
             }
         }
 
         @Override
-        public void markDirty() {
-            stack.getOrCreateNbt().put("Items", toNbtList());
-            super.markDirty();
+        public boolean canPlayerUse(PlayerEntity player) {
+            // FIXME: Duplication? Swapping the album with another one doesn't change
+            //        this condition I think.
+            return getAlbumStack(player).isOf(Camerapture.ALBUM);
+        }
+
+        @Override
+        public void onClose(PlayerEntity player) {
+            Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());
+            super.onClose(player);
         }
 
         @Override
         public int getMaxCountPerStack() {
             return 1;
+        }
+
+        private ItemStack getAlbumStack(PlayerEntity player) {
+            return player.getStackInHand(this.hand);
         }
     }
 }
