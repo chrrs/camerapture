@@ -54,24 +54,27 @@ public class Camerapture implements ModInitializer {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
+    // Camera
     public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
     public static final SoundEvent CAMERA_SHUTTER = SoundEvent.of(id("camera_shutter"));
+    public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 
+    // Picture
     public static final Item PICTURE = new PictureItem(new FabricItemSettings());
     public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
             new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
 
+    // Album
     public static final Item ALBUM = new AlbumItem(new FabricItemSettings().maxCount(1));
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER =
             new ScreenHandlerType<>(AlbumScreenHandler::new, FeatureSet.empty());
 
+    // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
                     .setDimensions(0.5f, 0.5f)
                     .maxTrackingRange(10)
                     .build("picture_frame");
-
-    public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 
     @Override
     public void onInitialize() {
@@ -81,11 +84,20 @@ public class Camerapture implements ModInitializer {
             LOGGER.error("failed to load config", e);
         }
 
+        registerContent();
+        registerPackets();
+        registerEvents();
+    }
+
+    private void registerContent() {
         // Camera
         Registry.register(Registries.ITEM, id("camera"), CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(CAMERA));
 
         Registry.register(Registries.SOUND_EVENT, CAMERA_SHUTTER.getId(), CAMERA_SHUTTER);
+
+        Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
+        Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
 
         // Picture
         Registry.register(Registries.ITEM, id("picture"), PICTURE);
@@ -97,11 +109,9 @@ public class Camerapture implements ModInitializer {
 
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
+    }
 
-        // Pictures Taken statistic
-        Registry.register(Registries.CUSTOM_STAT, "pictures_taken", PICTURES_TAKEN);
-        Stats.CUSTOM.getOrCreateStat(PICTURES_TAKEN, StatFormatter.DEFAULT);
-
+    private void registerPackets() {
         // Client requests to take / upload a picture
         ServerPlayNetworking.registerGlobalReceiver(NewPicturePacket.TYPE, (packet, player, sender) -> {
             Pair<Hand, ItemStack> camera = findCamera(player, false);
@@ -113,6 +123,7 @@ public class Camerapture implements ModInitializer {
                 return;
             }
 
+            // We don't want to play the sound when the player is uploading a picture, only when it's being taken.
             if (CameraItem.isActive(camera.getRight())) {
                 player.getServerWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
             }
@@ -152,6 +163,8 @@ public class Camerapture implements ModInitializer {
 
                         ServerPictureStore.getInstance().put(server, uuid, new ServerPictureStore.Picture(bytes));
                         ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
+
+                        // We have to do this on a separate thread, because it might spawn an item entity.
                         server.execute(() -> player.getInventory().offerOrDrop(picture));
                     } catch (Exception e) {
                         LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
@@ -181,10 +194,12 @@ public class Camerapture implements ModInitializer {
                 if (picture == null) {
                     LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
                     ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
-                } else {
-                    ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
-                            ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
+                    return;
                 }
+
+                // FIXME: Throttle this, so we don't overload the server by sending packets.
+                ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
+                        ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
@@ -213,13 +228,20 @@ public class Camerapture implements ModInitializer {
                 LOGGER.warn("{} failed to edit picture frame {}", player.getName().getString(), packet.uuid());
             }
         });
+    }
 
+    private void registerEvents() {
+        // When a player joins, we send them our config.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             Config config = CONFIG_MANAGER.getConfig();
             sender.sendPacket(new ConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
         });
     }
 
+    /**
+     * Try to find an (active) camera in a player's hand. Returns null if the player is
+     * not holding a camera.
+     */
     @Nullable
     public static Pair<Hand, ItemStack> findCamera(PlayerEntity player, boolean active) {
         if (player == null) {
@@ -236,7 +258,10 @@ public class Camerapture implements ModInitializer {
         return null;
     }
 
-    public static boolean isCameraActive(PlayerEntity player) {
+    /**
+     * Return if the player is currently holding an active camera.
+     */
+    public static boolean hasActiveCamera(PlayerEntity player) {
         return findCamera(player, true) != null;
     }
 

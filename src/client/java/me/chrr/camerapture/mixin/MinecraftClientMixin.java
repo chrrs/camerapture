@@ -21,7 +21,8 @@ public abstract class MinecraftClientMixin {
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "HEAD"), cancellable = true)
     private void onBlockBreaking(boolean breaking, CallbackInfo ci) {
-        if (breaking && Camerapture.isCameraActive(player)) {
+        // Stop accidentally breaking any blocks when taking a photo.
+        if (breaking && Camerapture.hasActiveCamera(player)) {
             ci.cancel();
         }
     }

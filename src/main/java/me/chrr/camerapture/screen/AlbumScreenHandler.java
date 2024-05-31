@@ -55,6 +55,7 @@ public class AlbumScreenHandler extends ScreenHandler {
 
     @Override
     public ItemStack quickMove(PlayerEntity player, int slot) {
+        // FIXME: Implement SHIFT-clicking.
         return ItemStack.EMPTY;
     }
 

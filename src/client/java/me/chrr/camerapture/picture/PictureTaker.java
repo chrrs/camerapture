@@ -24,6 +24,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
+/**
+ * This class is responsible for keeping track of taking pictures.
+ * It does this by turning off the HUD for a single frame and taking
+ * a screenshot. It is also responsible for processing and compressing
+ * the image, and making it ready to be sent to the server.
+ */
 public class PictureTaker {
     private static final PictureTaker INSTANCE = new PictureTaker();
 
@@ -38,6 +44,9 @@ public class PictureTaker {
     private PictureTaker() {
     }
 
+    /**
+     * Take a screenshot and prepare it, requesting for it to be uploaded.
+     */
     public void uploadScreenPicture() {
         if (takePicture) {
             return;
@@ -48,10 +57,14 @@ public class PictureTaker {
         MinecraftClient.getInstance().options.hudHidden = true;
     }
 
-    public boolean tryUpload(Path filePath) {
+    /**
+     * Try reading an image from the file system and prepare it, requesting
+     * for it to be uploaded.
+     */
+    public boolean tryUploadFile(Path filePath) {
         try {
-            BufferedImage image = ImageIO.read(filePath.toFile());
-            uploadPicture(image);
+            this.picture = ImageIO.read(filePath.toFile());
+            ClientPlayNetworking.send(new NewPicturePacket());
             return true;
         } catch (IOException e) {
             Camerapture.LOGGER.error("failed to read picture from file", e);
@@ -59,12 +72,12 @@ public class PictureTaker {
         }
     }
 
-    public void uploadPicture(BufferedImage picture) {
-        this.picture = picture;
-
-        ClientPlayNetworking.send(new NewPicturePacket());
-    }
-
+    /**
+     * Process the frame that has just been rendered, taking a screenshot
+     * and processing it.
+     * <p>
+     * This should only be called on the main renderer thread!
+     */
     public void renderTickEnd() {
         if (!this.takePicture) {
             return;
@@ -75,12 +88,11 @@ public class PictureTaker {
         this.takePicture = false;
         client.options.hudHidden = this.hudHidden;
 
-        BufferedImage image;
         try (NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
-            image = ImageUtil.fromNativeImage(nativeImage, false);
-            this.picture = image;
+            this.picture = ImageUtil.fromNativeImage(nativeImage, false);
         }
 
+        // We de-activate the camera client-side immediately, to make it feel more responsive.
         Pair<Hand, ItemStack> activeCamera = Camerapture.findCamera(client.player, true);
         if (activeCamera != null) {
             CameraItem.setActive(activeCamera.getRight(), false);
@@ -97,6 +109,8 @@ public class PictureTaker {
         try {
             BufferedImage picture = ImageUtil.clampSize(this.picture, maxImageResolution);
 
+            // Starting at 100% quality, we step up the compression by 5% each time
+            // until we fit it into our size limit.
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
@@ -113,6 +127,7 @@ public class PictureTaker {
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
                     ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
+            // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
             ClientPictureStore.getInstance().processImage(uuid, picture);
             ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
             this.picture = null;

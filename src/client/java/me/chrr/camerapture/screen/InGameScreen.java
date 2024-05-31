@@ -4,9 +4,14 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
-// Because of differences between 1.20.1 and 1.20.4, background
-// rendering changed in weird ways. I don't want to repeat these
-// for multiple screens, so here we are.
+/**
+ * Because of differences between 1.20.1 and 1.20.4, background
+ * rendering changed in weird ways. I don't want to repeat these
+ * changes for multiple screens, so this is a utility class to
+ * consolidate that.
+ * <p>
+ * FIXME: This will be obsolete when dropping 1.20.1 support.
+ */
 public abstract class InGameScreen extends Screen {
     protected InGameScreen(Text title) {
         super(title);

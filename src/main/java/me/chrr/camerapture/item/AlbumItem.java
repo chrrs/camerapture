@@ -41,8 +41,8 @@ public class AlbumItem extends Item {
         return TypedActionResult.success(stack);
     }
 
-    public static List<ItemStack> getPictures(ItemStack stack) {
-        NbtCompound nbt = stack.getNbt();
+    public static List<ItemStack> getPictures(ItemStack album) {
+        NbtCompound nbt = album.getNbt();
         if (nbt == null || !nbt.contains("Items")) {
             return List.of();
         }

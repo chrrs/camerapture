@@ -12,6 +12,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * The server-side picture store. It is actually a bit of a misnomer, as this
+ * picture store can store any byte files, and does not do any image parsing.
+ * <p>
+ * Pictures put in the store will be stored on the disk in the world folder.
+ * The store also manages picture UUID's.
+ */
 public class ServerPictureStore {
     private static final int CACHE_SIZE = 250;
 

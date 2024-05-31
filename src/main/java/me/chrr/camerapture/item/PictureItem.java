@@ -37,7 +37,7 @@ public class PictureItem extends Item {
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
         if (!user.isSneaking()) {
-            // It shows client side.
+            // When not sneaking, we show the picture client-side through an event handler.
             return TypedActionResult.success(stack);
         } else {
             return TypedActionResult.pass(stack);
