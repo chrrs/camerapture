@@ -41,7 +41,17 @@ public class ClientPictureStore {
     }
 
     public void clearCache() {
-        uuidPictures.clear();
+        MinecraftClient.getInstance().submit(() -> {
+            for (Picture picture : uuidPictures.values()) {
+                if (picture.identifier != null) {
+                    MinecraftClient.getInstance()
+                            .getTextureManager()
+                            .destroyTexture(picture.identifier);
+                }
+            }
+
+            uuidPictures.clear();
+        });
     }
 
     public void processReceivedError(UUID uuid) {

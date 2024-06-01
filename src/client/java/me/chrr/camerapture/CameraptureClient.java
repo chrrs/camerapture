@@ -83,11 +83,6 @@ public class CameraptureClient implements ClientModInitializer {
         // Server sends over the server-side config
         ClientPlayNetworking.registerGlobalReceiver(ConfigPacket.TYPE, (packet, player, sender) ->
                 PictureTaker.getInstance().setConfig(packet.maxImageBytes(), packet.maxImageResolution()));
-
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            ClientPictureStore.getInstance().clearCache();
-            PictureTaker.getInstance().resetConfig();
-        });
     }
 
     private void registerEvents() {
@@ -143,6 +138,12 @@ public class CameraptureClient implements ClientModInitializer {
             }
 
             return ActionResult.PASS;
+        });
+
+        // When disconnecting, we clear the picture cache.
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientPictureStore.getInstance().clearCache();
+            PictureTaker.getInstance().resetConfig();
         });
     }
 
