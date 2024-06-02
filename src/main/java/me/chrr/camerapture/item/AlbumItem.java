@@ -13,7 +13,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
