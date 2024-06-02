@@ -82,6 +82,9 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        /*? if <1.20.4*/
+        /*this.renderBackground(context);*/
+
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context, mouseX, mouseY);
     }

@@ -35,6 +35,8 @@ loom {
         }
     }
 
+    accessWidenerPath = rootProject.file("src/main/resources/camerapture.accesswidener")
+
     runConfigs["client"].runDir = "../../run"
     runConfigs["server"].runDir = "../../run/server"
 

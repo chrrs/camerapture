@@ -13,6 +13,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class AlbumItem extends Item {
 
             NbtCompound nbt = stack.getNbt();
             if (nbt != null) {
-                Inventories.readNbt(nbt, this.heldStacks);
+                Inventories.readNbt(nbt, this.getHeldStacks());
             }
         }
 
@@ -98,5 +99,12 @@ public class AlbumItem extends Item {
         private ItemStack getAlbumStack(PlayerEntity player) {
             return player.getStackInHand(this.hand);
         }
+
+        // This method exists on 1.20.4, but not on 1.20.1
+        /*? if <1.20.4 {*//*
+        private DefaultedList<ItemStack> getHeldStacks() {
+            return this.stacks;
+        }
+        *//*?}*/
     }
 }

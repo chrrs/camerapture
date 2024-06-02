@@ -12,6 +12,7 @@
     },
     "license": "MIT",
     "icon": "assets/camerapture/icon.png",
+    "accessWidener": "camerapture.accesswidener",
     "mixins": [{
         "config": "camerapture.mixins.json",
         "environment": "client"
