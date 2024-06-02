@@ -198,6 +198,7 @@ public class Camerapture implements ModInitializer {
                 }
 
                 // FIXME: Throttle this, so we don't overload the server by sending packets.
+                //        Probably with a packet queue.
                 ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
                         ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
             } catch (Exception e) {

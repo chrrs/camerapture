@@ -25,12 +25,16 @@ public class AlbumScreenHandler extends ScreenHandler {
         inventory.onOpen(playerInventory.player);
 
         // Album inventory
-        for (int side = 0; side < 2; side++) {
-            for (int x = 0; x < 6; x++) {
-                for (int y = 0; y < 3; y++) {
-                    int dx = side * 131 + 22 + x * 18;
-                    int dy = 27 + y * 18;
-                    this.addSlot(new PictureSlot(inventory, side * 18 + y * 6 + x, dx, dy));
+        for (int page = 0; page < AlbumItem.PAGES; page++) {
+            for (int side = 0; side < 2; side++) {
+                for (int x = 0; x < 2; x++) {
+                    for (int y = 0; y < 3; y++) {
+                        int i = page * 12 + side * 6 + y * 2 + x;
+                        int dx = side * 131 + 22 + x * 56;
+                        int dy = 27 + y * 32;
+
+                        this.addSlot(new PictureSlot(inventory, i, dx, dy));
+                    }
                 }
             }
         }

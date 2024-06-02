@@ -2,8 +2,8 @@ package me.chrr.camerapture.screen;
 
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.util.PictureUtil;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 public class PictureScreen extends InGameScreen {
     public static final int BAR_WIDTH = 360;
-    public static final int BORDER_WIDTH = 24;
+    public static final int BORDER_THICKNESS = 24;
 
     private final List<ItemStack> pictures;
     private int index = 0;
@@ -38,7 +38,7 @@ public class PictureScreen extends InGameScreen {
 
         if (!isSinglePicture()) {
             int barX = width / 2 - BAR_WIDTH / 2;
-            int barY = height - BORDER_WIDTH - 20;
+            int barY = height - BORDER_THICKNESS - 20;
 
             addDrawableChild(ButtonWidget.builder(Text.of("←"), button -> {
                         this.index = Math.floorMod(this.index - 1, pictures.size());
@@ -59,7 +59,7 @@ public class PictureScreen extends InGameScreen {
     public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
         // Drawing the item name and page number
         if (!isSinglePicture()) {
-            int barY = height - BORDER_WIDTH - 20 / 2;
+            int barY = height - BORDER_THICKNESS - 20 / 2;
 
             int pageNumberX = width / 2 - this.textRenderer.getWidth(this.pageNumber) / 2;
             if (this.customName != null) {
@@ -76,37 +76,8 @@ public class PictureScreen extends InGameScreen {
         }
 
         // Drawing the picture
-        switch (this.picture.getStatus()) {
-            case FETCHING -> {
-                String loading = LoadingDisplay.get(System.currentTimeMillis());
-                Text fetching = Text.translatable("text.camerapture.fetching_picture");
-                context.drawCenteredTextWithShadow(textRenderer, fetching, width / 2, height / 2 - textRenderer.fontHeight, 0xffffff);
-                context.drawCenteredTextWithShadow(textRenderer, loading, width / 2, height / 2, 0x808080);
-            }
-            case ERROR -> {
-                Text error = Text.translatable("text.camerapture.fetching_failed");
-                context.drawCenteredTextWithShadow(textRenderer, error, width / 2, height / 2 - textRenderer.fontHeight / 2, 0xff0000);
-            }
-            case SUCCESS -> {
-                int bottomOffset = isSinglePicture() ? 0 : 24;
-
-                int maxWidth = width - BORDER_WIDTH * 2;
-                int maxHeight = height - BORDER_WIDTH * 2 - bottomOffset;
-
-                float scaledWidth = (float) maxWidth / this.picture.getWidth();
-                float scaleHeight = (float) maxHeight / this.picture.getHeight();
-
-                float scale = Math.min(scaledWidth, scaleHeight);
-
-                int newWidth = (int) (this.picture.getWidth() * scale);
-                int newHeight = (int) (this.picture.getHeight() * scale);
-
-                int x = width / 2 - newWidth / 2;
-                int y = height / 2 - newHeight / 2 - bottomOffset / 2;
-
-                context.drawTexture(this.picture.getIdentifier(), x, y, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
-            }
-        }
+        int bottomOffset = isSinglePicture() ? 0 : 24;
+        PictureUtil.drawPicture(context, textRenderer, picture, BORDER_THICKNESS, BORDER_THICKNESS, width - BORDER_THICKNESS * 2, height - BORDER_THICKNESS * 2 - bottomOffset);
     }
 
     @Override
