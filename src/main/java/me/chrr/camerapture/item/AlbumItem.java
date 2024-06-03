@@ -18,6 +18,9 @@ import net.minecraft.world.World;
 import java.util.ArrayList;
 import java.util.List;
 
+/*? if <1.20.4*/
+/*import net.minecraft.util.collection.DefaultedList;*/
+
 public class AlbumItem extends Item {
     public static int PAGES = 3;
     public static int ITEMS_PER_PAGE = 12;
