@@ -81,6 +81,14 @@ public class ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.server.maxImageResolution = value)
                 .build());
 
+        server.add(builder.startIntField(
+                        Text.translatable("config.camerapture.option.ms_per_picture"),
+                        config.server.msPerPicture
+                )
+                .setDefaultValue(50)
+                .setSaveConsumer((value) -> config.server.msPerPicture = value)
+                .build());
+
         return server.build();
     }
 

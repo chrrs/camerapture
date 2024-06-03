@@ -20,7 +20,7 @@ public class Config {
 
     public Server server = new Server();
     public static class Server {
-        public static int VERSION = 1;
+        public static int VERSION = 2;
 
         @SerializedName("version")
         public int version = VERSION;
@@ -30,6 +30,9 @@ public class Config {
 
         @SerializedName("max_image_resolution")
         public int maxImageResolution = 1280;
+
+        @SerializedName("ms_per_picture")
+        public int msPerPicture = 50;
 
         public void upgrade() {
             this.version = VERSION;

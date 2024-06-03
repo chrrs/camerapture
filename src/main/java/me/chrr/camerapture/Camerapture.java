@@ -11,6 +11,7 @@ import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -30,6 +31,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.stat.StatFormatter;
@@ -39,13 +41,14 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
+import org.apache.commons.lang3.mutable.Mutable;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Camerapture implements ModInitializer {
@@ -75,6 +78,8 @@ public class Camerapture implements ModInitializer {
                     .setDimensions(0.5f, 0.5f)
                     .maxTrackingRange(10)
                     .build("picture_frame");
+
+    private final Queue<QueuedPicture> pictureQueue = new LinkedList<>();
 
     @Override
     public void onInitialize() {
@@ -197,10 +202,7 @@ public class Camerapture implements ModInitializer {
                     return;
                 }
 
-                // FIXME: Throttle this, so we don't overload the server by sending packets.
-                //        Probably with a packet queue.
-                ByteCollector.split(picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
-                        ServerPlayNetworking.send(player, new PartialPicturePacket(packet.uuid(), section, bytesLeft)));
+                pictureQueue.add(new QueuedPicture(player, packet.uuid(), picture));
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
@@ -237,6 +239,33 @@ public class Camerapture implements ModInitializer {
             Config config = CONFIG_MANAGER.getConfig();
             sender.sendPacket(new ConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
         });
+
+        // Every so often, we send a picture from the queue.
+        Timer timer = new Timer("Picture Sender");
+        Mutable<TimerTask> sendTask = new MutableObject<>();
+
+        // When the server is running, we start the timer that sends the pictures.
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    QueuedPicture item = pictureQueue.poll();
+                    if (item == null || item.recipient.isDisconnected()) {
+                        return;
+                    }
+
+                    ByteCollector.split(item.picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
+                            ServerPlayNetworking.send(item.recipient, new PartialPicturePacket(item.uuid, section, bytesLeft)));
+
+                }
+            };
+
+            timer.scheduleAtFixedRate(task, 0L, CONFIG_MANAGER.getConfig().server.msPerPicture);
+            sendTask.setValue(task);
+        });
+
+        // When the server stops, we also stop the timer.
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> sendTask.getValue().cancel());
     }
 
     /**
@@ -268,5 +297,8 @@ public class Camerapture implements ModInitializer {
 
     public static Identifier id(String path) {
         return new Identifier("camerapture", path);
+    }
+
+    private record QueuedPicture(ServerPlayerEntity recipient, UUID uuid, ServerPictureStore.Picture picture) {
     }
 }
