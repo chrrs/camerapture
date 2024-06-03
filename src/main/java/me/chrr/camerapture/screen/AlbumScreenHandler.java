@@ -7,17 +7,18 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 
 public class AlbumScreenHandler extends ScreenHandler {
     private final Inventory inventory;
 
-    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS));
+    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
+        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS), buf.readInt());
     }
 
-    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
+    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, int albumSlot) {
         super(Camerapture.ALBUM_SCREEN_HANDLER, syncId);
 
         checkSize(inventory, AlbumItem.SLOTS);
@@ -48,7 +49,7 @@ public class AlbumScreenHandler extends ScreenHandler {
 
         // Player hotbar
         for (int x = 0; x < 9; x++) {
-            this.addSlot(new Slot(playerInventory, x, 60 + x * 18, 213));
+            this.addSlot(new LockedSlot(playerInventory, x, 60 + x * 18, 213, x == albumSlot));
         }
     }
 
@@ -113,6 +114,36 @@ public class AlbumScreenHandler extends ScreenHandler {
 
     @Override
     public void onClosed(PlayerEntity player) {
+        super.onClosed(player);
         this.inventory.onClose(player);
+    }
+
+    /**
+     * A slot that can be locked. This slot type is used for the player inventory,
+     * to prevent the player from taking the album item out of their inventory
+     * while interacting with the album.
+     */
+    private static class LockedSlot extends Slot {
+        private final boolean locked;
+
+        public LockedSlot(Inventory inventory, int index, int x, int y, boolean locked) {
+            super(inventory, index, x, y);
+            this.locked = locked;
+        }
+
+        @Override
+        public boolean canTakeItems(PlayerEntity playerEntity) {
+            return !locked && super.canTakeItems(playerEntity);
+        }
+
+        @Override
+        public boolean canInsert(ItemStack stack) {
+            return !locked && super.canInsert(stack);
+        }
+
+        @Override
+        public boolean canTakePartial(PlayerEntity player) {
+            return super.canTakePartial(player);
+        }
     }
 }

@@ -2,7 +2,9 @@ package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
@@ -10,7 +12,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
@@ -33,12 +38,28 @@ public class AlbumItem extends Item {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
-        
+
         if (!world.isClient && player.isSneaking()) {
-            player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
-                    (syncId, playerInventory, _player) ->
-                            new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)),
-                    stack.getName()));
+            // We write the slot with the album in it. If the album is in
+            // the offhand, we can ignore it.
+            int albumSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot : -1;
+
+            player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+                @Override
+                public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
+                    buf.writeInt(albumSlot);
+                }
+
+                @Override
+                public Text getDisplayName() {
+                    return stack.getName();
+                }
+
+                @Override
+                public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+                    return new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack), albumSlot);
+                }
+            });
         }
 
         return TypedActionResult.success(stack);

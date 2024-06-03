@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
@@ -27,7 +28,6 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sound.SoundCategory;
@@ -67,7 +67,7 @@ public class Camerapture implements ModInitializer {
     // Album
     public static final Item ALBUM = new AlbumItem(new FabricItemSettings().maxCount(1));
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER =
-            new ScreenHandlerType<>(AlbumScreenHandler::new, FeatureSet.empty());
+            new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
