@@ -114,8 +114,10 @@ public class CameraptureClient implements ClientModInitializer {
                 }
             } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
                 List<ItemStack> pictures = AlbumItem.getPictures(stack);
-                client.submit(() -> client.setScreen(new PictureScreen(pictures)));
-                return TypedActionResult.success(stack);
+                if (!pictures.isEmpty()) {
+                    client.submit(() -> client.setScreen(new PictureScreen(pictures)));
+                    return TypedActionResult.success(stack);
+                }
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
