@@ -34,6 +34,9 @@ public class Config {
         @SerializedName("ms_per_picture")
         public int msPerPicture = 50;
 
+        @SerializedName("can_rotate_pictures")
+        public boolean canRotatePictures = true;
+
         public void upgrade() {
             this.version = VERSION;
         }

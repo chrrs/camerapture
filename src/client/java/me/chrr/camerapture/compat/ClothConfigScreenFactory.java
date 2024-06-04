@@ -89,6 +89,14 @@ public class ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.server.msPerPicture = value)
                 .build());
 
+        server.add(builder.startBooleanToggle(
+                        Text.translatable("config.camerapture.option.can_rotate_pictures"),
+                        config.server.canRotatePictures
+                )
+                .setDefaultValue(true)
+                .setSaveConsumer((value) -> config.server.canRotatePictures = value)
+                .build());
+
         return server.build();
     }
 

@@ -59,10 +59,12 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
     public ActionResult interact(PlayerEntity player, Hand hand) {
         System.out.println("interact " + hand + ", " + player);
 
+        boolean canRotate = Camerapture.CONFIG_MANAGER.getConfig().server.canRotatePictures;
+
         if (player.isSneaking()) {
             // We open the edit picture GUI on the client side using an event.
             return ActionResult.SUCCESS;
-        } else if (!isFixed()) {
+        } else if (canRotate && !isFixed()) {
             if (!player.getWorld().isClient) {
                 setRotation(getRotation() + 1);
 

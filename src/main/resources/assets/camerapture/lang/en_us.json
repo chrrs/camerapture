@@ -31,5 +31,6 @@
     "config.camerapture.option.max_image_bytes": "Maximum image size (bytes)",
     "config.camerapture.option.max_image_resolution": "Maximum square image resolution",
     "config.camerapture.option.ms_per_picture": "Delay between pictures sent (ms)",
+    "config.camerapture.option.can_rotate_pictures": "Rotate pictures when right-clicked",
     "config.camerapture.set_by_server": "NOTE: This option is determined by the server,\nand synced to the client upon joining."
 }
