@@ -1,3 +1,12 @@
+## 1.3.0
+Add an album item to store your pictures!
+
+Rotate hanging pictures when right-clicking.
+
+Various other smaller fixes and improvements.
+
+[full changelog...](https://github.com/chrrs/camerapture/compare/v1.2.1...v1.3.0)
+
 ## 1.2.1
 Disable local image caching by default.
 
