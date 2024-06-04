@@ -26,6 +26,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * The client-side picture store. This class manages picture son the client side.
+ * Its cache is cleared when you leave a world. It also manages caching pictures
+ * to disk when that's enabled, and converts them to NativeImages for Minecraft
+ * to understand. To the outside, this class works with BufferedImages.
+ */
 public class ClientPictureStore {
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
@@ -35,7 +41,17 @@ public class ClientPictureStore {
     }
 
     public void clearCache() {
-        uuidPictures.clear();
+        MinecraftClient.getInstance().submit(() -> {
+            for (Picture picture : uuidPictures.values()) {
+                if (picture.identifier != null) {
+                    MinecraftClient.getInstance()
+                            .getTextureManager()
+                            .destroyTexture(picture.identifier);
+                }
+            }
+
+            uuidPictures.clear();
+        });
     }
 
     public void processReceivedError(UUID uuid) {
@@ -57,6 +73,7 @@ public class ClientPictureStore {
                     processImage(uuid, image);
                     return;
                 } catch (IOException e) {
+                    // If this fails, we fall through to requesting the picture from the server.
                     Camerapture.LOGGER.error("could not read cached picture {}", uuid, e);
                 }
             }
@@ -79,6 +96,9 @@ public class ClientPictureStore {
         }
     }
 
+    /**
+     * Process a BufferedImage to update the stored picture by UUID.
+     */
     public void processImage(UUID uuid, BufferedImage image) {
         Picture picture = uuidPictures.computeIfAbsent(uuid, Picture::new);
 
@@ -95,6 +115,9 @@ public class ClientPictureStore {
         });
     }
 
+    /**
+     * Process the bytes received from the server, and update the stored picture.
+     */
     public void processReceivedBytes(UUID uuid, byte[] bytes) {
         try {
             processImage(uuid, ImageIO.read(new ByteArrayInputStream(bytes)));
@@ -106,8 +129,15 @@ public class ClientPictureStore {
         }
     }
 
+    /**
+     * Get a picture by UUID, fetching it from the server if we don't have it yet.
+     * This method returns null if the input UUID is null.
+     * <p>
+     * If the corresponding picture has an error status on the client-side, this
+     * method will force-retry fetching the picture from the server.
+     */
     @Nullable
-    public Picture ensureServerPicture(UUID uuid) {
+    public Picture ensureServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }
@@ -122,8 +152,12 @@ public class ClientPictureStore {
         return picture;
     }
 
+    /**
+     * Get a picture by UUID, fetching it from the server if we don't have it yet.
+     * This method returns null if the input UUID is null.
+     */
     @Nullable
-    public Picture getServerPicture(UUID uuid) {
+    public Picture getServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }

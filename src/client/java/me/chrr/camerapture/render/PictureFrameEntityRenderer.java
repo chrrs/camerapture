@@ -46,9 +46,10 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             UUID uuid = PictureItem.getUuid(itemStack);
             ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
+            // When hovering, render a "block" outline to make the frame appear as a block.
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
-                    && !Camerapture.isCameraActive(client.player)
+                    && !Camerapture.hasActiveCamera(client.player)
                     && client.crosshairTarget instanceof EntityHitResult hitResult
                     && hitResult.getEntity() == entity) {
                 renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
@@ -178,6 +179,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     @Override
     protected boolean hasLabel(PictureFrameEntity entity) {
+        // this.dispatcher.targetedEntity should work, but it doesn't.
         if (MinecraftClient.isHudEnabled()
                 && entity.hasCustomName()
                 && MinecraftClient.getInstance().crosshairTarget instanceof EntityHitResult hitResult

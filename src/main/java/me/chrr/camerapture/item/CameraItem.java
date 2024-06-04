@@ -17,6 +17,7 @@ public class CameraItem extends Item {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
+
         if (!user.isSneaking()) {
             setActive(stack, !isActive(stack));
         }

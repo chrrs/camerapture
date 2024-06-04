@@ -96,6 +96,6 @@ public class UploadScreen extends InGameScreen {
             return false;
         }
 
-        return PictureTaker.getInstance().tryUpload(path);
+        return PictureTaker.getInstance().tryUploadFile(path);
     }
 }

@@ -13,6 +13,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * General utility class for working with pictures. Editing picture is
+ * mostly done using BufferedImages, as it is easier. Minecraft, however,
+ * can only interact with NativeImages, so there's conversion methods.
+ */
 public class ImageUtil {
     private ImageUtil() {
     }
@@ -72,6 +77,7 @@ public class ImageUtil {
     public static byte[] compressIntoWebP(BufferedImage image, float quality) throws IOException {
         ImageWriter imageWriter = ImageIO.getImageWritersByMIMEType("image/webp").next();
 
+        // We use lossy compression to save space.
         WebPWriteParam writeParam = new WebPWriteParam(imageWriter.getLocale());
         writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         writeParam.setCompressionType(writeParam.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
@@ -85,6 +91,7 @@ public class ImageUtil {
         imageWriter.write(null, new IIOImage(image, null, null), writeParam);
         imageWriter.dispose();
 
+        // We manually flush the ImageOutputStream, because of a bug in the webp-imageio library.
         imageOutputStream.flush();
 
         return outputStream.toByteArray();

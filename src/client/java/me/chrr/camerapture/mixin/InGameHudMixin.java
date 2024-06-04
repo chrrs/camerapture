@@ -37,7 +37,7 @@ public abstract class InGameHudMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;getLastFrameDuration()F"))
     private void onRender(DrawContext context, float tickDelta, CallbackInfo ci) {
-        if (!Camerapture.isCameraActive(client.player)) {
+        if (!Camerapture.hasActiveCamera(client.player)) {
             return;
         }
 
@@ -72,7 +72,7 @@ public abstract class InGameHudMixin {
 
     @Redirect(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/option/GameOptions;hudHidden:Z"))
     private boolean isHudHidden(GameOptions options) {
-        return Camerapture.isCameraActive(client.player) || options.hudHidden;
+        return Camerapture.hasActiveCamera(client.player) || options.hudHidden;
     }
 
     @Unique

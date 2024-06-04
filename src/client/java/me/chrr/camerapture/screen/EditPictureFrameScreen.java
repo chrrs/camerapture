@@ -17,10 +17,12 @@ import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
-// FIXME: This UI is fully and completely a stolen idea from the original
-//        Forge camera mod. It's far from perfect, I don't know if I like
-//        it, but I can't think of anything better right now.
-//        => https://www.curseforge.com/minecraft/mc-mods/camera-mod
+/**
+ * This UI is fully and completely a stolen idea from the
+ * <a href="https://www.curseforge.com/minecraft/mc-mods/camera-mod">Forge camera mod</a>.
+ * It's far from perfect, I don't know if I like it, but I
+ * can't think of anything better right now.
+ */
 public class EditPictureFrameScreen extends InGameScreen {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_picture_frame.png");
 
@@ -155,6 +157,8 @@ public class EditPictureFrameScreen extends InGameScreen {
 
     @Override
     public boolean shouldPause() {
+        // We don't pause the game, so we can actually see the picture frame
+        // update in the background while we're editing it.
         return false;
     }
 

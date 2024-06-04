@@ -33,7 +33,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "HEAD"))
     private void determineRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
-        if (Camerapture.isCameraActive(client.player)) {
+        if (Camerapture.hasActiveCamera(client.player)) {
             shouldveRenderedHand = renderHand;
             setRenderHand(false);
         }
@@ -41,14 +41,14 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "RETURN"))
     private void resetRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
-        if (Camerapture.isCameraActive(client.player)) {
+        if (Camerapture.hasActiveCamera(client.player)) {
             setRenderHand(shouldveRenderedHand);
         }
     }
 
     @Inject(method = "shouldRenderBlockOutline", at = @At(value = "HEAD"), cancellable = true)
     private void shouldRenderBlockOutline(CallbackInfoReturnable<Boolean> cir) {
-        if (Camerapture.isCameraActive(client.player)) {
+        if (Camerapture.hasActiveCamera(client.player)) {
             cir.setReturnValue(false);
             cir.cancel();
         }
