@@ -8,6 +8,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
@@ -16,6 +17,8 @@ import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -29,6 +32,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> ROTATION = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public PictureFrameEntity(EntityType<? extends PictureFrameEntity> entityType, World world) {
         super(entityType, world);
@@ -48,6 +52,28 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         this.getDataTracker().startTracking(ITEM_STACK, ItemStack.EMPTY);
         this.getDataTracker().startTracking(GLOWING, false);
         this.getDataTracker().startTracking(FIXED, false);
+        this.getDataTracker().startTracking(ROTATION, 0);
+    }
+
+    @Override
+    public ActionResult interact(PlayerEntity player, Hand hand) {
+        System.out.println("interact " + hand + ", " + player);
+
+        if (player.isSneaking()) {
+            // We open the edit picture GUI on the client side using an event.
+            return ActionResult.SUCCESS;
+        } else if (!isFixed()) {
+            if (!player.getWorld().isClient) {
+                setRotation(getRotation() + 1);
+
+                this.playSound(SoundEvents.ENTITY_ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.emitGameEvent(GameEvent.BLOCK_CHANGE, player);
+            }
+
+            return ActionResult.SUCCESS;
+        }
+
+        return ActionResult.PASS;
     }
 
     @Override
@@ -90,6 +116,14 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
     public void setFixed(boolean fixed) {
         this.getDataTracker().set(FIXED, fixed);
+    }
+
+    public int getRotation() {
+        return this.getDataTracker().get(ROTATION);
+    }
+
+    public void setRotation(int rotation) {
+        this.getDataTracker().set(ROTATION, rotation % 4);
     }
 
     @Override
@@ -196,6 +230,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
         nbt.putBoolean("Fixed", this.isFixed());
+        nbt.putInt("PictureRotation", this.getRotation());
     }
 
     @Override
@@ -214,6 +249,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
         this.setFixed(nbt.getBoolean("Fixed"));
+        this.setRotation(nbt.getInt("PictureRotation"));
     }
 
     @Override

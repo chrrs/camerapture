@@ -60,7 +60,8 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
                 renderFetching(matrices, vertexConsumers);
             } else {
-                renderPicture(matrices, vertexConsumers, picture, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
+                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
+                renderPicture(matrices, vertexConsumers, picture, entity.getRotation(), entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
             }
         }
 
@@ -69,9 +70,18 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, float frameWidth, float frameHeight, boolean glowing, int light) {
-        float scaledWidth = frameWidth / picture.getWidth();
-        float scaleHeight = frameHeight / picture.getHeight();
+    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, int rotation, float frameWidth, float frameHeight, boolean glowing, int light) {
+        float pictureWidth = picture.getWidth();
+        float pictureHeight = picture.getHeight();
+
+        // If the picture is on its side, we flip width and height.
+        if (rotation % 2 == 1) {
+            pictureWidth = picture.getHeight();
+            pictureHeight = picture.getWidth();
+        }
+
+        float scaledWidth = frameWidth / pictureWidth;
+        float scaleHeight = frameHeight / pictureHeight;
 
         float scale = Math.min(scaledWidth, scaleHeight);
 
