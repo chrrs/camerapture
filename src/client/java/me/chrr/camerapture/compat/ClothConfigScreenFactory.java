@@ -97,6 +97,14 @@ public class ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.server.canRotatePictures = value)
                 .build());
 
+        server.add(builder.startBooleanToggle(
+                        Text.translatable("config.camerapture.option.check_frame_position"),
+                        config.server.checkFramePosition
+                )
+                .setDefaultValue(false)
+                .setSaveConsumer((value) -> config.server.checkFramePosition = value)
+                .build());
+
         return server.build();
     }
 

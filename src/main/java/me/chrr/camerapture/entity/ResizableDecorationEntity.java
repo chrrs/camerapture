@@ -62,7 +62,7 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void tick() {
-        if (!this.getWorld().isClient) {
+        if (!this.getWorld().isClient && Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
             if (this.obstructionCheckCounter++ == 100) {
                 this.obstructionCheckCounter = 0;
                 if (!this.canStayAttached() && !this.isRemoved()) {
@@ -135,6 +135,8 @@ public abstract class ResizableDecorationEntity extends Entity {
             Vec3d p2 = p1.add(THICKNESS, getFrameHeight(), parallel.getOffsetZ() * getFrameWidth());
             this.setBoundingBox(new Box(p1, p2));
         }
+
+        resetObstructionCheckCounter();
     }
 
     @Override
@@ -148,7 +150,9 @@ public abstract class ResizableDecorationEntity extends Entity {
     }
 
     public boolean canStayAttached() {
-        if (!this.getWorld().isSpaceEmpty(this)) {
+        if (!Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
+            return true;
+        } else if (!this.getWorld().isSpaceEmpty(this)) {
             return false;
         } else {
             BlockPos blockPos = this.attachmentPos.offset(this.facing.getOpposite());
