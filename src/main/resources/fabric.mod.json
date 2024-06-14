@@ -12,6 +12,7 @@
     },
     "license": "MIT",
     "icon": "assets/camerapture/icon.png",
+    "accessWidener": "camerapture.accesswidener",
     "mixins": [{
         "config": "camerapture.mixins.json",
         "environment": "client"
@@ -19,11 +20,13 @@
     "environment": "*",
     "entrypoints": {
         "client": ["me.chrr.camerapture.CameraptureClient"],
-        "main": ["me.chrr.camerapture.Camerapture"]
+        "main": ["me.chrr.camerapture.Camerapture"],
+        "jade": ["me.chrr.camerapture.compat.JadePlugin"],
+        "modmenu": ["me.chrr.camerapture.compat.ModMenuCompat"]
     },
     "depends": {
-        "fabricloader": ">=${loader_version}",
+        "fabricloader": ">=${loaderVersion}",
         "fabric": "*",
-        "minecraft": "${minecraft_version}"
+        "minecraft": "${minecraftDependency}"
     }
 }

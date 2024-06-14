@@ -1,0 +1,11 @@
+name: Question
+description: If you just want to ask a simple question, you can use this!
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    validations:
+      required: true
+    attributes:
+      label: What your question?
+      description: Ask away! Please be specific, and make sure to include details you think are needed to understand the question better!

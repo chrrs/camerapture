@@ -1,14 +1,17 @@
 package me.chrr.camerapture;
 
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.net.ConfigPacket;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.net.PictureErrorPacket;
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
+import me.chrr.camerapture.screen.AlbumScreen;
 import me.chrr.camerapture.screen.EditPictureFrameScreen;
 import me.chrr.camerapture.screen.PictureScreen;
 import me.chrr.camerapture.screen.UploadScreen;
@@ -19,40 +22,46 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CameraptureClient implements ClientModInitializer {
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static boolean replayModInstalled = false;
 
     @Override
     public void onInitializeClient() {
+        ClientPictureStore.getInstance().clearCache();
+        PictureTaker.getInstance().resetConfig();
+
+        HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
-        ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-            if (Camerapture.isCameraActive(player) && paperInInventory() > 0) {
-                PictureTaker.getInstance().uploadScreenPicture();
-                return true;
-            }
+        if (FabricLoader.getInstance().isModLoaded("replaymod")) {
+            Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config");
+            replayModInstalled = true;
+        }
 
-            return false;
-        });
+        registerPackets();
+        registerEvents();
+    }
 
+    private void registerPackets() {
         // Server requests client to send over a picture, most likely from the camera
         ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
                 ThreadPooler.run(() -> PictureTaker.getInstance().sendStoredPicture(packet.uuid())));
 
         // Server sends back a picture following a picture request by UUID
-        Map<UUID, ByteCollector> collectors = new HashMap<>();
+        Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
         ClientPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
@@ -60,7 +69,7 @@ public class CameraptureClient implements ClientModInitializer {
             }));
 
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                LOGGER.error("received malformed byte section from server");
+                Camerapture.LOGGER.error("received malformed byte section from server");
                 ClientPictureStore.getInstance().processReceivedError(packet.uuid());
             }
         });
@@ -71,42 +80,78 @@ public class CameraptureClient implements ClientModInitializer {
             collectors.remove(packet.uuid());
         });
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-                ClientPictureStore.getInstance().clearCache());
+        // Server sends over the server-side config
+        ClientPlayNetworking.registerGlobalReceiver(ConfigPacket.TYPE, (packet, player, sender) ->
+                PictureTaker.getInstance().setConfig(packet.maxImageBytes(), packet.maxImageResolution()));
+    }
 
+    private void registerEvents() {
+        // Attacking when a camera is active should take a picture!
+        ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
+            if (Camerapture.hasActiveCamera(player) && paperInInventory() > 0) {
+                PictureTaker.getInstance().uploadScreenPicture();
+                return true;
+            }
+
+            return false;
+        });
+
+        // Right-clicking on certain items should open client-side GUI's.
+        // Ideally, this would be done using the methods in the Item class,
+        // but we can't access client code from there.
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
+            MinecraftClient client = MinecraftClient.getInstance();
+
+            if (client.player != player) {
+                return TypedActionResult.pass(stack);
+            }
+
             if (stack.isOf(Camerapture.PICTURE)) {
-                UUID uuid = PictureItem.getUuid(stack);
-                if (uuid != null) {
-                    MinecraftClient.getInstance().submit(() ->
-                            MinecraftClient.getInstance().setScreen(new PictureScreen(uuid)));
+                if (PictureItem.getUuid(stack) != null) {
+                    client.submit(() -> client.setScreen(new PictureScreen(List.of(stack))));
+                    return TypedActionResult.success(stack);
+                }
+            } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
+                List<ItemStack> pictures = AlbumItem.getPictures(stack);
+                if (!pictures.isEmpty()) {
+                    client.submit(() -> client.setScreen(new PictureScreen(pictures)));
                     return TypedActionResult.success(stack);
                 }
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
-                MinecraftClient.getInstance().submit(() ->
-                        MinecraftClient.getInstance().setScreen(new UploadScreen()));
+                client.submit(() -> client.setScreen(new UploadScreen()));
                 return TypedActionResult.success(stack);
             }
 
             return TypedActionResult.pass(stack);
         });
 
+        // Shift-right-clicking a picture frame should open the edit GUI for that frame.
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (player.isSneaking() && entity instanceof PictureFrameEntity picture) {
-                MinecraftClient.getInstance().submit(() ->
-                        MinecraftClient.getInstance().setScreen(new EditPictureFrameScreen(picture)));
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == player && player.isSneaking()
+                    && entity instanceof PictureFrameEntity picture) {
+                client.submit(() -> client.setScreen(new EditPictureFrameScreen(picture)));
 
                 return ActionResult.SUCCESS;
             }
 
             return ActionResult.PASS;
         });
+
+        // When disconnecting, we clear the picture cache.
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientPictureStore.getInstance().clearCache();
+            PictureTaker.getInstance().resetConfig();
+        });
     }
 
+    /**
+     * Returns the amount of paper in the player's inventory.
+     */
     public static int paperInInventory() {
         MinecraftClient client = MinecraftClient.getInstance();
         return client.player == null ? 0 : client.player.getInventory().count(Items.PAPER);

@@ -1,28 +1,38 @@
 package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.CameraptureClient;
+import me.chrr.camerapture.ThreadPooler;
 import me.chrr.camerapture.net.RequestPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.DynamicTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * The client-side picture store. This class manages picture son the client side.
+ * Its cache is cleared when you leave a world. It also manages caching pictures
+ * to disk when that's enabled, and converts them to NativeImages for Minecraft
+ * to understand. To the outside, this class works with BufferedImages.
+ */
 public class ClientPictureStore {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
     private final Map<UUID, Picture> uuidPictures = new HashMap<>();
@@ -31,7 +41,17 @@ public class ClientPictureStore {
     }
 
     public void clearCache() {
-        uuidPictures.clear();
+        MinecraftClient.getInstance().submit(() -> {
+            for (Picture picture : uuidPictures.values()) {
+                if (picture.identifier != null) {
+                    MinecraftClient.getInstance()
+                            .getTextureManager()
+                            .destroyTexture(picture.identifier);
+                }
+            }
+
+            uuidPictures.clear();
+        });
     }
 
     public void processReceivedError(UUID uuid) {
@@ -41,10 +61,45 @@ public class ClientPictureStore {
         }
 
         picture.setStatus(Status.ERROR);
-        LOGGER.error("remote error for image " + uuid);
+        Camerapture.LOGGER.error("remote error for image {}", uuid);
     }
 
-    public void cacheImage(UUID uuid, BufferedImage image) {
+    private void fetchPicture(UUID uuid) {
+        ThreadPooler.run(() -> {
+            File file = getCacheFilePath(uuid).toFile();
+            if (file.exists()) {
+                try {
+                    BufferedImage image = ImageIO.read(file);
+                    processImage(uuid, image);
+                    return;
+                } catch (IOException e) {
+                    // If this fails, we fall through to requesting the picture from the server.
+                    Camerapture.LOGGER.error("could not read cached picture {}", uuid, e);
+                }
+            }
+
+            ClientPlayNetworking.send(new RequestPicturePacket(uuid));
+        });
+    }
+
+    public void cacheToDisk(UUID uuid, byte[] bytes) {
+        if (!shouldCacheToDisk()) {
+            return;
+        }
+
+        try {
+            Path path = getCacheFilePath(uuid);
+            Files.createDirectories(path.getParent());
+            Files.write(path, bytes);
+        } catch (IOException e) {
+            Camerapture.LOGGER.error("could not cache picture {}", uuid, e);
+        }
+    }
+
+    /**
+     * Process a BufferedImage to update the stored picture by UUID.
+     */
+    public void processImage(UUID uuid, BufferedImage image) {
         Picture picture = uuidPictures.computeIfAbsent(uuid, Picture::new);
 
         NativeImage nativeImage = ImageUtil.toNativeImage(image);
@@ -60,18 +115,29 @@ public class ClientPictureStore {
         });
     }
 
+    /**
+     * Process the bytes received from the server, and update the stored picture.
+     */
     public void processReceivedBytes(UUID uuid, byte[] bytes) {
         try {
-            cacheImage(uuid, ImageIO.read(new ByteArrayInputStream(bytes)));
+            processImage(uuid, ImageIO.read(new ByteArrayInputStream(bytes)));
+            cacheToDisk(uuid, bytes);
         } catch (Exception e) {
-            LOGGER.error("failed to decode received image bytes for image " + uuid, e);
+            Camerapture.LOGGER.error("failed to decode received image bytes for image {}", uuid, e);
             Picture picture = uuidPictures.computeIfAbsent(uuid, Picture::new);
             picture.setStatus(Status.ERROR);
         }
     }
 
+    /**
+     * Get a picture by UUID, fetching it from the server if we don't have it yet.
+     * This method returns null if the input UUID is null.
+     * <p>
+     * If the corresponding picture has an error status on the client-side, this
+     * method will force-retry fetching the picture from the server.
+     */
     @Nullable
-    public Picture ensureServerPicture(UUID uuid) {
+    public Picture ensureServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }
@@ -80,15 +146,18 @@ public class ClientPictureStore {
         if (picture == null || picture.getStatus() == Status.ERROR) {
             picture = new Picture(uuid);
             uuidPictures.put(uuid, picture);
-
-            ClientPlayNetworking.send(new RequestPicturePacket(uuid));
+            fetchPicture(uuid);
         }
 
         return picture;
     }
 
+    /**
+     * Get a picture by UUID, fetching it from the server if we don't have it yet.
+     * This method returns null if the input UUID is null.
+     */
     @Nullable
-    public Picture getServerPicture(UUID uuid) {
+    public Picture getServerPicture(@Nullable UUID uuid) {
         if (uuid == null) {
             return null;
         }
@@ -99,6 +168,22 @@ public class ClientPictureStore {
         } else {
             return picture;
         }
+    }
+
+    private static boolean shouldCacheToDisk() {
+        // We enable single-player picture caching when Replay Mod is installed.
+        return CameraptureClient.replayModInstalled
+                || (Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
+                && !MinecraftClient.getInstance().isConnectedToLocalServer());
+    }
+
+    private Path getCacheFilePath(UUID uuid) {
+        Path cacheFolder = FabricLoader.getInstance()
+                .getGameDir()
+                .resolve("camerapture")
+                .resolve("picture-cache");
+
+        return cacheFolder.resolve(uuid + ".webp");
     }
 
     public static ClientPictureStore getInstance() {

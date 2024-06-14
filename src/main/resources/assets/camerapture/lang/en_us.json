@@ -1,10 +1,13 @@
 {
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
+    "item.camerapture.album": "Album",
+    "entity.camerapture.picture_frame": "Picture Frame",
     "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",
     "item.camerapture.picture.timestamp_tooltip": "on %s",
     "text.camerapture.picture_failed": "Could not save picture, try again later.",
+    "text.camerapture.upload_failed": "Could not upload picture, try again later.",
     "text.camerapture.fetching_picture": "Fetching picture...",
     "text.camerapture.fetching_failed": "Could not fetch picture.",
     "text.camerapture.no_paper": "NO PAPER",
@@ -18,5 +21,16 @@
     "text.camerapture.upload_picture.description": "Drag 'n drop your image here",
     "text.camerapture.upload_picture.browse": "or browse your filesystem...",
     "advancements.camerapture.shutterbug.title": "Shutterbug",
-    "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you"
+    "advancements.camerapture.shutterbug.description": "Obtain a Camera and start documenting the world around you",
+    "sound.camerapture.camera_shutter": "Camera shutters",
+    "config.jade.plugin_camerapture.picture_frame": "Picture Frame",
+    "config.camerapture.title": "Camerapture Options",
+    "config.camerapture.category.client": "Client",
+    "config.camerapture.category.server": "Server",
+    "config.camerapture.option.cache_pictures": "Cache pictures locally on disk",
+    "config.camerapture.option.max_image_bytes": "Maximum image size (bytes)",
+    "config.camerapture.option.max_image_resolution": "Maximum square image resolution",
+    "config.camerapture.option.ms_per_picture": "Delay between pictures sent (ms)",
+    "config.camerapture.option.can_rotate_pictures": "Rotate pictures when right-clicked",
+    "config.camerapture.set_by_server": "NOTE: This option is determined by the server,\nand synced to the client upon joining."
 }

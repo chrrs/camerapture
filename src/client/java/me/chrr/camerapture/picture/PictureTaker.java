@@ -2,19 +2,21 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.ByteCollector;
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.NewPicturePacket;
 import me.chrr.camerapture.net.PartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -22,8 +24,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
+/**
+ * This class is responsible for keeping track of taking pictures.
+ * It does this by turning off the HUD for a single frame and taking
+ * a screenshot. It is also responsible for processing and compressing
+ * the image, and making it ready to be sent to the server.
+ */
 public class PictureTaker {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final PictureTaker INSTANCE = new PictureTaker();
 
     private boolean hudHidden = false;
@@ -31,9 +38,15 @@ public class PictureTaker {
 
     private BufferedImage picture;
 
+    private int maxImageBytes;
+    private int maxImageResolution;
+
     private PictureTaker() {
     }
 
+    /**
+     * Take a screenshot and prepare it, requesting for it to be uploaded.
+     */
     public void uploadScreenPicture() {
         if (takePicture) {
             return;
@@ -44,23 +57,27 @@ public class PictureTaker {
         MinecraftClient.getInstance().options.hudHidden = true;
     }
 
-    public boolean tryUpload(Path filePath) {
+    /**
+     * Try reading an image from the file system and prepare it, requesting
+     * for it to be uploaded.
+     */
+    public boolean tryUploadFile(Path filePath) {
         try {
-            BufferedImage image = ImageIO.read(filePath.toFile());
-            uploadPicture(image);
+            this.picture = ImageIO.read(filePath.toFile());
+            ClientPlayNetworking.send(new NewPicturePacket());
             return true;
         } catch (IOException e) {
-            LOGGER.error("failed to read picture from file", e);
+            Camerapture.LOGGER.error("failed to read picture from file", e);
             return false;
         }
     }
 
-    public void uploadPicture(BufferedImage picture) {
-        this.picture = picture;
-
-        ClientPlayNetworking.send(new NewPicturePacket());
-    }
-
+    /**
+     * Process the frame that has just been rendered, taking a screenshot
+     * and processing it.
+     * <p>
+     * This should only be called on the main renderer thread!
+     */
     public void renderTickEnd() {
         if (!this.takePicture) {
             return;
@@ -71,12 +88,11 @@ public class PictureTaker {
         this.takePicture = false;
         client.options.hudHidden = this.hudHidden;
 
-        BufferedImage image;
         try (NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
-            image = ImageUtil.fromNativeImage(nativeImage, false);
-            this.picture = image;
+            this.picture = ImageUtil.fromNativeImage(nativeImage, false);
         }
 
+        // We de-activate the camera client-side immediately, to make it feel more responsive.
         Pair<Hand, ItemStack> activeCamera = Camerapture.findCamera(client.player, true);
         if (activeCamera != null) {
             CameraItem.setActive(activeCamera.getRight(), false);
@@ -91,12 +107,14 @@ public class PictureTaker {
         }
 
         try {
-            BufferedImage picture = ImageUtil.clampSize(this.picture, Camerapture.MAX_IMAGE_SIZE);
+            BufferedImage picture = ImageUtil.clampSize(this.picture, maxImageResolution);
 
+            // Starting at 100% quality, we step up the compression by 5% each time
+            // until we fit it into our size limit.
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
-            while (bytes.length > Camerapture.MAX_IMAGE_BYTES) {
+            while (bytes.length > maxImageBytes) {
                 if (factor < 0.1f) {
                     throw new IOException("image too big, even at 10% compression (" + bytes.length + " bytes)");
                 }
@@ -105,16 +123,35 @@ public class PictureTaker {
                 bytes = ImageUtil.compressIntoWebP(picture, factor);
             }
 
-            LOGGER.debug("sending picture (" + bytes.length + " bytes, " + (int) (factor * 100f) + "%)");
+            Camerapture.LOGGER.debug("sending picture ({} bytes, {}%)", bytes.length, (int) (factor * 100f));
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
                     ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
 
-            ClientPictureStore.getInstance().cacheImage(uuid, this.picture);
+            // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
+            ClientPictureStore.getInstance().processImage(uuid, picture);
+            ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
             this.picture = null;
         } catch (IOException e) {
-            LOGGER.error("failed to send picture to server", e);
+            Camerapture.LOGGER.error("failed to send picture to server", e);
             this.picture = null;
+
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player != null) {
+                player.sendMessage(Text.translatable("text.camerapture.upload_failed").formatted(Formatting.RED));
+            }
         }
+    }
+
+    public void resetConfig() {
+        Config config = Camerapture.CONFIG_MANAGER.getConfig();
+        this.maxImageBytes = config.server.maxImageBytes;
+        this.maxImageResolution = config.server.maxImageResolution;
+    }
+
+    public void setConfig(int maxImageBytes, int maxImageResolution) {
+        Camerapture.LOGGER.info("setting max image size to {} bytes, max resolution to {}", maxImageBytes, maxImageResolution);
+        this.maxImageBytes = maxImageBytes;
+        this.maxImageResolution = maxImageResolution;
     }
 
     public static PictureTaker getInstance() {

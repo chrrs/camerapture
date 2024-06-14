@@ -1,0 +1,8 @@
+{
+    "camera_shutter": {
+        "subtitle": "sound.camerapture.camera_shutter",
+        "sounds": [
+            "camerapture:camera_shutter"
+        ]
+    }
+}

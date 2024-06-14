@@ -1,25 +1,28 @@
+import java.lang.System.getenv
+
 plugins {
-    id("fabric-loom") version "1.5-SNAPSHOT"
+    id("fabric-loom") version "1.6-SNAPSHOT"
+    id("com.modrinth.minotaur") version "2.+"
 }
 
-val minecraftVersion: String by project
-val yarnMappings: String by project
-val loaderVersion: String by project
+val minecraftVersion = stonecutter.current.version
 
-val modVersion: String by project
-val mavenGroup: String by project
-val archivesBase: String by project
-
-val fabricVersion: String by project
-
-group = mavenGroup
-version = "$modVersion+mc$minecraftVersion"
+group = property("mod.mavenGroup") as String
+version = "${property("mod.version")}+mc$minecraftVersion"
 
 base {
-    archivesName.set(archivesBase)
+    archivesName.set(property("mod.archivesName") as String)
 }
 
 repositories {
+    maven("https://maven.shedaniel.me/")
+    maven("https://maven.terraformersmc.com/releases/")
+
+    maven("https://api.modrinth.com/maven") {
+        content {
+            includeGroup("maven.modrinth")
+        }
+    }
 }
 
 loom {
@@ -31,38 +34,87 @@ loom {
             sourceSet(sourceSets["client"])
         }
     }
+
+    accessWidenerPath = rootProject.file("src/main/resources/camerapture.accesswidener")
+
+    runConfigs["client"].runDir = "../../run"
+    runConfigs["server"].runDir = "../../run/server"
+
+    if (stonecutter.current.isActive) {
+        runConfigs.all { ideConfigGenerated(true) }
+    }
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$yarnMappings:v2")
-    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
+    mappings("net.fabricmc:yarn:${property("fabric.yarn")}:v2")
+    modImplementation("net.fabricmc:fabric-loader:${property("fabric.loader")}")
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabricApi")}")
+    modImplementation("maven.modrinth:jade:${property("deps.jade")}")
 
-    include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
+    modImplementation("com.terraformersmc:modmenu:${property("deps.modMenu")}")
+    modApi("me.shedaniel.cloth:cloth-config-fabric:${property("deps.clothConfig")}") {
+        exclude("net.fabricmc.fabric-api")
+    }
+
+    // FIXME: I don't really want to include the whole kotlin stdlib here,
+    //        but webp-imageio is written in Kotlin, and I don't want to
+    //        add a dependency on Fabric Language Kotlin. Since webp-imageio
+    //        is already +3kB, and kotlin adds +1kB, I think the sacrifice is
+    //        worth it.
+    include(implementation(kotlin("stdlib"))!!)
+    include(implementation("com.github.usefulness:webp-imageio:0.8.0")!!)
 }
+
+val modVersion = property("mod.version")
+val loaderVersion = property("fabric.loader")
+val minecraftDependency = property("deps.minecraft")
 
 tasks {
     processResources {
+
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
-            expand(mutableMapOf(
-                "version" to project.version,
-                "loader_version" to loaderVersion,
-                "minecraft_version" to minecraftVersion,
-            ))
+            expand(
+                mapOf(
+                    "version" to modVersion,
+                    "loaderVersion" to loaderVersion,
+                    "minecraftDependency" to minecraftDependency,
+                )
+            )
         }
     }
 
     jar {
         from("LICENSE")
     }
+
+    modrinth.get().dependsOn(build)
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+modrinth {
+    token.set(getenv("MODRINTH_TOKEN"))
+    projectId.set(property("modrinth.id") as String)
+
+    val modVersion = property("mod.version") as String
+    versionName.set("$modVersion - Fabric $minecraftVersion")
+    versionType.set(if (modVersion.contains("beta")) "beta" else "release")
+
+    versionNumber.set("$version")
+    changelog.set(getenv("CHANGELOG") ?: "No changelog provided.")
+
+    gameVersions.addAll((property("modrinth.compatibleVersions") as String).split(','))
+    loaders.addAll("fabric", "quilt")
+
+    uploadFile.set(tasks.remapJar.get())
+
+    dependencies {
+        required.project("fabric-api")
+    }
 }

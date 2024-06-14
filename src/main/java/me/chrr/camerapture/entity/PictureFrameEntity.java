@@ -8,6 +8,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
@@ -15,21 +16,23 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-public class PictureFrameEntity extends ResizableDecorationEntity {
-    private static final Logger LOGGER = LogManager.getLogger();
+import java.util.Objects;
 
+public class PictureFrameEntity extends ResizableDecorationEntity {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> ROTATION = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public PictureFrameEntity(EntityType<? extends PictureFrameEntity> entityType, World world) {
         super(entityType, world);
@@ -49,6 +52,30 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         this.getDataTracker().startTracking(ITEM_STACK, ItemStack.EMPTY);
         this.getDataTracker().startTracking(GLOWING, false);
         this.getDataTracker().startTracking(FIXED, false);
+        this.getDataTracker().startTracking(ROTATION, 0);
+    }
+
+    @Override
+    public ActionResult interact(PlayerEntity player, Hand hand) {
+        System.out.println("interact " + hand + ", " + player);
+
+        boolean canRotate = Camerapture.CONFIG_MANAGER.getConfig().server.canRotatePictures;
+
+        if (player.isSneaking()) {
+            // We open the edit picture GUI on the client side using an event.
+            return ActionResult.SUCCESS;
+        } else if (canRotate && !isFixed()) {
+            if (!player.getWorld().isClient) {
+                setRotation(getRotation() + 1);
+
+                this.playSound(SoundEvents.ENTITY_ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.emitGameEvent(GameEvent.BLOCK_CHANGE, player);
+            }
+
+            return ActionResult.SUCCESS;
+        }
+
+        return ActionResult.PASS;
     }
 
     @Override
@@ -92,6 +119,14 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
     public void setFixed(boolean fixed) {
         this.getDataTracker().set(FIXED, fixed);
         resetObstructionCheckCounter();
+    }
+
+    public int getRotation() {
+        return this.getDataTracker().get(ROTATION);
+    }
+
+    public void setRotation(int rotation) {
+        this.getDataTracker().set(ROTATION, rotation % 4);
     }
 
     @Override
@@ -200,6 +235,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
         nbt.putBoolean("Fixed", this.isFixed());
+        nbt.putInt("PictureRotation", this.getRotation());
     }
 
     @Override
@@ -210,7 +246,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         if (nbtCompound != null && !nbtCompound.isEmpty()) {
             ItemStack itemStack = ItemStack.fromNbt(nbtCompound);
             if (itemStack.isEmpty()) {
-                LOGGER.warn("unable to load item from: {}", nbtCompound);
+                Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
             }
 
             this.setItemStack(itemStack);
@@ -218,6 +254,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
         this.setFixed(nbt.getBoolean("Fixed"));
+        this.setRotation(nbt.getInt("PictureRotation"));
     }
 
     @Override
@@ -228,6 +265,17 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
         } else {
             return itemStack.copy();
         }
+    }
+
+    @Override
+    public boolean hasCustomName() {
+        return getItemStack() != null && getItemStack().hasCustomName();
+    }
+
+    @Nullable
+    @Override
+    public Text getCustomName() {
+        return hasCustomName() ? Objects.requireNonNull(getItemStack()).getName() : null;
     }
 
     public enum ResizeDirection {

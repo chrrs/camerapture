@@ -2,6 +2,14 @@ package me.chrr.camerapture;
 
 import java.util.function.Consumer;
 
+/**
+ * A utility class to deal with segmented byte streams. It can take in segments
+ * of bytes, along with the amount of bytes left, and reconstructs the final byte
+ * array.
+ * <p>
+ * On the way, it also checks if the passed number of bytes stays correct, and if
+ * it receives more or less bytes than expected, will return an error.
+ */
 public class ByteCollector {
     private final Consumer<byte[]> callback;
 
@@ -10,6 +18,10 @@ public class ByteCollector {
 
     public ByteCollector(Consumer<byte[]> callback) {
         this.callback = callback;
+    }
+
+    public int getCurrentLength() {
+        return offset;
     }
 
     public boolean push(byte[] bytes, int bytesLeft) {
@@ -31,21 +43,21 @@ public class ByteCollector {
         return true;
     }
 
-    public static void split(byte[] bytes, int size, SectionCallback callback) {
+    public static void split(byte[] bytes, int sectionSize, SectionConsumer callback) {
         int bytesLeft = bytes.length;
         int offset = 0;
         while (bytesLeft > 0) {
-            int sectionSize = Math.min(size, bytesLeft);
-            byte[] section = new byte[sectionSize];
-            System.arraycopy(bytes, offset, section, 0, sectionSize);
-            callback.accept(section, bytesLeft - sectionSize);
+            int size = Math.min(sectionSize, bytesLeft);
+            byte[] section = new byte[size];
+            System.arraycopy(bytes, offset, section, 0, size);
+            callback.accept(section, bytesLeft - size);
 
-            offset += sectionSize;
-            bytesLeft -= sectionSize;
+            offset += size;
+            bytesLeft -= size;
         }
     }
 
-    public interface SectionCallback {
+    public interface SectionConsumer {
         void accept(byte[] section, int bytesLeft);
     }
 }

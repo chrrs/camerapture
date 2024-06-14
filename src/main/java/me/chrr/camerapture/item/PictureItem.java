@@ -12,6 +12,8 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -22,12 +24,24 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PictureItem extends Item {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy 'at' HH:mm");
 
     public PictureItem(Settings settings) {
         super(settings);
+    }
+
+    @Override
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+        ItemStack stack = user.getStackInHand(hand);
+        if (!user.isSneaking()) {
+            // When not sneaking, we show the picture client-side through an event handler.
+            return TypedActionResult.success(stack);
+        } else {
+            return TypedActionResult.pass(stack);
+        }
     }
 
     @Override
@@ -83,10 +97,13 @@ public class PictureItem extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        NbtCompound nbt = stack.getOrCreateNbt();
+        getTooltip(tooltip::add, stack);
+    }
 
+    public static void getTooltip(Consumer<Text> textConsumer, ItemStack itemStack) {
+        NbtCompound nbt = itemStack.getOrCreateNbt();
         if (nbt.contains("creator")) {
-            tooltip.add(Text.translatable(
+            textConsumer.accept(Text.translatable(
                     "item.camerapture.picture.creator_tooltip",
                     Text.literal(nbt.getString("creator")).formatted(Formatting.GRAY)
             ).formatted(Formatting.DARK_GRAY));
@@ -94,7 +111,7 @@ public class PictureItem extends Item {
 
         if (nbt.contains("timestamp")) {
             String timestamp = SDF.format(new Date(nbt.getLong("timestamp")));
-            tooltip.add(Text.translatable(
+            textConsumer.accept(Text.translatable(
                     "item.camerapture.picture.timestamp_tooltip",
                     Text.literal(timestamp).formatted(Formatting.GRAY)
             ).formatted(Formatting.DARK_GRAY));

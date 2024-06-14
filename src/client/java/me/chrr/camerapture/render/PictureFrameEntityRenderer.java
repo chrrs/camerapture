@@ -21,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
@@ -45,9 +46,10 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             UUID uuid = PictureItem.getUuid(itemStack);
             ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
 
+            // When hovering, render a "block" outline to make the frame appear as a block.
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
-                    && !Camerapture.isCameraActive(client.player)
+                    && !Camerapture.hasActiveCamera(client.player)
                     && client.crosshairTarget instanceof EntityHitResult hitResult
                     && hitResult.getEntity() == entity) {
                 renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
@@ -58,7 +60,8 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
                 renderFetching(matrices, vertexConsumers);
             } else {
-                renderPicture(matrices, vertexConsumers, picture, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
+                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
+                renderPicture(matrices, vertexConsumers, picture, entity.getRotation(), entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
             }
         }
 
@@ -67,9 +70,18 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, float frameWidth, float frameHeight, boolean glowing, int light) {
-        float scaledWidth = frameWidth / picture.getWidth();
-        float scaleHeight = frameHeight / picture.getHeight();
+    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, int rotation, float frameWidth, float frameHeight, boolean glowing, int light) {
+        float pictureWidth = picture.getWidth();
+        float pictureHeight = picture.getHeight();
+
+        // If the picture is on its side, we flip width and height.
+        if (rotation % 2 == 1) {
+            pictureWidth = picture.getHeight();
+            pictureHeight = picture.getWidth();
+        }
+
+        float scaledWidth = frameWidth / pictureWidth;
+        float scaleHeight = frameHeight / pictureHeight;
 
         float scale = Math.min(scaledWidth, scaleHeight);
 
@@ -118,22 +130,26 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     private void pushGlowingVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
+        Matrix3f matrix3f = matrix.getNormalMatrix();
+
         buffer.vertex(matrix4f, x, y, 0f)
                 .color(0xffffffff)
                 .texture(u, v)
                 .light(0xf000f0)
-                .normal(0f, 0f, -1f)
+                .normal(matrix3f, 0f, 0f, 1f)
                 .next();
     }
 
     private void pushCutoutVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v, int light) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
+        Matrix3f matrix3f = matrix.getNormalMatrix();
+
         buffer.vertex(matrix4f, x, y, 0f)
                 .color(0xffffffff)
                 .texture(u, v)
                 .overlay(OverlayTexture.DEFAULT_UV)
                 .light(light)
-                .normal(0f, 0f, -1f)
+                .normal(matrix3f, 0f, 0f, 1f)
                 .next();
     }
 
@@ -169,5 +185,27 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     @Override
     protected int getBlockLight(PictureFrameEntity entity, BlockPos pos) {
         return entity.isPictureGlowing() ? 15 : super.getBlockLight(entity, pos);
+    }
+
+    @Override
+    protected boolean hasLabel(PictureFrameEntity entity) {
+        // this.dispatcher.targetedEntity should work, but it doesn't.
+        if (MinecraftClient.isHudEnabled()
+                && entity.hasCustomName()
+                && MinecraftClient.getInstance().crosshairTarget instanceof EntityHitResult hitResult
+                && hitResult.getEntity() == entity) {
+            double d = this.dispatcher.getSquaredDistanceToCamera(entity);
+            return d < 64f * 64f;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    protected void renderLabelIfPresent(PictureFrameEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        matrices.push();
+        matrices.translate(0f, entity.getFrameHeight() - 1f, -((float) entity.getFrameWidth() - 1f) / 2f);
+        super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light);
+        matrices.pop();
     }
 }

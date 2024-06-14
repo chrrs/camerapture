@@ -1,5 +1,6 @@
 package me.chrr.camerapture.entity;
 
+import me.chrr.camerapture.Camerapture;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
@@ -19,12 +20,15 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This is mostly a copy of {@link AbstractDecorationEntity}, but modified
+ * to make it resizable. This could've been done using a superclass, but
+ * there's other behaviour I didn't need for the picture frames, so this
+ * ended up being less work.
+ */
 public abstract class ResizableDecorationEntity extends Entity {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final double THICKNESS = 1.0 / 16.0;
 
     private static final TrackedData<Integer> FRAME_WIDTH = DataTracker.registerData(ResizableDecorationEntity.class, TrackedDataHandlerRegistry.INTEGER);
@@ -114,11 +118,13 @@ public abstract class ResizableDecorationEntity extends Entity {
             return;
         }
 
+        // Find the center of the top-left piece.
         Vec3d center = attachmentPos.toCenterPos();
         center = center.subtract(new Vec3d(facing.getOffsetX(), 0, facing.getOffsetZ()).multiply(0.5 - THICKNESS / 2));
 
         this.setPos(center.x, center.y, center.z);
 
+        // Then, we expand into the full frame.
         Direction parallel = facing.rotateYCounterclockwise();
         if (facing.getAxis() == Direction.Axis.Z) {
             Vec3d p1 = center.subtract(parallel.getOffsetX() * 0.5, 0.5, THICKNESS / 2);
@@ -263,7 +269,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public void readCustomDataFromNbt(NbtCompound nbt) {
         BlockPos blockPos = new BlockPos(nbt.getInt("TileX"), nbt.getInt("TileY"), nbt.getInt("TileZ"));
         if (!blockPos.isWithinDistance(this.getBlockPos(), 16.0)) {
-            LOGGER.error("hanging entity at invalid position: {}", blockPos);
+            Camerapture.LOGGER.error("hanging entity at invalid position: {}", blockPos);
         } else {
             this.attachmentPos = blockPos;
         }

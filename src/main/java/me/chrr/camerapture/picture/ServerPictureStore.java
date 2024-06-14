@@ -5,11 +5,20 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * The server-side picture store. It is actually a bit of a misnomer, as this
+ * picture store can store any byte files, and does not do any image parsing.
+ * <p>
+ * Pictures put in the store will be stored on the disk in the world folder.
+ * The store also manages picture UUID's.
+ */
 public class ServerPictureStore {
     private static final int CACHE_SIZE = 250;
 
@@ -45,9 +54,14 @@ public class ServerPictureStore {
             throw new IOException("UUID not reserved");
         }
 
-        if (picture.bytes().length > Camerapture.MAX_IMAGE_BYTES) {
-            throw new IOException("image larger than " + Camerapture.MAX_IMAGE_BYTES + " bytes");
+        int maxImageBytes = Camerapture.CONFIG_MANAGER.getConfig().server.maxImageBytes;
+        if (picture.bytes().length > maxImageBytes) {
+            throw new IOException("image larger than " + maxImageBytes + " bytes");
         }
+
+        // We read the image server-side to verify that it's valid.
+        // This throws an error if it fails.
+        ImageIO.read(new ByteArrayInputStream(picture.bytes));
 
         imageCache.put(uuid, picture);
 
