@@ -5,7 +5,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
-import me.chrr.camerapture.util.PictureUtil;
+import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.PageTurnWidget;
@@ -115,7 +115,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
             UUID uuid = PictureItem.getUuid(slot.getStack());
             ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
             if (picture != null) {
-                PictureUtil.drawPicture(context, textRenderer, picture, slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
+                PictureDrawingUtil.drawPicture(context, textRenderer, picture, slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
             }
         } else {
             context.drawTexture(TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);

@@ -6,7 +6,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.text.Text;
 
-public class PictureUtil {
+public class PictureDrawingUtil {
     public static void drawPicture(DrawContext context, TextRenderer textRenderer, ClientPictureStore.Picture picture, int x, int y, int width, int height) {
         switch (picture.getStatus()) {
             case FETCHING -> {

@@ -1,15 +1,25 @@
 package me.chrr.camerapture.screen;
 
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
-import me.chrr.camerapture.util.PictureUtil;
+import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.texture.AbstractTexture;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +34,8 @@ public class PictureScreen extends InGameScreen {
 
     private Text pageNumber;
     private Text customName;
+
+    private boolean ctrlHeld = false;
 
     public PictureScreen(List<ItemStack> pictures) {
         super(Text.translatable("item.camerapture.picture"));
@@ -75,14 +87,45 @@ public class PictureScreen extends InGameScreen {
             return;
         }
 
+        if (this.ctrlHeld) {
+            Text text = Text.translatable("text.camerapture.save_as").formatted(Formatting.GRAY);
+            int tw = this.textRenderer.getWidth(text);
+            context.drawText(this.textRenderer, text, width / 2 - tw / 2, BORDER_THICKNESS - textRenderer.fontHeight - 2, 0xffffff, false);
+        }
+
         // Drawing the picture
         int bottomOffset = isSinglePicture() ? 0 : 24;
-        PictureUtil.drawPicture(context, textRenderer, picture, BORDER_THICKNESS, BORDER_THICKNESS, width - BORDER_THICKNESS * 2, height - BORDER_THICKNESS * 2 - bottomOffset);
+        PictureDrawingUtil.drawPicture(context, textRenderer, picture, BORDER_THICKNESS, BORDER_THICKNESS, width - BORDER_THICKNESS * 2, height - BORDER_THICKNESS * 2 - bottomOffset);
+    }
+
+    @Nullable
+    public NativeImage getNativeImage() {
+        if (this.client == null ||
+                this.picture == null
+                || this.picture.getStatus() != ClientPictureStore.Status.SUCCESS) {
+            return null;
+        }
+
+        AbstractTexture texture = client.getTextureManager().getTexture(this.picture.getIdentifier());
+        if (!(texture instanceof NativeImageBackedTexture backedTexture)) {
+            return null;
+        }
+
+        return backedTexture.getImage();
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+        if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL) {
+            this.ctrlHeld = true;
+        } else if (keyCode == GLFW.GLFW_KEY_S && (modifiers & GLFW.GLFW_MOD_CONTROL) != 0) {
+            // On Ctrl-S, we prompt the user to save the image.
+            NativeImage image = this.getNativeImage();
+            if (image != null) {
+                saveAs(image);
+                return true;
+            }
+        } else if (keyCode == GLFW.GLFW_KEY_LEFT) {
             this.index = Math.floorMod(this.index - 1, pictures.size());
             forceRefresh();
             return true;
@@ -94,6 +137,15 @@ public class PictureScreen extends InGameScreen {
 
         // We leave the usual handling to last, so we override the arrow keys controlling focus.
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL) {
+            this.ctrlHeld = false;
+        }
+
+        return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -118,5 +170,26 @@ public class PictureScreen extends InGameScreen {
 
     private boolean isSinglePicture() {
         return pictures.size() == 1;
+    }
+
+    private void saveAs(NativeImage image) {
+        new Thread(() -> {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                PointerBuffer filter = stack.mallocPointer(1);
+                filter.put(stack.UTF8("png"));
+                filter.flip();
+
+                String path = TinyFileDialogs.tinyfd_saveFileDialog("Save Picture", "picture.png", filter, "*.png");
+                if (path == null) {
+                    return;
+                }
+
+                try {
+                    image.writeTo(Path.of(path));
+                } catch (IOException e) {
+                    Camerapture.LOGGER.error("failed to save picture to disk", e);
+                }
+            }
+        }, "Save prompter").start();
     }
 }
