@@ -1,4 +1,4 @@
-import dev.kikugie.stonecutter.gradle.StonecutterSettings
+import dev.kikugie.stonecutter.StonecutterSettings
 
 pluginManagement {
     repositories {

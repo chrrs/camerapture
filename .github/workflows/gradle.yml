@@ -22,6 +22,4 @@ jobs:
         distribution: 'temurin'
 
     - name: Build with Gradle Wrapper
-      uses: srz-zumix/retry-run-action@v0
-      with:
-        run: ./gradlew chiseledBuild
+      run: ./gradlew chiseledBuild
