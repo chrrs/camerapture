@@ -20,7 +20,7 @@ public class Config {
 
     public Server server = new Server();
     public static class Server {
-        public static int VERSION = 2;
+        public static int VERSION = 3;
 
         @SerializedName("version")
         public int version = VERSION;
@@ -36,6 +36,9 @@ public class Config {
 
         @SerializedName("can_rotate_pictures")
         public boolean canRotatePictures = true;
+
+        @SerializedName("check_frame_position")
+        public boolean checkFramePosition = false;
 
         public void upgrade() {
             this.version = VERSION;
