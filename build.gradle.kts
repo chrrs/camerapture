@@ -1,8 +1,8 @@
-import java.lang.System.getenv
+import me.modmuss50.mpp.ReleaseType
 
 plugins {
     id("fabric-loom") version "1.6-SNAPSHOT"
-    id("com.modrinth.minotaur") version "2.+"
+    id("me.modmuss50.mod-publish-plugin") version "0.5.1"
 }
 
 val minecraftVersion = stonecutter.current.version
@@ -90,7 +90,7 @@ tasks {
         from("LICENSE")
     }
 
-    modrinth.get().dependsOn(build)
+    publishMods.get().dependsOn(build)
 }
 
 java {
@@ -98,23 +98,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-modrinth {
-    token.set(getenv("MODRINTH_TOKEN"))
-    projectId.set(property("modrinth.id") as String)
-
+publishMods {
     val modVersion = property("mod.version") as String
-    versionName.set("$modVersion - Fabric $minecraftVersion")
-    versionType.set(if (modVersion.contains("beta")) "beta" else "release")
+    val gameVersions = (property("modrinth.compatibleVersions") as String).split(',')
 
-    versionNumber.set("$version")
-    changelog.set(getenv("CHANGELOG") ?: "No changelog provided.")
+    file.set(tasks.remapJar.get().archiveFile)
+    changelog.set(providers.environmentVariable("CHANGELOG"))
+    type.set(if (modVersion.contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
+    modLoaders.addAll("fabric", "quilt")
 
-    gameVersions.addAll((property("modrinth.compatibleVersions") as String).split(','))
-    loaders.addAll("fabric", "quilt")
+    displayName.set("$modVersion - Fabric $minecraftVersion")
 
-    uploadFile.set(tasks.remapJar.get())
-
-    dependencies {
-        required.project("fabric-api")
+    modrinth {
+        projectId.set(property("modrinth.id") as String)
+        accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
+        minecraftVersions.addAll(gameVersions)
+        requires("fabric-api")
     }
 }

@@ -11,5 +11,5 @@ stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chisele
 
 stonecutter registerChiseled tasks.register("chiseledPublish", stonecutter.chiseled) {
     group = "project"
-    ofTask("modrinth")
+    ofTask("publishMods")
 }
