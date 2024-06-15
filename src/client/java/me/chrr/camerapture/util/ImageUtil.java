@@ -81,7 +81,7 @@ public class ImageUtil {
         WebPWriteParam writeParam = new WebPWriteParam(imageWriter.getLocale());
         writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         writeParam.setCompressionType(writeParam.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
-        writeParam.setAlphaCompressionAlgorithm(1);
+        writeParam.setAlphaCompression(1);
         writeParam.setCompressionQuality(quality);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
