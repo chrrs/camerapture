@@ -1,3 +1,12 @@
+## 1.3.1
+Allow saving pictures to disk when pressing Ctrl-S.
+
+Add a config option for picture frame obstruction checks.
+
+Fix a compatibility issue with Essential.
+
+[full changelog...](https://github.com/chrrs/camerapture/compare/v1.3.0...v1.3.1)
+
 ## 1.3.0
 Add an album item to store your pictures!
 
