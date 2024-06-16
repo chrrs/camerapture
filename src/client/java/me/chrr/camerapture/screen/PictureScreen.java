@@ -149,11 +149,10 @@ public class PictureScreen extends InGameScreen {
     }
 
     @Override
-    /*? if >=1.20.4 {*/
+    //? if >=1.20.4 {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        /*?} else {*//*
-    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
-        *//*?}*/
+        //?} else
+    /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
         this.index = Math.floorMod(this.index - (int) verticalAmount, pictures.size());
         forceRefresh();
         return true;

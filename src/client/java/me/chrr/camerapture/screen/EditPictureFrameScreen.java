@@ -196,11 +196,10 @@ public class EditPictureFrameScreen extends InGameScreen {
         }
 
         @Override
-        /*? if >=1.20.4 {*/
+        //? if >=1.20.4 {
         protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-            /*?} else {*//*
-        protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-            *//*?}*/
+            //?} else
+        /*protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {*/
             MinecraftClient minecraftClient = MinecraftClient.getInstance();
             TextRenderer textRenderer = minecraftClient.textRenderer;
 

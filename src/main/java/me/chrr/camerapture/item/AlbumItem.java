@@ -23,7 +23,7 @@ import net.minecraft.world.World;
 import java.util.ArrayList;
 import java.util.List;
 
-/*? if <1.20.4*/
+//? if <1.20.4
 /*import net.minecraft.util.collection.DefaultedList;*/
 
 public class AlbumItem extends Item {
@@ -124,10 +124,10 @@ public class AlbumItem extends Item {
         }
 
         // This method exists on 1.20.4, but not on 1.20.1
-        /*? if <1.20.4 {*//*
-        private DefaultedList<ItemStack> getHeldStacks() {
+        //? if <1.20.4 {
+        /*private DefaultedList<ItemStack> getHeldStacks() {
             return this.stacks;
         }
-        *//*?}*/
+        *///?}
     }
 }

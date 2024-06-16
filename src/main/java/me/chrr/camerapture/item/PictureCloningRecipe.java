@@ -13,15 +13,15 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 public class PictureCloningRecipe extends SpecialCraftingRecipe {
-    /*? if >=1.20.4 {*/
+    //? if >=1.20.4 {
     public PictureCloningRecipe(CraftingRecipeCategory category) {
         super(category);
     }
-    /*?} else {*//*
-    public PictureCloningRecipe(net.minecraft.util.Identifier id, CraftingRecipeCategory category) {
+    //?} else {
+    /*public PictureCloningRecipe(net.minecraft.util.Identifier id, CraftingRecipeCategory category) {
         super(id, category);
     }
-    *//*?}*/
+    *///?}
 
     @Override
     public boolean matches(RecipeInputInventory inventory, World world) {
