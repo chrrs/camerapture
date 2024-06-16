@@ -48,6 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,6 +85,10 @@ public class Camerapture implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        // FIXME: Workaround for an Essential issue, it seems like it doesn't
+        //        detect the webp-imageio library in the first pass.
+        ImageIO.scanForPlugins();
+
         if (!WebP.loadNativeLibrary()) {
             LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
         }
