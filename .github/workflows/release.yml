@@ -8,30 +8,27 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v4
-        with:
-          java-version: 21
-          distribution: temurin
+      - uses: actions/checkout@v4
 
-      - name: Set environment variables
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Fetch Changelog
         run: |
           {
-            VERSION="${GITHUB_REF_NAME#v}"
-            CHANGELOG="$(awk -vver=$VERSION '/^## / { if (p) { exit }; if ($2 == ver) { p=1; next } } p' CHANGELOG.md)"
-            
-            echo "VERSION=$VERSION"
             echo "CHANGELOG<<EOF"
-            echo "$CHANGELOG"
+            tr -d '\r' < CHANGELOG.md | awk -vver="${GITHUB_REF_NAME#v}" '/^## / { if (p) { exit }; if ($2 == ver) { p=1; next } } p'
             echo "EOF"
           } >> $GITHUB_ENV
 
-      - name: Publish with Gradle
-        run: ./gradlew chiseledPublish
+      - run: ./gradlew chiseledPublish
         env:
           CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
