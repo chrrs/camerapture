@@ -33,6 +33,22 @@ jobs:
           CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
+      - name: Check out 1.21
+        run: |
+          git fetch origin 1.21
+          git checkout 1.21
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git rebase ${{ github.ref }}
+          git push origin 1.21 --force
+
+      - run: ./gradlew chiseledPublish
+        env:
+          CHANGELOG: ${{ env.CHANGELOG }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
