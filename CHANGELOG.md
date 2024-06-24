@@ -1,3 +1,12 @@
+## 1.4.0
+Update to 1.21.
+
+Remove strict server-side checks for uploaded pictures.
+
+Various other smaller fixes.
+
+[full changelog...](https://github.com/chrrs/camerapture/compare/v1.3.1...v1.4.0)
+
 ## 1.3.1
 Allow saving pictures to disk when pressing Ctrl-S.
 
