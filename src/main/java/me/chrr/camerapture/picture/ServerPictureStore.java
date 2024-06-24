@@ -5,8 +5,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,10 +56,6 @@ public class ServerPictureStore {
         if (picture.bytes().length > maxImageBytes) {
             throw new IOException("image larger than " + maxImageBytes + " bytes");
         }
-
-        // We read the image server-side to verify that it's valid.
-        // This throws an error if it fails.
-        ImageIO.read(new ByteArrayInputStream(picture.bytes));
 
         imageCache.put(uuid, picture);
 
