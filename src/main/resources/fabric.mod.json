@@ -4,7 +4,9 @@
     "version": "${version}",
     "name": "Camerapture",
     "description": "Take photos and display pictures in Minecraft",
-    "authors": ["chrrrs"],
+    "authors": [
+        "chrrrs"
+    ],
     "contact": {
         "homepage": "https://modrinth.com/mod/camerapture",
         "sources": "https://github.com/chrrs/camerapture",
@@ -13,16 +15,26 @@
     "license": "MIT",
     "icon": "assets/camerapture/icon.png",
     "accessWidener": "camerapture.accesswidener",
-    "mixins": [{
-        "config": "camerapture.mixins.json",
-        "environment": "client"
-    }],
+    "mixins": [
+        {
+            "config": "camerapture-client.mixins.json",
+            "environment": "client"
+        }
+    ],
     "environment": "*",
     "entrypoints": {
-        "client": ["me.chrr.camerapture.CameraptureClient"],
-        "main": ["me.chrr.camerapture.Camerapture"],
-        "jade": ["me.chrr.camerapture.compat.JadePlugin"],
-        "modmenu": ["me.chrr.camerapture.compat.ModMenuCompat"]
+        "client": [
+            "me.chrr.camerapture.CameraptureClient"
+        ],
+        "main": [
+            "me.chrr.camerapture.Camerapture"
+        ],
+        "jade": [
+            "me.chrr.camerapture.compat.JadePlugin"
+        ],
+        "modmenu": [
+            "me.chrr.camerapture.compat.ModMenuCompat"
+        ]
     },
     "depends": {
         "fabricloader": ">=${loaderVersion}",
