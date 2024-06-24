@@ -1,6 +1,7 @@
 package me.chrr.camerapture.entity;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.screen.PictureFrameScreenHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.MovementType;
@@ -9,12 +10,16 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.tag.DamageTypeTags;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.PropertyDelegate;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -28,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PictureFrameEntity extends ResizableDecorationEntity {
+public class PictureFrameEntity extends ResizableDecorationEntity implements NamedScreenHandlerFactory {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -57,12 +62,10 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        System.out.println("interact " + hand + ", " + player);
-
         boolean canRotate = Camerapture.CONFIG_MANAGER.getConfig().server.canRotatePictures;
 
         if (player.isSneaking()) {
-            // We open the edit picture GUI on the client side using an event.
+            player.openHandledScreen(this);
             return ActionResult.SUCCESS;
         } else if (canRotate && !isFixed()) {
             if (!player.getWorld().isClient) {
@@ -276,6 +279,34 @@ public class PictureFrameEntity extends ResizableDecorationEntity {
     @Override
     public Text getCustomName() {
         return hasCustomName() ? Objects.requireNonNull(getItemStack()).getName() : null;
+    }
+
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        return new PictureFrameScreenHandler(syncId, this, new PropertyDelegate() {
+            @Override
+            public int get(int id) {
+                return switch (id) {
+                    case 0 -> PictureFrameEntity.this.getFrameWidth();
+                    case 1 -> PictureFrameEntity.this.getFrameHeight();
+                    case 2 -> PictureFrameEntity.this.isPictureGlowing() ? 1 : 0;
+                    case 3 -> PictureFrameEntity.this.isFixed() ? 1 : 0;
+                    default -> 0;
+                };
+            }
+
+            @Override
+            public void set(int id, int value) {
+                // We aren't setting anything via properties, we're accessing
+                // the entity directly, as this simple int-based property system
+                // is not enough for our needs.
+            }
+
+            @Override
+            public int size() {
+                return 4;
+            }
+        });
     }
 
     public enum ResizeDirection {

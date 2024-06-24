@@ -1,17 +1,18 @@
 package me.chrr.camerapture.screen;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.entity.PictureFrameEntity;
-import me.chrr.camerapture.net.EditPictureFramePacket;
-import me.chrr.camerapture.net.ResizePictureFramePacket;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -19,37 +20,32 @@ import java.util.function.Consumer;
 
 /**
  * This UI is fully and completely a stolen idea from the
- * <a href="https://www.curseforge.com/minecraft/mc-mods/camera-mod">Forge camera mod</a>.
+ * <a href="https://modrinth.com/mod/camera-mod">Forge camera mod</a>.
  * It's far from perfect, I don't know if I like it, but I
  * can't think of anything better right now.
  */
-public class EditPictureFrameScreen extends InGameScreen {
+public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler> implements ScreenHandlerListener {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_picture_frame.png");
 
-    private static final int backgroundWidth = 158;
-    private static final int backgroundHeight = 52;
-
-    private final PictureFrameEntity entity;
-
-    private int frameWidth;
-    private int frameHeight;
-    private boolean glowing;
-    private boolean fixed;
+    private int frameWidth = 0;
+    private int frameHeight = 0;
+    private boolean glowing = false;
+    private boolean fixed = false;
 
     private ButtonWidget upButton;
     private ButtonWidget leftButton;
     private ButtonWidget rightButton;
     private ButtonWidget downButton;
 
-    public EditPictureFrameScreen(PictureFrameEntity entity) {
-        super(Text.translatable("item.camerapture.picture"));
+    private SmallCheckboxWidget glowingCheckbox;
+    private SmallCheckboxWidget fixedCheckbox;
 
-        this.entity = entity;
+    public PictureFrameScreen(PictureFrameScreenHandler screenHandler, PlayerInventory inventory, Text title) {
+        super(screenHandler, inventory, title);
+        screenHandler.addListener(this);
 
-        this.frameWidth = entity.getFrameWidth();
-        this.frameHeight = entity.getFrameHeight();
-        this.glowing = entity.isPictureGlowing();
-        this.fixed = entity.isFixed();
+        this.backgroundWidth = 158;
+        this.backgroundHeight = 52;
     }
 
     @Override
@@ -57,60 +53,82 @@ public class EditPictureFrameScreen extends InGameScreen {
         super.init();
 
         upButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button ->
-                                resizeRemotePicture(PictureFrameEntity.ResizeDirection.UP, hasShiftDown()))
+                ButtonWidget.builder(Text.empty(), button -> {
+                            this.sendButtonPressPacket(hasShiftDown() ? 0 : 1);
+                            this.frameHeight += hasShiftDown() ? -1 : 1;
+                        })
                         .dimensions(width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2 - 20 - 4, backgroundWidth, 20)
                         .build());
 
-        leftButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button ->
-                                resizeRemotePicture(PictureFrameEntity.ResizeDirection.LEFT, hasShiftDown()))
-                        .dimensions(width / 2 - backgroundWidth / 2 - 20 - 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
-                        .build());
-
         rightButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button ->
-                                resizeRemotePicture(PictureFrameEntity.ResizeDirection.RIGHT, hasShiftDown()))
-                        .dimensions(width / 2 + backgroundWidth / 2 + 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
+                ButtonWidget.builder(Text.empty(), button -> {
+                            this.sendButtonPressPacket(hasShiftDown() ? 2 : 3);
+                            this.frameWidth += hasShiftDown() ? -1 : 1;
+                        }).dimensions(width / 2 + backgroundWidth / 2 + 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
                         .build());
 
         downButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button ->
-                                resizeRemotePicture(PictureFrameEntity.ResizeDirection.DOWN, hasShiftDown()))
+                ButtonWidget.builder(Text.empty(), button -> {
+                            this.sendButtonPressPacket(hasShiftDown() ? 4 : 5);
+                            this.frameHeight += hasShiftDown() ? -1 : 1;
+                        })
                         .dimensions(width / 2 - backgroundWidth / 2, height / 2 + backgroundHeight / 2 + 4, backgroundWidth, 20)
                         .build());
 
-        addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.glowing"), (glowing) -> {
-            this.glowing = glowing;
-            updateRemotePicture();
-        }, width / 2 - backgroundWidth / 2 + 7, height / 2 - backgroundHeight / 2 + 34, false, this.glowing));
+        leftButton = addDrawableChild(
+                ButtonWidget.builder(Text.empty(), button -> {
+                            this.sendButtonPressPacket(hasShiftDown() ? 6 : 7);
+                            this.frameWidth += hasShiftDown() ? -1 : 1;
+                        }).dimensions(width / 2 - backgroundWidth / 2 - 20 - 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
+                        .build());
 
-        addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.fixed"), (fixed) -> {
-            this.fixed = fixed;
-            updateRemotePicture();
-        }, width / 2 + backgroundWidth / 2 - 7 - 11, height / 2 - backgroundHeight / 2 + 34, true, this.fixed));
+        glowingCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.glowing"), (glowing) -> {
+                    this.sendButtonPressPacket(8);
+                    this.glowing = glowing;
+                }, width / 2 - backgroundWidth / 2 + 7, height / 2 - backgroundHeight / 2 + 34, false, this.glowing));
+
+        fixedCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.fixed"), (fixed) -> {
+                    this.sendButtonPressPacket(9);
+                    this.fixed = fixed;
+                }, width / 2 + backgroundWidth / 2 - 7 - 11, height / 2 - backgroundHeight / 2 + 34, true, this.fixed));
+
+        updateButtons();
+    }
+
+    private void sendButtonPressPacket(int id) {
+        if (this.client == null || this.client.interactionManager == null) {
+            return;
+        }
+
+        this.client.interactionManager.clickButton(this.handler.syncId, id);
+    }
+
+    @Override
+    public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {
+        // This screen has no slots.
+    }
+
+    @Override
+    public void onPropertyUpdate(ScreenHandler handler, int property, int value) {
+        switch (property) {
+            case 0 -> this.frameWidth = value;
+            case 1 -> this.frameHeight = value;
+            case 2 -> this.glowing = value == 1;
+            case 3 -> this.fixed = value == 1;
+        }
 
         updateButtons();
     }
 
     @Override
-    public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0, 0, backgroundWidth, backgroundHeight);
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), width / 2, height / 2 - backgroundHeight / 2 + 7, 0xffffff);
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), width / 2, height / 2 - backgroundHeight / 2 + 7 + textRenderer.fontHeight + 2, 0xa0a0a0);
+    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
+        context.drawTexture(TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
     }
 
-    private void resizeRemotePicture(PictureFrameEntity.ResizeDirection direction, boolean shrink) {
-        switch (direction) {
-            case UP, DOWN -> addSize(0, shrink ? -1 : 1);
-            case LEFT, RIGHT -> addSize(shrink ? -1 : 1, 0);
-        }
-
-        ClientPlayNetworking.send(new ResizePictureFramePacket(entity.getUuid(), direction, shrink));
-    }
-
-    private void updateRemotePicture() {
-        ClientPlayNetworking.send(new EditPictureFramePacket(entity.getUuid(), glowing, fixed));
+    @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), backgroundWidth / 2, 7, 0xffffff);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), backgroundWidth / 2, 7 + textRenderer.fontHeight + 2, 0xa0a0a0);
     }
 
     private void updateButtons() {
@@ -135,12 +153,9 @@ public class EditPictureFrameScreen extends InGameScreen {
             rightButton.active = frameWidth < 16;
             downButton.active = frameHeight < 16;
         }
-    }
 
-    private void addSize(int x, int y) {
-        frameWidth += x;
-        frameHeight += y;
-        updateButtons();
+        glowingCheckbox.checked = this.glowing;
+        fixedCheckbox.checked = this.fixed;
     }
 
     @Override
@@ -199,7 +214,7 @@ public class EditPictureFrameScreen extends InGameScreen {
         //? if >=1.20.4 {
         protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
             //?} else
-        /*protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {*/
+            /*protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {*/
             MinecraftClient minecraftClient = MinecraftClient.getInstance();
             TextRenderer textRenderer = minecraftClient.textRenderer;
 

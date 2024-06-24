@@ -1,6 +1,5 @@
 package me.chrr.camerapture;
 
-import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
@@ -12,7 +11,7 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.screen.AlbumScreen;
-import me.chrr.camerapture.screen.EditPictureFrameScreen;
+import me.chrr.camerapture.screen.PictureFrameScreen;
 import me.chrr.camerapture.screen.PictureScreen;
 import me.chrr.camerapture.screen.UploadScreen;
 import net.fabricmc.api.ClientModInitializer;
@@ -20,14 +19,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
-import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
 
 import java.util.List;
@@ -45,6 +42,8 @@ public class CameraptureClient implements ClientModInitializer {
 
         HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
+
+        HandledScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
 
         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
             Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config");
@@ -127,19 +126,6 @@ public class CameraptureClient implements ClientModInitializer {
             }
 
             return TypedActionResult.pass(stack);
-        });
-
-        // Shift-right-clicking a picture frame should open the edit GUI for that frame.
-        UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.player == player && player.isSneaking()
-                    && entity instanceof PictureFrameEntity picture) {
-                client.submit(() -> client.setScreen(new EditPictureFrameScreen(picture)));
-
-                return ActionResult.SUCCESS;
-            }
-
-            return ActionResult.PASS;
         });
 
         // When disconnecting, we clear the picture cache.

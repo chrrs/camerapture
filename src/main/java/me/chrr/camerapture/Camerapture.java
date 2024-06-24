@@ -11,6 +11,7 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
+import me.chrr.camerapture.screen.PictureFrameScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -18,7 +19,6 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
@@ -30,6 +30,7 @@ import net.minecraft.item.Items;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -80,6 +81,8 @@ public class Camerapture implements ModInitializer {
                     .setDimensions(0.5f, 0.5f)
                     .maxTrackingRange(10)
                     .build("picture_frame");
+    public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
+            new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());
 
     private final Queue<QueuedPicture> pictureQueue = new LinkedList<>();
 
@@ -124,6 +127,7 @@ public class Camerapture implements ModInitializer {
 
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
+        Registry.register(Registries.SCREEN_HANDLER, id("picture_frame"), PICTURE_FRAME_SCREEN_HANDLER);
     }
 
     private void registerPackets() {
@@ -216,29 +220,6 @@ public class Camerapture implements ModInitializer {
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                 ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
-            }
-        });
-
-        // Client resizes picture frame
-        ServerPlayNetworking.registerGlobalReceiver(ResizePictureFramePacket.TYPE, (packet, player, sender) -> {
-            Entity entity = player.getServerWorld().getEntity(packet.uuid());
-            if (entity instanceof PictureFrameEntity frameEntity
-                    && player.canModifyAt(player.getServerWorld(), frameEntity.getBlockPos())) {
-                frameEntity.resize(packet.direction(), packet.shrink());
-            } else {
-                LOGGER.warn("{} failed to resize picture frame {}", player.getName().getString(), packet.uuid());
-            }
-        });
-
-        // Client edits picture frame
-        ServerPlayNetworking.registerGlobalReceiver(EditPictureFramePacket.TYPE, (packet, player, sender) -> {
-            Entity entity = player.getServerWorld().getEntity(packet.uuid());
-            if (entity instanceof PictureFrameEntity frameEntity
-                    && player.canModifyAt(player.getServerWorld(), frameEntity.getBlockPos())) {
-                frameEntity.setPictureGlowing(packet.glowing());
-                frameEntity.setFixed(packet.fixed());
-            } else {
-                LOGGER.warn("{} failed to edit picture frame {}", player.getName().getString(), packet.uuid());
             }
         });
     }
