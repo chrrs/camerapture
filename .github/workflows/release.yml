@@ -35,13 +35,14 @@ jobs:
 
       - name: Check out 1.21
         run: |
-          git fetch origin 1.21
-          git checkout 1.21
-          
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          git rebase ${{ github.ref }}
+          git fetch origin main
+          git fetch origin 1.21
+          
+          git checkout 1.21
+          git rebase main
           git push origin 1.21 --force
 
       - run: ./gradlew chiseledPublish
