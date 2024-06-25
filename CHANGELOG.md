@@ -1,3 +1,8 @@
+## 1.4.1
+
+- Stabilize 1.21.
+- Render picture frame name tags correctly.
+
 ## 1.4.0
 
 - Update to 1.21.
