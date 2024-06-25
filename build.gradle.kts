@@ -94,8 +94,9 @@ java {
 
 fun fetchChangelog() =
     rootProject.file("CHANGELOG.md").readText()
-        .substringAfter("## $modVersion")
-        .substringBefore("## ")
+        .replace("\r\n", "\n")
+        .substringAfter("## $modVersion\n")
+        .substringBefore("\n## ")
 
 publishMods {
     val gameVersions = (property("modrinth.compatibleVersions") as String).split(',')
