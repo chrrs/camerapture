@@ -61,9 +61,9 @@ dependencies {
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
 
-val modVersion = property("mod.version")
-val loaderVersion = property("fabric.loader")
-val minecraftDependency = property("deps.minecraft")
+val modVersion = property("mod.version") as String
+val loaderVersion = property("fabric.loader") as String
+val minecraftDependency = property("deps.minecraft") as String
 
 tasks {
     processResources {
@@ -92,16 +92,25 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+fun fetchChangelog() =
+    rootProject.file("CHANGELOG.md").readText()
+        .substringAfter("## $modVersion")
+        .substringBefore("## ")
+
 publishMods {
-    val modVersion = property("mod.version") as String
     val gameVersions = (property("modrinth.compatibleVersions") as String).split(',')
 
-    file.set(tasks.remapJar.get().archiveFile)
-    changelog.set(providers.environmentVariable("CHANGELOG"))
+    displayName.set("$modVersion - Fabric $minecraftVersion")
     type.set(if (modVersion.contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
     modLoaders.addAll("fabric", "quilt")
 
-    displayName.set("$modVersion - Fabric $minecraftVersion")
+    file.set(tasks.remapJar.get().archiveFile)
+
+    // If the CHANGELOG environment variable is not set, we'll just fetch it ourselves.
+    changelog.set(
+        providers.environmentVariable("CHANGELOG")
+            .orElse(providers.provider(::fetchChangelog))
+    )
 
     modrinth {
         projectId.set(property("modrinth.id") as String)
