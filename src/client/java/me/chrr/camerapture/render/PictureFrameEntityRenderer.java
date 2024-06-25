@@ -204,7 +204,11 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     @Override
     protected void renderLabelIfPresent(PictureFrameEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
-        matrices.translate(0f, entity.getFrameHeight() - 1f, -((float) entity.getFrameWidth() - 1f) / 2f);
+
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - entity.getYaw()));
+        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 1f, 0f);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180.0F + entity.getYaw()));
+
         super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light);
         matrices.pop();
     }
