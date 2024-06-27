@@ -119,4 +119,11 @@ publishMods {
         minecraftVersions.addAll(gameVersions)
         requires("fabric-api")
     }
+
+    curseforge {
+        projectId.set(property("curseforge.id") as String)
+        accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
+        minecraftVersions.addAll(gameVersions)
+        requires("fabric-api")
+    }
 }
