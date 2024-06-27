@@ -32,6 +32,7 @@ jobs:
         env:
           CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
         
       - name: Create Release
         uses: softprops/action-gh-release@v2
