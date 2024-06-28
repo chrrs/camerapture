@@ -57,6 +57,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+//? if >=1.20.5
+/*import net.minecraft.component.ComponentType;*/
+
 public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
 
@@ -86,6 +89,13 @@ public class Camerapture implements ModInitializer {
                     .build("picture_frame");
     public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
             new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());
+
+    // Data Components
+    //? if >=1.20.5 {
+    /*public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
+            .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
+            .build();
+    *///?}
 
     private final Queue<QueuedPicture> pictureQueue = new LinkedList<>();
 

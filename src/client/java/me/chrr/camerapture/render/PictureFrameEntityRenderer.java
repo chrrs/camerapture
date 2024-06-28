@@ -24,8 +24,6 @@ import net.minecraft.util.shape.VoxelShapes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import java.util.UUID;
-
 public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity> {
     public PictureFrameEntityRenderer(EntityRendererFactory.Context ctx) {
         super(ctx);
@@ -43,9 +41,6 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         if (itemStack == null) {
             renderErrorText(matrices, vertexConsumers);
         } else {
-            UUID uuid = PictureItem.getUuid(itemStack);
-            ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
-
             // When hovering, render a "block" outline to make the frame appear as a block.
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
@@ -55,13 +50,25 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
                 renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
             }
 
-            if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
+            PictureItem.PictureData pictureData = PictureItem.getPictureData(itemStack);
+            if (pictureData == null) {
+                // Picture item has no picture data.
                 renderErrorText(matrices, vertexConsumers);
-            } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
-                renderFetching(matrices, vertexConsumers);
             } else {
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
-                renderPicture(matrices, vertexConsumers, picture, entity.getRotation(), entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
+                ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
+                if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
+                    // Picture failed to load.
+                    renderErrorText(matrices, vertexConsumers);
+                } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
+                    // Picture is still fetching.
+                    renderFetching(matrices, vertexConsumers);
+                } else {
+                    // Picture should be rendered.
+                    matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
+                    renderPicture(matrices, vertexConsumers, picture, entity.getRotation(),
+                            entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f,
+                            entity.isPictureGlowing(), light);
+                }
             }
         }
 

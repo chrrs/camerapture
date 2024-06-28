@@ -3,9 +3,9 @@ package me.chrr.camerapture.picture;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.ThreadPooler;
-import me.chrr.camerapture.net.RequestPicturePacket;
+import me.chrr.camerapture.net.ClientNetworking;
+import me.chrr.camerapture.net.serverbound.RequestPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.AbstractTexture;
@@ -13,7 +13,7 @@ import net.minecraft.client.texture.DynamicTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -78,7 +79,7 @@ public class ClientPictureStore {
                 }
             }
 
-            ClientPlayNetworking.send(new RequestPicturePacket(uuid));
+            ClientNetworking.sendToServer(new RequestPicturePacket(uuid));
         });
     }
 
@@ -136,12 +137,8 @@ public class ClientPictureStore {
      * If the corresponding picture has an error status on the client-side, this
      * method will force-retry fetching the picture from the server.
      */
-    @Nullable
-    public Picture ensureServerPicture(@Nullable UUID uuid) {
-        if (uuid == null) {
-            return null;
-        }
-
+    @NotNull
+    public Picture ensureServerPicture(@NotNull UUID uuid) {
         Picture picture = uuidPictures.get(uuid);
         if (picture == null || picture.getStatus() == Status.ERROR) {
             picture = new Picture(uuid);
@@ -156,18 +153,9 @@ public class ClientPictureStore {
      * Get a picture by UUID, fetching it from the server if we don't have it yet.
      * This method returns null if the input UUID is null.
      */
-    @Nullable
-    public Picture getServerPicture(@Nullable UUID uuid) {
-        if (uuid == null) {
-            return null;
-        }
-
+    public Picture getServerPicture(@NotNull UUID uuid) {
         Picture picture = uuidPictures.get(uuid);
-        if (picture == null) {
-            return ensureServerPicture(uuid);
-        } else {
-            return picture;
-        }
+        return Optional.ofNullable(picture).orElseGet(() -> ensureServerPicture(uuid));
     }
 
     private static boolean shouldCacheToDisk() {
