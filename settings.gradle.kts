@@ -15,7 +15,7 @@ plugins {
 extensions.configure<StonecutterSettings> {
     shared {
         versions("1.20.1", "1.20.4", "1.21")
-        vcsVersion = "1.20.4"
+        vcsVersion = "1.21"
     }
 
     kotlinController = true

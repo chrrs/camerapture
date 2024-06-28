@@ -21,16 +21,16 @@ import java.util.List;
 /*import net.minecraft.util.collection.DefaultedList;*/
 
 //? if >=1.20.5 {
-/*import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
-*///?} else {
-import net.minecraft.inventory.Inventories;
+//?} else {
+/*import net.minecraft.inventory.Inventories;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import java.util.ArrayList;
-//?}
+*///?}
 
 public class AlbumItem extends Item {
     public static int PAGES = 3;
@@ -52,16 +52,16 @@ public class AlbumItem extends Item {
 
             player.openHandledScreen(new ExtendedScreenHandlerFactory() {
                 //? if >=1.20.5 {
-                /*@Override
+                @Override
                 public Integer getScreenOpeningData(ServerPlayerEntity player) {
                     return albumSlot;
                 }
-                *///?} else {
-                @Override
+                //?} else {
+                /*@Override
                 public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
                     buf.writeInt(albumSlot);
                 }
-                //?}
+                *///?}
 
                 @Override
                 public Text getDisplayName() {
@@ -79,7 +79,7 @@ public class AlbumItem extends Item {
     }
 
     //? if >=1.20.5 {
-    /*public static List<ItemStack> getPictures(ItemStack album) {
+    public static List<ItemStack> getPictures(ItemStack album) {
         ContainerComponent container = album.get(DataComponentTypes.CONTAINER);
         if (container != null) {
             return container.streamNonEmpty().toList();
@@ -87,8 +87,8 @@ public class AlbumItem extends Item {
             return List.of();
         }
     }
-    *///?} else {
-    public static List<ItemStack> getPictures(ItemStack album) {
+    //?} else {
+    /*public static List<ItemStack> getPictures(ItemStack album) {
         NbtCompound nbt = album.getNbt();
         if (nbt == null || !nbt.contains("Items")) {
             return List.of();
@@ -105,19 +105,19 @@ public class AlbumItem extends Item {
 
         return pictures;
     }
-    //?}
+    *///?}
 
     //? if >=1.20.5 {
-    /*@Override
+    @Override
     public boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
         return false;
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     public boolean allowNbtUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
         return false;
     }
-    //?}
+    *///?}
 
 
     public static class AlbumInventory extends SimpleInventory {
@@ -128,16 +128,16 @@ public class AlbumItem extends Item {
             this.hand = hand;
 
             //? if >=1.20.5 {
-            /*ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+            ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
             if (container != null) {
                 container.copyTo(this.getHeldStacks());
             }
-            *///?} else {
-            NbtCompound nbt = stack.getNbt();
+            //?} else {
+            /*NbtCompound nbt = stack.getNbt();
             if (nbt != null) {
                 Inventories.readNbt(nbt, this.getHeldStacks());
             }
-            //?}
+            *///?}
         }
 
         @Override
@@ -150,9 +150,9 @@ public class AlbumItem extends Item {
         @Override
         public void onClose(PlayerEntity player) {
             //? if >=1.20.5 {
-            /*this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
-            *///?} else
-            Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());
+            this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+            //?} else
+            /*Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());*/
             super.onClose(player);
         }
 

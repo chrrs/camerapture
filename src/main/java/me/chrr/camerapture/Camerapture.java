@@ -58,10 +58,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 //? if >=1.20.5 {
-/*import com.mojang.serialization.Codec;
+import com.mojang.serialization.Codec;
 import net.minecraft.component.ComponentType;
 import net.minecraft.network.codec.PacketCodecs;
-*///?}
+//?}
 
 public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
@@ -82,9 +82,9 @@ public class Camerapture implements ModInitializer {
     // Album
     public static final Item ALBUM = new AlbumItem(new Item.Settings().maxCount(1));
     //? if >=1.20.5 {
-    /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new, PacketCodecs.INTEGER);
-    *///?} else
-    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);
+    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new, PacketCodecs.INTEGER);
+    //?} else
+    /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);*/
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
@@ -96,14 +96,14 @@ public class Camerapture implements ModInitializer {
 
     // Data Components
     //? if >=1.20.5 {
-    /*public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
+    public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
             .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
             .build();
 
     public static final ComponentType<Boolean> CAMERA_ACTIVE = ComponentType.<Boolean>builder()
             .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL)
             .build();
-    *///?}
+    //?}
 
     private final Queue<QueuedPicture> pictureQueue = new LinkedList<>();
 
@@ -144,9 +144,9 @@ public class Camerapture implements ModInitializer {
 
         // Data Components
         //? if >=1.20.5 {
-        /*Registry.register(Registries.DATA_COMPONENT_TYPE, id("picture_data"), PICTURE_DATA);
+        Registry.register(Registries.DATA_COMPONENT_TYPE, id("picture_data"), PICTURE_DATA);
         Registry.register(Registries.DATA_COMPONENT_TYPE, id("camera_active"), CAMERA_ACTIVE);
-        *///?}
+        //?}
     }
 
     private void registerPackets() {
@@ -315,9 +315,9 @@ public class Camerapture implements ModInitializer {
 
     public static Identifier id(String path) {
         //? if >=1.21 {
-        /*return Identifier.of("camerapture", path);
-        *///?} else
-        return new Identifier("camerapture", path);
+        return Identifier.of("camerapture", path);
+        //?} else
+        /*return new Identifier("camerapture", path);*/
     }
 
     private record QueuedPicture(ServerPlayerEntity recipient, UUID uuid, ServerPictureStore.Picture picture) {

@@ -8,13 +8,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 //? if >=1.20.5 {
-/*import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
-*///?} else {
-import me.chrr.camerapture.Camerapture;
+//?} else {
+/*import me.chrr.camerapture.Camerapture;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
@@ -22,7 +22,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.PacketByteBuf;
-//?}
+*///?}
 
 //? if <1.20.3
 /*import net.minecraft.nbt.NbtCompound;*/
@@ -41,7 +41,7 @@ public class Networking {
         clientPackets.put(clazz, type);
 
         //? if >=1.20.5 {
-        /*PacketCodec<io.netty.buffer.ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
+        PacketCodec<io.netty.buffer.ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
         PayloadTypeRegistry.playC2S().register(
                 new CustomPayload.Id<PacketPayload<P>>(netCodec.id()),
                 PacketCodec.tuple(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p))
@@ -51,8 +51,8 @@ public class Networking {
                 new CustomPayload.Id<PacketPayload<P>>(netCodec.id()),
                 (payload, context) -> type.handlers().forEach(handler -> handler.accept(payload.packet, context.player()))
         );
-        *///?} else {
-        ServerPlayNetworking.registerGlobalReceiver(netCodec.id(),
+        //?} else {
+        /*ServerPlayNetworking.registerGlobalReceiver(netCodec.id(),
                 (server, player, networkHandler, buf, sender) -> {
                     MapCodec<P> dataCodec = type.netCodec().codec().fieldOf("data");
                     DataResult<Pair<P, NbtElement>> result = dataCodec.decoder().decode(NbtOps.INSTANCE, buf.readNbt());
@@ -66,7 +66,7 @@ public class Networking {
                     type.handlers().forEach(handler -> handler.accept(packet, player));
                 }
         );
-        //?}
+        *///?}
     }
 
     public static <P> void registerClientBound(Class<P> clazz, NetCodec<P> netCodec) {
@@ -74,12 +74,12 @@ public class Networking {
         serverPackets.put(clazz, type);
 
         //? if >=1.20.5 {
-        /*PacketCodec<io.netty.buffer.ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
+        PacketCodec<io.netty.buffer.ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
         PayloadTypeRegistry.playS2C().register(
                 new CustomPayload.Id<PacketPayload<P>>(netCodec.id()),
                 PacketCodec.tuple(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p))
         );
-        *///?}
+        //?}
 
         if (clientAdapter != null) {
             clientAdapter.registerHandler(type);
@@ -90,10 +90,10 @@ public class Networking {
         @SuppressWarnings("unchecked") ServerPacketType<P> type = (ServerPacketType<P>) getServerPacketType(packet.getClass());
 
         //? if >=1.20.5 {
-        /*PacketPayload<P> payload = new PacketPayload<>(type.netCodec().id(), packet);
+        PacketPayload<P> payload = new PacketPayload<>(type.netCodec().id(), packet);
         ServerPlayNetworking.send(player, payload);
-        *///?} else {
-        PacketByteBuf buf = PacketByteBufs.create();
+        //?} else {
+        /*PacketByteBuf buf = PacketByteBufs.create();
 
         MapCodec<P> dataCodec = type.netCodec().codec().fieldOf("data");
         DataResult<NbtElement> result = dataCodec.encoder().encodeStart(NbtOps.INSTANCE, packet);
@@ -101,10 +101,10 @@ public class Networking {
         //? if >=1.20.3 {
         buf.writeNbt(result.get().left().orElseThrow());
         //?} else
-        /*buf.writeNbt((NbtCompound) result.get().left().orElseThrow());*/
+        /^buf.writeNbt((NbtCompound) result.get().left().orElseThrow());^/
 
         ServerPlayNetworking.send(player, type.netCodec().id(), buf);
-        //?}
+        *///?}
     }
 
     public static <P> void onServerPacketReceive(Class<P> clazz, BiConsumer<P, ServerPlayerEntity> handler) {
@@ -127,13 +127,13 @@ public class Networking {
     }
 
     //? if >=1.20.5 {
-    /*public record PacketPayload<P>(Identifier id, P packet) implements CustomPayload {
+    public record PacketPayload<P>(Identifier id, P packet) implements CustomPayload {
         @Override
         public Id<PacketPayload<P>> getId() {
             return new Id<>(id);
         }
     }
-    *///?}
+    //?}
 
     public record ClientPacketType<P>(NetCodec<P> netCodec, List<BiConsumer<P, ServerPlayerEntity>> handlers) {
     }

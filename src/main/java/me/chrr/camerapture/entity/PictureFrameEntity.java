@@ -33,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 
 //? if >=1.20.5 {
-/*import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.server.network.EntityTrackerEntry;
 import java.util.Optional;
-*///?}
+//?}
 
 public class PictureFrameEntity extends ResizableDecorationEntity implements NamedScreenHandlerFactory {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
@@ -56,7 +56,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     //? if >=1.20.5 {
-    /*@Override
+    @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(ITEM_STACK, ItemStack.EMPTY);
@@ -64,8 +64,8 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         builder.add(FIXED, false);
         builder.add(ROTATION, 0);
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     protected void initDataTracker() {
         super.initDataTracker();
 
@@ -74,7 +74,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         this.getDataTracker().startTracking(FIXED, false);
         this.getDataTracker().startTracking(ROTATION, 0);
     }
-    //?}
+    *///?}
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
@@ -232,16 +232,16 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     //? if >=1.20.5 {
-    /*@Override
+    @Override
     public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
         return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     public Packet<ClientPlayPacketListener> createSpawnPacket() {
         return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
     }
-    //?}
+    *///?}
 
     @Override
     public void onSpawnPacket(EntitySpawnS2CPacket packet) {
@@ -256,9 +256,9 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
             //? if >=1.20.5 {
-            /*nbt.put("Item", itemStack.encode(getRegistryManager()));
-            *///?} else
-            nbt.put("Item", itemStack.writeNbt(new NbtCompound()));
+            nbt.put("Item", itemStack.encode(getRegistryManager()));
+            //?} else
+            /*nbt.put("Item", itemStack.writeNbt(new NbtCompound()));*/
         }
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
@@ -273,14 +273,14 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         NbtCompound nbtCompound = nbt.getCompound("Item");
         if (nbtCompound != null && !nbtCompound.isEmpty()) {
             //? if >=1.20.5 {
-            /*Optional<ItemStack> itemStack = ItemStack.fromNbt(getRegistryManager(), nbtCompound);
+            Optional<ItemStack> itemStack = ItemStack.fromNbt(getRegistryManager(), nbtCompound);
             if (itemStack.isEmpty()) {
                 Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
             } else {
                 this.setItemStack(itemStack.get());
             }
-            *///?} else
-            this.setItemStack(ItemStack.fromNbt(nbtCompound));
+            //?} else
+            /*this.setItemStack(ItemStack.fromNbt(nbtCompound));*/
         }
 
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
@@ -296,9 +296,9 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     @Override
     public boolean hasCustomName() {
         //? if >=1.20.5 {
-        /*return getItemStack().get(DataComponentTypes.CUSTOM_NAME) != null;
-        *///?} else
-        return getItemStack().hasCustomName();
+        return getItemStack().get(DataComponentTypes.CUSTOM_NAME) != null;
+        //?} else
+        /*return getItemStack().hasCustomName();*/
     }
 
     @Nullable

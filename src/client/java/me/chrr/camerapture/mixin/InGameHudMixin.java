@@ -20,13 +20,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 //? if >=1.21 {
-/*import net.minecraft.client.gui.LayeredDrawer;
+import net.minecraft.client.gui.LayeredDrawer;
 import net.minecraft.client.render.RenderTickCounter;
-*///?} else {
-import net.minecraft.client.option.GameOptions;
+//?} else {
+/*import net.minecraft.client.option.GameOptions;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-//?}
+*///?}
 
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
@@ -42,7 +42,7 @@ public abstract class InGameHudMixin {
     public abstract TextRenderer getTextRenderer();
 
     //? if >=1.21 {
-    /*@Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/LayeredDrawer;render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"))
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/LayeredDrawer;render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"))
     private void render(LayeredDrawer instance, DrawContext context, RenderTickCounter tickCounter) {
         if (!Camerapture.hasActiveCamera(client.player) || this.client.options.hudHidden) {
             instance.render(context, tickCounter);
@@ -50,8 +50,8 @@ public abstract class InGameHudMixin {
             drawOverlay(context);
         }
     }
-    *///?} else {
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;getLastFrameDuration()F"))
+    //?} else {
+    /*@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;getLastFrameDuration()F"))
     private void onRender(DrawContext context, float tickDelta, CallbackInfo ci) {
         if (Camerapture.hasActiveCamera(client.player)) {
             drawOverlay(context);
@@ -62,7 +62,7 @@ public abstract class InGameHudMixin {
     private boolean isHudHidden(GameOptions options) {
         return Camerapture.hasActiveCamera(client.player) || options.hudHidden;
     }
-    //?}
+    *///?}
 
     @Unique
     private void drawOverlay(DrawContext context) {

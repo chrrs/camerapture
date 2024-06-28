@@ -2,7 +2,7 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "1.20.4" /* [SC] DO NOT EDIT */
+stonecutter active "1.21" /* [SC] DO NOT EDIT */
 
 // Read the versions from CHISELED_VERSIONS, and only build / publish those versions.
 val chiseledVersions = providers.environmentVariable("CHISELED_VERSIONS")

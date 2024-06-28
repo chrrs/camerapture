@@ -22,16 +22,16 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 //? if >=1.20.5 {
-/*import com.mojang.serialization.Codec;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
-*///?} else {
-import net.minecraft.nbt.NbtCompound;
-//?}
+//?} else {
+/*import net.minecraft.nbt.NbtCompound;
+*///?}
 
 public class PictureItem extends Item {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy 'at' HH:mm");
@@ -75,16 +75,16 @@ public class PictureItem extends Item {
 
         // Correctly handle (+NBT) items
         //? if >=1.20.5 {
-        /*NbtComponent nbtComponent = itemStack.getOrDefault(DataComponentTypes.ENTITY_DATA, NbtComponent.DEFAULT);
+        NbtComponent nbtComponent = itemStack.getOrDefault(DataComponentTypes.ENTITY_DATA, NbtComponent.DEFAULT);
         if (!nbtComponent.isEmpty()) {
             EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtComponent);
         }
-        *///?} else {
-        NbtCompound nbtCompound = itemStack.getNbt();
+        //?} else {
+        /*NbtCompound nbtCompound = itemStack.getNbt();
         if (nbtCompound != null) {
             EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtCompound);
         }
-        //?}
+        *///?}
 
         pictureFrameEntity.setItemStack(itemStack.copyWithCount(1));
 
@@ -102,28 +102,28 @@ public class PictureItem extends Item {
         ItemStack stack = new ItemStack(Camerapture.PICTURE, 1);
 
         //? if >=1.20.5 {
-        /*stack.set(Camerapture.PICTURE_DATA, new PictureData(uuid, creator, System.currentTimeMillis()));
-        *///?} else {
-        NbtCompound nbt = stack.getOrCreateNbt();
+        stack.set(Camerapture.PICTURE_DATA, new PictureData(uuid, creator, System.currentTimeMillis()));
+        //?} else {
+        /*NbtCompound nbt = stack.getOrCreateNbt();
         nbt.putString("creator", creator);
         nbt.putUuid("uuid", uuid);
         nbt.putLong("timestamp", System.currentTimeMillis());
-        //?}
+        *///?}
 
         return stack;
     }
 
     //? if >=1.20.5 {
-    /*@Override
+    @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, net.minecraft.item.tooltip.TooltipType type) {
         getTooltip(tooltip::add, stack);
     }
-    *///?} else {
-    @Override
+    //?} else {
+    /*@Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, net.minecraft.client.item.TooltipContext context) {
         getTooltip(tooltip::add, stack);
     }
-    //?}
+    *///?}
 
     public static void getTooltip(Consumer<Text> textConsumer, ItemStack stack) {
         PictureData data = getPictureData(stack);
@@ -146,9 +146,9 @@ public class PictureItem extends Item {
     @Nullable
     public static PictureData getPictureData(ItemStack stack) {
         //? if >=1.20.5 {
-        /*return stack.get(Camerapture.PICTURE_DATA);
-        *///?} else {
-        NbtCompound nbt = stack.getOrCreateNbt();
+        return stack.get(Camerapture.PICTURE_DATA);
+        //?} else {
+        /*NbtCompound nbt = stack.getOrCreateNbt();
         if (nbt.contains("uuid")) {
             return new PictureData(
                     nbt.getUuid("uuid"),
@@ -158,18 +158,18 @@ public class PictureItem extends Item {
         } else {
             return null;
         }
-        //?}
+        *///?}
     }
 
     public record PictureData(UUID id, String creator, long timestamp) {
         //? if >=1.20.5 {
-        /*public static Codec<PictureData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        public static Codec<PictureData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Uuids.CODEC.fieldOf("id").forGetter(component -> component.id),
                 Codec.STRING.fieldOf("creator").forGetter(component -> component.creator),
                 Codec.LONG.fieldOf("timestamp").forGetter(component -> component.timestamp)
         ).apply(instance, PictureData::new));
 
         public static PacketCodec<ByteBuf, PictureData> PACKET_CODEC = PacketCodecs.codec(CODEC);
-        *///?}
+        //?}
     }
 }

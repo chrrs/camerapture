@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 //? if >=1.21
-/*import net.minecraft.client.render.RenderTickCounter;*/
+import net.minecraft.client.render.RenderTickCounter;
 
 @Environment(EnvType.CLIENT)
 @Mixin(GameRenderer.class)
@@ -35,7 +35,7 @@ public abstract class GameRendererMixin {
     boolean shouldveRenderedHand;
 
     //? if >=1.21 {
-    /*@Inject(method = "render", at = @At(value = "HEAD"))
+    @Inject(method = "render", at = @At(value = "HEAD"))
     private void determineRenderHand(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         if (Camerapture.hasActiveCamera(client.player)) {
             shouldveRenderedHand = renderHand;
@@ -62,8 +62,8 @@ public abstract class GameRendererMixin {
     private void onRenderTickEnd(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         PictureTaker.getInstance().renderTickEnd();
     }
-    *///?} else {
-    @Inject(method = "render", at = @At(value = "HEAD"))
+    //?} else {
+    /*@Inject(method = "render", at = @At(value = "HEAD"))
     private void determineRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         if (Camerapture.hasActiveCamera(client.player)) {
             shouldveRenderedHand = renderHand;
@@ -90,5 +90,5 @@ public abstract class GameRendererMixin {
     private void onRenderTickEnd(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         PictureTaker.getInstance().renderTickEnd();
     }
-    //?}
+    *///?}
 }

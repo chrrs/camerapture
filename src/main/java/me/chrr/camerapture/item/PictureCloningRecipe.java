@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.Optional;
 
 //? if >=1.20.5 {
-/*import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.registry.RegistryWrapper;
-*///?} else {
-import net.minecraft.inventory.RecipeInputInventory;
+//?} else {
+/*import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.registry.DynamicRegistryManager;
-//?}
+*///?}
 
 public class PictureCloningRecipe extends SpecialCraftingRecipe {
     //? if >=1.20.4 {
@@ -33,7 +33,7 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
     *///?}
 
     //? if >=1.20.5 {
-    /*@Override
+    @Override
     public boolean matches(CraftingRecipeInput input, World world) {
         return getRecipe(input.getStacks()).isPresent();
     }
@@ -47,8 +47,8 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
     public DefaultedList<ItemStack> getRemainder(CraftingRecipeInput input) {
         return getRecipe(input.getStacks()).map(Pair::getRight).orElse(null);
     }
-    *///?} else if >=1.20.3 {
-    @Override
+    //?} else if >=1.20.3 {
+    /*@Override
     public boolean matches(RecipeInputInventory inventory, World world) {
         return getRecipe(inventory.getHeldStacks()).isPresent();
     }
@@ -62,7 +62,7 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
     public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
         return getRecipe(inventory.getHeldStacks()).map(Pair::getRight).orElse(null);
     }
-    //?} else {
+    *///?} else {
     /*@Override
     public boolean matches(RecipeInputInventory inventory, World world) {
         return getRecipe(inventory.getInputStacks()).isPresent();
