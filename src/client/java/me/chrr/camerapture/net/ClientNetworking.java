@@ -15,6 +15,9 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.PacketByteBuf;
 //?}
 
+//? if <1.20.3
+/*import net.minecraft.nbt.NbtCompound;*/
+
 import java.util.function.Consumer;
 
 public class ClientNetworking implements ClientAdapter {
@@ -37,7 +40,11 @@ public class ClientNetworking implements ClientAdapter {
 
         MapCodec<P> dataCodec = type.netCodec().codec().fieldOf("data");
         DataResult<NbtElement> result = dataCodec.encoder().encodeStart(NbtOps.INSTANCE, packet);
+
+        //? if >=1.20.3 {
         buf.writeNbt(result.get().left().orElseThrow());
+         //?} else
+        /*buf.writeNbt((NbtCompound) result.get().left().orElseThrow());*/
 
         ClientPlayNetworking.send(type.netCodec().id(), buf);
         //?}

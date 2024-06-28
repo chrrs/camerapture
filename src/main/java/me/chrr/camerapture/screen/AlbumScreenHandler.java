@@ -14,9 +14,15 @@ import net.minecraft.screen.slot.Slot;
 public class AlbumScreenHandler extends ScreenHandler {
     private final Inventory inventory;
 
+    //? if >=1.20.5 {
+    /*public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Integer albumSlot) {
+        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS), albumSlot);
+    }
+    *///?} else {
     public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
         this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS), buf.readInt());
     }
+    //?}
 
     public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, int albumSlot) {
         super(Camerapture.ALBUM_SCREEN_HANDLER, syncId);

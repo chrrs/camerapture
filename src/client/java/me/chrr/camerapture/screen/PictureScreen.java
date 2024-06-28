@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+//? if >=1.20.5
+/*import net.minecraft.component.DataComponentTypes;*/
+
 public class PictureScreen extends InGameScreen {
     public static final int BAR_WIDTH = 360;
     public static final int BORDER_THICKNESS = 24;
@@ -166,6 +169,10 @@ public class PictureScreen extends InGameScreen {
 
         this.picture = ClientPictureStore.getInstance().ensureServerPicture(pictureData.id());
         this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
+
+        //? if >=1.20.5 {
+        /*this.customName = stack.get(DataComponentTypes.CUSTOM_NAME);;
+        *///?} else
         this.customName = stack.hasCustomName() ? stack.getName() : null;
     }
 

@@ -4,7 +4,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.ThreadPooler;
 import me.chrr.camerapture.net.ClientNetworking;
-import me.chrr.camerapture.net.serverbound.RequestPicturePacket;
+import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -79,7 +79,7 @@ public class ClientPictureStore {
                 }
             }
 
-            ClientNetworking.sendToServer(new RequestPicturePacket(uuid));
+            ClientNetworking.sendToServer(new RequestDownloadPacket(uuid));
         });
     }
 

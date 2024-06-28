@@ -15,6 +15,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+//? if >=1.21
+/*import net.minecraft.client.render.RenderTickCounter;*/
+
 @Environment(EnvType.CLIENT)
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
@@ -31,6 +34,35 @@ public abstract class GameRendererMixin {
     @Unique
     boolean shouldveRenderedHand;
 
+    //? if >=1.21 {
+    /*@Inject(method = "render", at = @At(value = "HEAD"))
+    private void determineRenderHand(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
+        if (Camerapture.hasActiveCamera(client.player)) {
+            shouldveRenderedHand = renderHand;
+            setRenderHand(false);
+        }
+    }
+
+    @Inject(method = "render", at = @At(value = "RETURN"))
+    private void resetRenderHand(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
+        if (Camerapture.hasActiveCamera(client.player)) {
+            setRenderHand(shouldveRenderedHand);
+        }
+    }
+
+    @Inject(method = "shouldRenderBlockOutline", at = @At(value = "HEAD"), cancellable = true)
+    private void shouldRenderBlockOutline(CallbackInfoReturnable<Boolean> cir) {
+        if (Camerapture.hasActiveCamera(client.player)) {
+            cir.setReturnValue(false);
+            cir.cancel();
+        }
+    }
+
+    @Inject(method = "render", at = @At(value = "TAIL"))
+    private void onRenderTickEnd(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
+        PictureTaker.getInstance().renderTickEnd();
+    }
+    *///?} else {
     @Inject(method = "render", at = @At(value = "HEAD"))
     private void determineRenderHand(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         if (Camerapture.hasActiveCamera(client.player)) {
@@ -58,4 +90,5 @@ public abstract class GameRendererMixin {
     private void onRenderTickEnd(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         PictureTaker.getInstance().renderTickEnd();
     }
+    //?}
 }

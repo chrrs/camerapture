@@ -1,16 +1,25 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.util.Pair;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
+
+import java.util.List;
+import java.util.Optional;
+
+//? if >=1.20.5 {
+/*import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
+*///?} else {
+import net.minecraft.inventory.RecipeInputInventory;
+import net.minecraft.registry.DynamicRegistryManager;
+//?}
 
 public class PictureCloningRecipe extends SpecialCraftingRecipe {
     //? if >=1.20.4 {
@@ -23,23 +32,71 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
     }
     *///?}
 
+    //? if >=1.20.5 {
+    /*@Override
+    public boolean matches(CraftingRecipeInput input, World world) {
+        return getRecipe(input.getStacks()).isPresent();
+    }
+
+    @Override
+    public ItemStack craft(CraftingRecipeInput input, RegistryWrapper.WrapperLookup lookup) {
+        return getRecipe(input.getStacks()).map(Pair::getLeft).orElse(null);
+    }
+
+    @Override
+    public DefaultedList<ItemStack> getRemainder(CraftingRecipeInput input) {
+        return getRecipe(input.getStacks()).map(Pair::getRight).orElse(null);
+    }
+    *///?} else if >=1.20.3 {
     @Override
     public boolean matches(RecipeInputInventory inventory, World world) {
-        int paper = 0;
-        ItemStack picture = ItemStack.EMPTY;
+        return getRecipe(inventory.getHeldStacks()).isPresent();
+    }
 
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack stack = inventory.getStack(i);
+    @Override
+    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
+        return getRecipe(inventory.getHeldStacks()).map(Pair::getLeft).orElse(null);
+    }
+
+    @Override
+    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
+        return getRecipe(inventory.getHeldStacks()).map(Pair::getRight).orElse(null);
+    }
+    //?} else {
+    /*@Override
+    public boolean matches(RecipeInputInventory inventory, World world) {
+        return getRecipe(inventory.getInputStacks()).isPresent();
+    }
+
+    @Override
+    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
+        return getRecipe(inventory.getInputStacks()).map(Pair::getLeft).orElse(null);
+    }
+
+    @Override
+    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
+        return getRecipe(inventory.getInputStacks()).map(Pair::getRight).orElse(null);
+    }
+    *///?}
+
+    private Optional<Pair<ItemStack, DefaultedList<ItemStack>>> getRecipe(List<ItemStack> items) {
+        DefaultedList<ItemStack> remainder = DefaultedList.ofSize(items.size(), ItemStack.EMPTY);
+        ItemStack picture = ItemStack.EMPTY;
+        int paper = 0;
+
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = items.get(i);
             if (!stack.isEmpty()) {
                 if (stack.isOf(Camerapture.PICTURE)) {
-                    if (!picture.isEmpty()) {
-                        return false;
+                    if (!picture.isEmpty() || PictureItem.getPictureData(stack) == null) {
+                        return Optional.empty();
                     }
 
+                    remainder.set(i, stack.copyWithCount(1));
                     picture = stack;
                 } else {
                     if (!stack.isOf(Items.PAPER)) {
-                        return false;
+                        return Optional.empty();
                     }
 
                     ++paper;
@@ -47,45 +104,7 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
             }
         }
 
-        return !picture.isEmpty() && picture.hasNbt() && paper > 0;
-    }
-
-    @Override
-    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
-        int paper = 0;
-        ItemStack picture = ItemStack.EMPTY;
-
-        // We already know it matches, so we don't need as many checks.
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack stack = inventory.getStack(i);
-            if (!stack.isEmpty()) {
-                if (stack.isOf(Camerapture.PICTURE)) {
-                    picture = stack;
-                } else {
-                    paper++;
-                }
-            }
-        }
-
-        return picture.copyWithCount(paper);
-    }
-
-    @Override
-    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
-        DefaultedList<ItemStack> list = DefaultedList.ofSize(inventory.size(), ItemStack.EMPTY);
-
-        for (int i = 0; i < list.size(); ++i) {
-            ItemStack stack = inventory.getStack(i);
-            Item item = stack.getItem();
-            if (stack.isOf(Camerapture.PICTURE)) {
-                list.set(i, stack.copyWithCount(1));
-            } else if (item.hasRecipeRemainder()) {
-                //noinspection DataFlowIssue
-                list.set(i, new ItemStack(item.getRecipeRemainder()));
-            }
-        }
-
-        return list;
+        return Optional.of(new Pair<>(picture.copyWithCount(paper), remainder));
     }
 
     @Override

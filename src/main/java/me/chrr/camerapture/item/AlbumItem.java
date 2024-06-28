@@ -5,14 +5,9 @@ import me.chrr.camerapture.screen.AlbumScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -20,11 +15,22 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
 import java.util.List;
 
 //? if <1.20.4
 /*import net.minecraft.util.collection.DefaultedList;*/
+
+//? if >=1.20.5 {
+/*import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
+*///?} else {
+import net.minecraft.inventory.Inventories;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import java.util.ArrayList;
+//?}
 
 public class AlbumItem extends Item {
     public static int PAGES = 3;
@@ -45,10 +51,17 @@ public class AlbumItem extends Item {
             int albumSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot : -1;
 
             player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+                //? if >=1.20.5 {
+                /*@Override
+                public Integer getScreenOpeningData(ServerPlayerEntity player) {
+                    return albumSlot;
+                }
+                *///?} else {
                 @Override
                 public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
                     buf.writeInt(albumSlot);
                 }
+                //?}
 
                 @Override
                 public Text getDisplayName() {
@@ -65,6 +78,16 @@ public class AlbumItem extends Item {
         return TypedActionResult.success(stack);
     }
 
+    //? if >=1.20.5 {
+    /*public static List<ItemStack> getPictures(ItemStack album) {
+        ContainerComponent container = album.get(DataComponentTypes.CONTAINER);
+        if (container != null) {
+            return container.streamNonEmpty().toList();
+        } else {
+            return List.of();
+        }
+    }
+    *///?} else {
     public static List<ItemStack> getPictures(ItemStack album) {
         NbtCompound nbt = album.getNbt();
         if (nbt == null || !nbt.contains("Items")) {
@@ -82,11 +105,20 @@ public class AlbumItem extends Item {
 
         return pictures;
     }
+    //?}
 
+    //? if >=1.20.5 {
+    /*@Override
+    public boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
+        return false;
+    }
+    *///?} else {
     @Override
     public boolean allowNbtUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
         return false;
     }
+    //?}
+
 
     public static class AlbumInventory extends SimpleInventory {
         private final Hand hand;
@@ -95,10 +127,17 @@ public class AlbumItem extends Item {
             super(SLOTS);
             this.hand = hand;
 
+            //? if >=1.20.5 {
+            /*ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+            if (container != null) {
+                container.copyTo(this.getHeldStacks());
+            }
+            *///?} else {
             NbtCompound nbt = stack.getNbt();
             if (nbt != null) {
                 Inventories.readNbt(nbt, this.getHeldStacks());
             }
+            //?}
         }
 
         @Override
@@ -110,6 +149,9 @@ public class AlbumItem extends Item {
 
         @Override
         public void onClose(PlayerEntity player) {
+            //? if >=1.20.5 {
+            /*this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+            *///?} else
             Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());
             super.onClose(player);
         }

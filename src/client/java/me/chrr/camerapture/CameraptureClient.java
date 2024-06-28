@@ -125,7 +125,7 @@ public class CameraptureClient implements ClientModInitializer {
                     return TypedActionResult.success(stack);
                 }
             } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
-                // Right clicking the album should open the gallery screen.
+                // Right-clicking the album should open the gallery screen.
                 List<ItemStack> pictures = AlbumItem.getPictures(stack);
                 if (!pictures.isEmpty()) {
                     client.submit(() -> client.setScreen(new PictureScreen(pictures)));

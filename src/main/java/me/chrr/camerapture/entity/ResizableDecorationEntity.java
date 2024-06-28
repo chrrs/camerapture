@@ -43,11 +43,19 @@ public abstract class ResizableDecorationEntity extends Entity {
         super(type, world);
     }
 
+    //? if >=1.20.5 {
+    /*@Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        builder.add(FRAME_WIDTH, 1);
+        builder.add(FRAME_HEIGHT, 1);
+    }
+    *///?} else {
     @Override
     protected void initDataTracker() {
         this.getDataTracker().startTracking(FRAME_WIDTH, 1);
         this.getDataTracker().startTracking(FRAME_HEIGHT, 1);
     }
+    //?}
 
     @Override
     public void onTrackedDataSet(TrackedData<?> data) {

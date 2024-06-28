@@ -13,7 +13,7 @@ import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
 import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
 import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
-import me.chrr.camerapture.net.serverbound.RequestPicturePacket;
+import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
@@ -57,8 +57,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-//? if >=1.20.5
-/*import net.minecraft.component.ComponentType;*/
+//? if >=1.20.5 {
+/*import com.mojang.serialization.Codec;
+import net.minecraft.component.ComponentType;
+import net.minecraft.network.codec.PacketCodecs;
+*///?}
 
 public class Camerapture implements ModInitializer {
     public static final int SECTION_SIZE = 30_000;
@@ -78,13 +81,14 @@ public class Camerapture implements ModInitializer {
 
     // Album
     public static final Item ALBUM = new AlbumItem(new Item.Settings().maxCount(1));
-    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER =
-            new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);
+    //? if >=1.20.5 {
+    /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new, PacketCodecs.INTEGER);
+    *///?} else
+    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
-                    .setDimensions(0.5f, 0.5f)
                     .maxTrackingRange(10)
                     .build("picture_frame");
     public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
@@ -94,6 +98,10 @@ public class Camerapture implements ModInitializer {
     //? if >=1.20.5 {
     /*public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
             .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
+            .build();
+
+    public static final ComponentType<Boolean> CAMERA_ACTIVE = ComponentType.<Boolean>builder()
+            .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL)
             .build();
     *///?}
 
@@ -133,11 +141,17 @@ public class Camerapture implements ModInitializer {
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
         Registry.register(Registries.SCREEN_HANDLER, id("picture_frame"), PICTURE_FRAME_SCREEN_HANDLER);
+
+        // Data Components
+        //? if >=1.20.5 {
+        /*Registry.register(Registries.DATA_COMPONENT_TYPE, id("picture_data"), PICTURE_DATA);
+        Registry.register(Registries.DATA_COMPONENT_TYPE, id("camera_active"), CAMERA_ACTIVE);
+        *///?}
     }
 
     private void registerPackets() {
         Networking.registerServerBound(NewPicturePacket.class, NewPicturePacket.NET_CODEC);
-        Networking.registerServerBound(RequestPicturePacket.class, RequestPicturePacket.NET_CODEC);
+        Networking.registerServerBound(RequestDownloadPacket.class, RequestDownloadPacket.NET_CODEC);
         Networking.registerServerBound(UploadPartialPicturePacket.class, UploadPartialPicturePacket.NET_CODEC);
         Networking.registerClientBound(PictureErrorPacket.class, PictureErrorPacket.NET_CODEC);
         Networking.registerClientBound(RequestUploadPacket.class, RequestUploadPacket.NET_CODEC);
@@ -219,7 +233,7 @@ public class Camerapture implements ModInitializer {
         });
 
         // Client requests a picture with a certain UUID
-        Networking.onServerPacketReceive(RequestPicturePacket.class, (packet, player) -> {
+        Networking.onServerPacketReceive(RequestDownloadPacket.class, (packet, player) -> {
             try {
                 ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
