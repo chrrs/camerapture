@@ -17,6 +17,6 @@
         }
     },
     "result": {
-        "item": "camerapture:camera"
+        "id": "camerapture:camera"
     }
 }

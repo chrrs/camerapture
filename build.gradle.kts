@@ -67,6 +67,9 @@ val minecraftDependency = property("deps.minecraft") as String
 
 tasks {
     processResources {
+        // 1.21 renamed "recipes" to "recipe".
+        val folderToExclude = if (stonecutter.eval(minecraftVersion, ">=1.21")) "recipes" else "recipe"
+        filesMatching("data/camerapture/$folderToExclude/**") { exclude() }
 
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
