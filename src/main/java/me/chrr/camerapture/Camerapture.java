@@ -8,15 +8,20 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureCloningRecipe;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.net.*;
+import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
+import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
+import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
+import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
+import me.chrr.camerapture.net.serverbound.NewPicturePacket;
+import me.chrr.camerapture.net.serverbound.RequestPicturePacket;
+import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
 import me.chrr.camerapture.screen.PictureFrameScreenHandler;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
@@ -59,17 +64,17 @@ public class Camerapture implements ModInitializer {
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     // Camera
-    public static final Item CAMERA = new CameraItem(new FabricItemSettings().maxCount(1));
+    public static final Item CAMERA = new CameraItem(new Item.Settings().maxCount(1));
     public static final SoundEvent CAMERA_SHUTTER = SoundEvent.of(id("camera_shutter"));
     public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 
     // Picture
-    public static final Item PICTURE = new PictureItem(new FabricItemSettings());
+    public static final Item PICTURE = new PictureItem(new Item.Settings());
     public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
             new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
 
     // Album
-    public static final Item ALBUM = new AlbumItem(new FabricItemSettings().maxCount(1));
+    public static final Item ALBUM = new AlbumItem(new Item.Settings().maxCount(1));
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER =
             new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);
 
@@ -121,8 +126,16 @@ public class Camerapture implements ModInitializer {
     }
 
     private void registerPackets() {
+        Networking.registerServerBound(NewPicturePacket.class, NewPicturePacket.NET_CODEC);
+        Networking.registerServerBound(RequestPicturePacket.class, RequestPicturePacket.NET_CODEC);
+        Networking.registerServerBound(UploadPartialPicturePacket.class, UploadPartialPicturePacket.NET_CODEC);
+        Networking.registerClientBound(PictureErrorPacket.class, PictureErrorPacket.NET_CODEC);
+        Networking.registerClientBound(RequestUploadPacket.class, RequestUploadPacket.NET_CODEC);
+        Networking.registerClientBound(SyncConfigPacket.class, SyncConfigPacket.NET_CODEC);
+        Networking.registerClientBound(DownloadPartialPicturePacket.class, DownloadPartialPicturePacket.NET_CODEC);
+
         // Client requests to take / upload a picture
-        ServerPlayNetworking.registerGlobalReceiver(NewPicturePacket.TYPE, (packet, player, sender) -> {
+        Networking.onServerPacketReceive(NewPicturePacket.class, (packet, player) -> {
             Pair<Hand, ItemStack> camera = findCamera(player, false);
             if (camera == null) {
                 return;
@@ -144,12 +157,12 @@ public class Camerapture implements ModInitializer {
             player.incrementStat(PICTURES_TAKEN);
 
             UUID uuid = ServerPictureStore.getInstance().reserveUuid();
-            ServerPlayNetworking.send(player, new RequestPicturePacket(uuid));
+            Networking.sendTo(player, new RequestUploadPacket(uuid));
         });
 
         // Client sends back a picture following a take-picture request
         Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
-        ServerPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
+        Networking.onServerPacketReceive(UploadPartialPicturePacket.class, (packet, player) -> {
             if (!ServerPictureStore.getInstance().isReserved(packet.uuid())) {
                 LOGGER.error("{} tried to send a byte section for an unreserved UUID", player.getName().toString());
                 return;
@@ -196,20 +209,20 @@ public class Camerapture implements ModInitializer {
         });
 
         // Client requests a picture with a certain UUID
-        ServerPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) -> {
+        Networking.onServerPacketReceive(RequestPicturePacket.class, (packet, player) -> {
             try {
                 ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
                 if (picture == null) {
                     LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
-                    ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
+                    Networking.sendTo(player, new PictureErrorPacket(packet.uuid()));
                     return;
                 }
 
                 pictureQueue.add(new QueuedPicture(player, packet.uuid(), picture));
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
-                ServerPlayNetworking.send(player, new PictureErrorPacket(packet.uuid()));
+                Networking.sendTo(player, new PictureErrorPacket(packet.uuid()));
             }
         });
     }
@@ -218,7 +231,7 @@ public class Camerapture implements ModInitializer {
         // When a player joins, we send them our config.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             Config config = CONFIG_MANAGER.getConfig();
-            sender.sendPacket(new ConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
+            Networking.sendTo(handler.player, new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
         });
 
         // Every so often, we send a picture from the queue.
@@ -236,7 +249,7 @@ public class Camerapture implements ModInitializer {
                     }
 
                     ByteCollector.split(item.picture.bytes(), SECTION_SIZE, (section, bytesLeft) ->
-                            ServerPlayNetworking.send(item.recipient, new PartialPicturePacket(item.uuid, section, bytesLeft)));
+                            Networking.sendTo(item.recipient, new DownloadPartialPicturePacket(item.uuid, section, bytesLeft)));
 
                 }
             };
@@ -277,6 +290,9 @@ public class Camerapture implements ModInitializer {
     }
 
     public static Identifier id(String path) {
+        //? if >=1.21 {
+        /*return Identifier.of("camerapture", path);
+        *///?} else
         return new Identifier("camerapture", path);
     }
 
