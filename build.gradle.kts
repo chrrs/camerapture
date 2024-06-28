@@ -67,10 +67,23 @@ val minecraftDependency = property("deps.minecraft") as String
 
 tasks {
     processResources {
-        // 1.21 renamed "recipes" to "recipe".
-        val folderToExclude = if (stonecutter.eval(minecraftVersion, ">=1.21")) "recipes" else "recipe"
-        filesMatching("data/camerapture/$folderToExclude/**") { exclude() }
+        // 1.20.5 changed some things about datapacks. Because of this, let's create a system
+        // to handle assets. Now we can make directories named [1.20.5] and [1.20], and it
+        // includes and excludes them appropriately.
+        val version = if (stonecutter.eval(minecraftVersion, ">=1.20.5")) "1.20.5" else "1.20"
+        val opposite = if (version == "1.20") "1.20.5" else "1.20"
 
+        // Keep matching files.
+        filesMatching("data/camerapture/[$version]/**") {
+            path = path.replaceFirst("/[$version]", "")
+        }
+
+        // Remove the other ones.
+        filesMatching("data/camerapture/[$opposite]/**") {
+            exclude()
+        }
+
+        // For fabric.mod.json, we source some properties from gradle.properties.
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(
