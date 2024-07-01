@@ -131,6 +131,14 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
         context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), backgroundWidth / 2, 7 + textRenderer.fontHeight + 2, 0xa0a0a0);
     }
 
+    //? if <1.20.4 {
+    /*@Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackground(context);
+        super.render(context, mouseX, mouseY, delta);
+    }
+    *///?}
+
     private void updateButtons() {
         if (hasShiftDown()) {
             upButton.setMessage(Text.of("↓"));

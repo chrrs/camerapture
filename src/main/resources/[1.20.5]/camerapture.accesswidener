@@ -1,0 +1,7 @@
+accessWidener v2 named
+
+# This is marked private in 1.20.1
+extendable method net/minecraft/client/gui/screen/ingame/HandledScreen drawSlot (Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/screen/slot/Slot;)V
+
+# Used when upgrading NBT to data components
+accessible class net/minecraft/datafixer/fix/ItemStackComponentizationFix$StackData

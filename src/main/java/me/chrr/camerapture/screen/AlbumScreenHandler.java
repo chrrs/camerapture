@@ -7,16 +7,24 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+
+//? if <1.20.5
+/*import net.minecraft.network.PacketByteBuf;*/
 
 public class AlbumScreenHandler extends ScreenHandler {
     private final Inventory inventory;
 
-    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
+    //? if >=1.20.5 {
+    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Integer albumSlot) {
+        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS), albumSlot);
+    }
+    //?} else {
+    /*public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
         this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS), buf.readInt());
     }
+    *///?}
 
     public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, int albumSlot) {
         super(Camerapture.ALBUM_SCREEN_HANDLER, syncId);

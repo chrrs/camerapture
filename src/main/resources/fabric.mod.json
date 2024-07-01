@@ -19,6 +19,10 @@
         {
             "config": "camerapture-client.mixins.json",
             "environment": "client"
+        },
+        {
+            "config": "camerapture.mixins.json",
+            "environment": "*"
         }
     ],
     "environment": "*",

@@ -7,6 +7,11 @@ plugins {
 
 val minecraftVersion = stonecutter.current.version
 
+// 1.20.5 changed some things about datapacks. Because of this, let's create a system
+// to handle assets. Now we can make directories named [1.20.5] and [1.20], and it
+// includes and excludes them appropriately.
+val resourceVersion = if (stonecutter.eval(minecraftVersion, ">=1.20.5")) "1.20.5" else "1.20"
+
 group = property("mod.mavenGroup") as String
 version = "${property("mod.version")}+mc$minecraftVersion"
 
@@ -35,7 +40,7 @@ loom {
         }
     }
 
-    accessWidenerPath = rootProject.file("src/main/resources/camerapture.accesswidener")
+    accessWidenerPath = rootProject.file("src/main/resources/[$resourceVersion]/camerapture.accesswidener")
 
     runConfigs["client"].runDir = "../../run"
     runConfigs["server"].runDir = "../../run/server"
@@ -67,7 +72,18 @@ val minecraftDependency = property("deps.minecraft") as String
 
 tasks {
     processResources {
+        // Keep matching files.
+        filesMatching("[$resourceVersion]/**") {
+            path = path.substring("[$resourceVersion]/".length)
+        }
 
+        // Remove the other ones.
+        val opposite = if (resourceVersion == "1.20") "1.20.5" else "1.20"
+        filesMatching("[$opposite]/**") {
+            exclude()
+        }
+
+        // For fabric.mod.json, we source some properties from gradle.properties.
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(

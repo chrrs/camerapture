@@ -14,8 +14,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.util.UUID;
-
 public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_album.png");
 
@@ -112,10 +110,11 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
         RenderSystem.enableBlend();
 
         if (pictureSlot.hasStack()) {
-            UUID uuid = PictureItem.getUuid(slot.getStack());
-            ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
-            if (picture != null) {
-                PictureDrawingUtil.drawPicture(context, textRenderer, picture, slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
+            PictureItem.PictureData pictureData = PictureItem.getPictureData(slot.getStack());
+            if (pictureData != null) {
+                ClientPictureStore.Picture picture = ClientPictureStore.getInstance().ensureServerPicture(pictureData.id());
+                PictureDrawingUtil.drawPicture(context, textRenderer, picture,
+                        slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
             }
         } else {
             context.drawTexture(TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);

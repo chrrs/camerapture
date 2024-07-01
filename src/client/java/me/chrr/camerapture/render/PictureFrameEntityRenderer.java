@@ -21,10 +21,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import java.util.UUID;
+//? if <1.21
+/*import org.joml.Matrix3f;*/
 
 public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity> {
     public PictureFrameEntityRenderer(EntityRendererFactory.Context ctx) {
@@ -43,9 +43,6 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         if (itemStack == null) {
             renderErrorText(matrices, vertexConsumers);
         } else {
-            UUID uuid = PictureItem.getUuid(itemStack);
-            ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(uuid);
-
             // When hovering, render a "block" outline to make the frame appear as a block.
             MinecraftClient client = MinecraftClient.getInstance();
             if (!this.dispatcher.gameOptions.hudHidden
@@ -55,13 +52,25 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
                 renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
             }
 
-            if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
+            PictureItem.PictureData pictureData = PictureItem.getPictureData(itemStack);
+            if (pictureData == null) {
+                // Picture item has no picture data.
                 renderErrorText(matrices, vertexConsumers);
-            } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
-                renderFetching(matrices, vertexConsumers);
             } else {
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
-                renderPicture(matrices, vertexConsumers, picture, entity.getRotation(), entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f, entity.isPictureGlowing(), light);
+                ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
+                if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
+                    // Picture failed to load.
+                    renderErrorText(matrices, vertexConsumers);
+                } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
+                    // Picture is still fetching.
+                    renderFetching(matrices, vertexConsumers);
+                } else {
+                    // Picture should be rendered.
+                    matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
+                    renderPicture(matrices, vertexConsumers, picture, entity.getRotation(),
+                            entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f,
+                            entity.isPictureGlowing(), light);
+                }
             }
         }
 
@@ -104,8 +113,12 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
             RenderSystem.setShaderTexture(0, picture.getIdentifier());
 
-            BufferBuilder buffer = tessellator.getBuffer();
+            //? if >=1.21 {
+            BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+            //?} else {
+            /*BufferBuilder buffer = tessellator.getBuffer();
             buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+            *///?}
 
             MatrixStack.Entry matrix = matrices.peek();
             pushGlowingVertex(buffer, matrix, x1, y1, 1f, 1f);
@@ -113,7 +126,11 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             pushGlowingVertex(buffer, matrix, x2, y2, 0f, 0f);
             pushGlowingVertex(buffer, matrix, x2, y1, 0f, 1f);
 
-            tessellator.draw();
+            //? if >=1.20.5 {
+            BufferRenderer.drawWithGlobalProgram(buffer.end());
+            //?} else
+            /*tessellator.draw();*/
+
             RenderSystem.disableDepthTest();
             RenderSystem.disableBlend();
         } else {
@@ -130,27 +147,24 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     private void pushGlowingVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
-        Matrix3f matrix3f = matrix.getNormalMatrix();
 
-        buffer.vertex(matrix4f, x, y, 0f)
-                .color(0xffffffff)
-                .texture(u, v)
-                .light(0xf000f0)
-                .normal(matrix3f, 0f, 0f, 1f)
-                .next();
+        //? if >=1.21 {
+        buffer.vertex(matrix4f, x, y, 0f).color(0xffffffff).texture(u, v).light(0xf000f0).normal(matrix, 0f, 0f, 1f);
+        //?} else {
+        /*Matrix3f matrix3f = matrix.getNormalMatrix();
+        buffer.vertex(matrix4f, x, y, 0f).color(0xffffffff).texture(u, v).light(0xf000f0).normal(matrix3f, 0f, 0f, 1f).next();
+        *///?}
     }
 
     private void pushCutoutVertex(VertexConsumer buffer, MatrixStack.Entry matrix, float x, float y, float u, float v, int light) {
         Matrix4f matrix4f = matrix.getPositionMatrix();
-        Matrix3f matrix3f = matrix.getNormalMatrix();
 
-        buffer.vertex(matrix4f, x, y, 0f)
-                .color(0xffffffff)
-                .texture(u, v)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(matrix3f, 0f, 0f, 1f)
-                .next();
+        //? if >=1.21 {
+        buffer.vertex(matrix4f, x, y, 0f).color(0xffffffff).texture(u, v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix, 0f, 0f, 1f);
+        //?} else {
+        /*Matrix3f matrix3f = matrix.getNormalMatrix();
+        buffer.vertex(matrix4f, x, y, 0f).color(0xffffffff).texture(u, v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0f, 0f, 1f).next();
+        *///?}
     }
 
     public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
@@ -201,15 +215,29 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         }
     }
 
+    //? if >=1.21 {
     @Override
+    protected void renderLabelIfPresent(PictureFrameEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float tickDelta) {
+        matrices.push();
+
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - entity.getYaw()));
+        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 2f, 0f);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180.0F + entity.getYaw()));
+
+        super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light, tickDelta);
+        matrices.pop();
+    }
+    //?} else {
+    /*@Override
     protected void renderLabelIfPresent(PictureFrameEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - entity.getYaw()));
-        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 1f, 0f);
+        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 2f, 0f);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180.0F + entity.getYaw()));
 
         super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light);
         matrices.pop();
     }
+    *///?}
 }

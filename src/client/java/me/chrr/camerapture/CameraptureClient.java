@@ -4,10 +4,11 @@ import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
-import me.chrr.camerapture.net.ConfigPacket;
-import me.chrr.camerapture.net.PartialPicturePacket;
-import me.chrr.camerapture.net.PictureErrorPacket;
-import me.chrr.camerapture.net.RequestPicturePacket;
+import me.chrr.camerapture.net.*;
+import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
+import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
+import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
+import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
@@ -17,7 +18,6 @@ import me.chrr.camerapture.screen.PictureScreen;
 import me.chrr.camerapture.screen.UploadScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
@@ -65,13 +65,15 @@ public class CameraptureClient implements ClientModInitializer {
     }
 
     private void registerPackets() {
+        ClientNetworking.init();
+
         // Server requests client to send over a picture, most likely from the camera
-        ClientPlayNetworking.registerGlobalReceiver(RequestPicturePacket.TYPE, (packet, player, sender) ->
+        ClientNetworking.onClientPacketReceive(RequestUploadPacket.class, (packet) ->
                 ThreadPooler.run(() -> PictureTaker.getInstance().sendStoredPicture(packet.uuid())));
 
         // Server sends back a picture following a picture request by UUID
         Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
-        ClientPlayNetworking.registerGlobalReceiver(PartialPicturePacket.TYPE, (packet, player, sender) -> {
+        ClientNetworking.onClientPacketReceive(DownloadPartialPicturePacket.class, (packet) -> {
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
                 collectors.remove(uuid);
                 ThreadPooler.run(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
@@ -84,13 +86,13 @@ public class CameraptureClient implements ClientModInitializer {
         });
 
         // Server sends back an error following a picture request by UUID
-        ClientPlayNetworking.registerGlobalReceiver(PictureErrorPacket.TYPE, (packet, player, sender) -> {
+        ClientNetworking.onClientPacketReceive(PictureErrorPacket.class, (packet) -> {
             ClientPictureStore.getInstance().processReceivedError(packet.uuid());
             collectors.remove(packet.uuid());
         });
 
         // Server sends over the server-side config
-        ClientPlayNetworking.registerGlobalReceiver(ConfigPacket.TYPE, (packet, player, sender) ->
+        ClientNetworking.onClientPacketReceive(SyncConfigPacket.class, (packet) ->
                 PictureTaker.getInstance().setConfig(packet.maxImageBytes(), packet.maxImageResolution()));
     }
 
@@ -117,11 +119,13 @@ public class CameraptureClient implements ClientModInitializer {
             }
 
             if (stack.isOf(Camerapture.PICTURE)) {
-                if (PictureItem.getUuid(stack) != null) {
+                // Right-clicking a picture item should open the picture screen.
+                if (PictureItem.getPictureData(stack) != null) {
                     client.submit(() -> client.setScreen(new PictureScreen(List.of(stack))));
                     return TypedActionResult.success(stack);
                 }
             } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
+                // Right-clicking the album should open the gallery screen.
                 List<ItemStack> pictures = AlbumItem.getPictures(stack);
                 if (!pictures.isEmpty()) {
                     client.submit(() -> client.setScreen(new PictureScreen(pictures)));
@@ -131,6 +135,7 @@ public class CameraptureClient implements ClientModInitializer {
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
+                // Shift-right clicking the camera should open the upload screen.
                 client.submit(() -> client.setScreen(new UploadScreen()));
                 return TypedActionResult.success(stack);
             }

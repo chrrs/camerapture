@@ -4,10 +4,10 @@ import me.chrr.camerapture.ByteCollector;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.item.CameraItem;
-import me.chrr.camerapture.net.NewPicturePacket;
-import me.chrr.camerapture.net.PartialPicturePacket;
+import me.chrr.camerapture.net.ClientNetworking;
+import me.chrr.camerapture.net.serverbound.NewPicturePacket;
+import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.texture.NativeImage;
@@ -64,7 +64,7 @@ public class PictureTaker {
     public boolean tryUploadFile(Path filePath) {
         try {
             this.picture = ImageIO.read(filePath.toFile());
-            ClientPlayNetworking.send(new NewPicturePacket());
+            ClientNetworking.sendToServer(new NewPicturePacket());
             return true;
         } catch (IOException e) {
             Camerapture.LOGGER.error("failed to read picture from file", e);
@@ -98,7 +98,7 @@ public class PictureTaker {
             CameraItem.setActive(activeCamera.getRight(), false);
         }
 
-        ClientPlayNetworking.send(new NewPicturePacket());
+        ClientNetworking.sendToServer(new NewPicturePacket());
     }
 
     public void sendStoredPicture(UUID uuid) {
@@ -125,7 +125,7 @@ public class PictureTaker {
 
             Camerapture.LOGGER.debug("sending picture ({} bytes, {}%)", bytes.length, (int) (factor * 100f));
             ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
-                    ClientPlayNetworking.send(new PartialPicturePacket(uuid, section, bytesLeft)));
+                    ClientNetworking.sendToServer(new UploadPartialPicturePacket(uuid, section, bytesLeft)));
 
             // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
             ClientPictureStore.getInstance().processImage(uuid, picture);

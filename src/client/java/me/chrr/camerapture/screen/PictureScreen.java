@@ -21,7 +21,9 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.UUID;
+
+//? if >=1.20.5
+import net.minecraft.component.DataComponentTypes;
 
 public class PictureScreen extends InGameScreen {
     public static final int BAR_WIDTH = 360;
@@ -160,11 +162,18 @@ public class PictureScreen extends InGameScreen {
 
     private void forceRefresh() {
         ItemStack stack = pictures.get(index);
-        UUID uuid = PictureItem.getUuid(stack);
-        this.picture = ClientPictureStore.getInstance().ensureServerPicture(uuid);
+        PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
+        if (pictureData == null) {
+            return;
+        }
 
+        this.picture = ClientPictureStore.getInstance().ensureServerPicture(pictureData.id());
         this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
-        this.customName = stack.hasCustomName() ? stack.getName() : null;
+
+        //? if >=1.20.5 {
+        this.customName = stack.get(DataComponentTypes.CUSTOM_NAME);
+        //?} else
+        /*this.customName = stack.hasCustomName() ? stack.getName() : null;*/
     }
 
     private boolean isSinglePicture() {

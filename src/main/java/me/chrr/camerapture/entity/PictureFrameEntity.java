@@ -31,7 +31,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+
+//? if >=1.20.5 {
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.server.network.EntityTrackerEntry;
+import java.util.Optional;
+//?}
 
 public class PictureFrameEntity extends ResizableDecorationEntity implements NamedScreenHandlerFactory {
     private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
@@ -50,7 +55,17 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         this.setFacing(facing);
     }
 
+    //? if >=1.20.5 {
     @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(ITEM_STACK, ItemStack.EMPTY);
+        builder.add(GLOWING, false);
+        builder.add(FIXED, false);
+        builder.add(ROTATION, 0);
+    }
+    //?} else {
+    /*@Override
     protected void initDataTracker() {
         super.initDataTracker();
 
@@ -59,6 +74,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         this.getDataTracker().startTracking(FIXED, false);
         this.getDataTracker().startTracking(ROTATION, 0);
     }
+    *///?}
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
@@ -87,7 +103,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         this.emitGameEvent(GameEvent.BLOCK_CHANGE, entity);
 
         ItemStack itemStack = this.getItemStack();
-        if (itemStack != null) {
+        if (!itemStack.isEmpty()) {
             itemStack.setHolder(null);
             this.dropStack(itemStack);
         }
@@ -98,7 +114,6 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         this.playSound(SoundEvents.ENTITY_ITEM_FRAME_PLACE, 1f, 1f);
     }
 
-    @Nullable
     public ItemStack getItemStack() {
         return this.getDataTracker().get(ITEM_STACK);
     }
@@ -138,7 +153,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
         if (data.equals(ITEM_STACK)) {
             ItemStack itemStack = getItemStack();
-            if (itemStack != null) {
+            if (!itemStack.isEmpty()) {
                 itemStack.setHolder(this);
             }
         }
@@ -216,10 +231,17 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         }
     }
 
+    //? if >=1.20.5 {
     @Override
+    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+        return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
+    }
+    //?} else {
+    /*@Override
     public Packet<ClientPlayPacketListener> createSpawnPacket() {
         return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
     }
+    *///?}
 
     @Override
     public void onSpawnPacket(EntitySpawnS2CPacket packet) {
@@ -232,8 +254,11 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         super.writeCustomDataToNbt(nbt);
 
         ItemStack itemStack = this.getItemStack();
-        if (itemStack != null) {
-            nbt.put("Item", itemStack.writeNbt(new NbtCompound()));
+        if (!itemStack.isEmpty()) {
+            //? if >=1.20.5 {
+            nbt.put("Item", itemStack.encode(getRegistryManager()));
+            //?} else
+            /*nbt.put("Item", itemStack.writeNbt(new NbtCompound()));*/
         }
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
@@ -247,12 +272,15 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
         NbtCompound nbtCompound = nbt.getCompound("Item");
         if (nbtCompound != null && !nbtCompound.isEmpty()) {
-            ItemStack itemStack = ItemStack.fromNbt(nbtCompound);
+            //? if >=1.20.5 {
+            Optional<ItemStack> itemStack = ItemStack.fromNbt(getRegistryManager(), nbtCompound);
             if (itemStack.isEmpty()) {
                 Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
+            } else {
+                this.setItemStack(itemStack.get());
             }
-
-            this.setItemStack(itemStack);
+            //?} else
+            /*this.setItemStack(ItemStack.fromNbt(nbtCompound));*/
         }
 
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
@@ -262,23 +290,21 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
     @Override
     public ItemStack getPickBlockStack() {
-        ItemStack itemStack = this.getItemStack();
-        if (itemStack == null) {
-            return ItemStack.EMPTY;
-        } else {
-            return itemStack.copy();
-        }
+        return this.getItemStack().copy();
     }
 
     @Override
     public boolean hasCustomName() {
-        return getItemStack() != null && getItemStack().hasCustomName();
+        //? if >=1.20.5 {
+        return getItemStack().get(DataComponentTypes.CUSTOM_NAME) != null;
+        //?} else
+        /*return getItemStack().hasCustomName();*/
     }
 
     @Nullable
     @Override
     public Text getCustomName() {
-        return hasCustomName() ? Objects.requireNonNull(getItemStack()).getName() : null;
+        return hasCustomName() ? getItemStack().getName() : null;
     }
 
     @Override
