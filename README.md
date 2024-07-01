@@ -2,7 +2,12 @@
 
 > Fabric mod with cameras that can take pictures!
 
-Read more about it on [Modrinth](https://modrinth.com/mod/camerapture).
+![Version](https://img.shields.io/github/v/release/chrrs/camerapture?include_prereleases&style=flat-square)
+![Build status](https://img.shields.io/github/actions/workflow/status/chrrs/camerapture/build.yml?style=flat-square)
+[![Modrinth](https://img.shields.io/modrinth/dt/9dzLWnmZ?style=flat-square&logo=modrinth)](https://modrinth.com/mod/camerapture)
+[![CurseForge](https://img.shields.io/curseforge/dt/1051342?style=flat-square&logo=curseforge)](https://curseforge.com/minecraft/mc-mods/camerapture)
+
+Read more about it on [Modrinth](https://modrinth.com/mod/camerapture) or [CurseForge](https://curseforge.com/minecraft/mc-mods/camerapture).
 
 ## Project Structure
 
