@@ -221,7 +221,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         matrices.push();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - entity.getYaw()));
-        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 1f, 0f);
+        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 2f, 0f);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180.0F + entity.getYaw()));
 
         super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light, tickDelta);
@@ -233,7 +233,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         matrices.push();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - entity.getYaw()));
-        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 1f, 0f);
+        matrices.translate(-((float) entity.getFrameWidth() - 1f) / 2f, entity.getFrameHeight() - 2f, 0f);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180.0F + entity.getYaw()));
 
         super.renderLabelIfPresent(entity, entity.getCustomName(), matrices, vertexConsumers, light);
