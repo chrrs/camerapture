@@ -137,6 +137,7 @@ public class Camerapture implements ModInitializer {
         // Album
         Registry.register(Registries.ITEM, id("album"), ALBUM);
         Registry.register(Registries.SCREEN_HANDLER, id("album"), ALBUM_SCREEN_HANDLER);
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(ALBUM));
 
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, id("picture_frame"), PICTURE_FRAME);
