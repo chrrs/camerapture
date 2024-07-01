@@ -1,3 +1,11 @@
+## 1.5.0
+
+- Rework networking backend to use codecs.
+- Fix recipes and advancements across versions.
+- Add the album item to the creative inventory.
+- Properly position picture frame name tags.
+- Various other smaller fixes.
+
 ## 1.4.1
 
 - Stabilize 1.21.
