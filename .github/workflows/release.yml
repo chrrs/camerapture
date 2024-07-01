@@ -1,15 +1,19 @@
-name: Release
+name: Publish
 
 on:
-  push:
-    tags: [ "v*" ]
-
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      publishedVersions:
+        required: false
+        description: Published Minecraft versions
+        type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +24,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Fetch Changelog
+      - run: ./gradlew chiseledBuild
+
+      - name: Fetch changelog
         run: |
           {
             echo "CHANGELOG<<EOF"
@@ -33,8 +39,9 @@ jobs:
           CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-        
-      - name: Create Release
+          CHISELED_VERSIONS: ${{ inputs.publishedVersions }}
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ env.CHANGELOG }}
