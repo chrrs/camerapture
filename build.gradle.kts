@@ -5,6 +5,9 @@ plugins {
     id("me.modmuss50.mod-publish-plugin") version "0.5.1"
 }
 
+fun Project.prop(namespace: String, key: String) =
+    property("$namespace.$key") as String
+
 val minecraftVersion = stonecutter.current.version
 
 // 1.20.5 changed some things about datapacks. Because of this, let's create a system
@@ -12,11 +15,11 @@ val minecraftVersion = stonecutter.current.version
 // includes and excludes them appropriately.
 val resourceVersion = if (stonecutter.eval(minecraftVersion, ">=1.20.5")) "1.20.5" else "1.20"
 
-group = property("mod.mavenGroup") as String
-version = "${property("mod.version")}+mc$minecraftVersion"
+group = prop("mod", "group")
+version = "${prop("mod", "version")}+mc$minecraftVersion"
 
 base {
-    archivesName.set(property("mod.archivesName") as String)
+    archivesName.set(prop("mod", "name"))
 }
 
 repositories {
@@ -52,23 +55,19 @@ loom {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:${property("fabric.yarn")}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${property("fabric.loader")}")
+    mappings("net.fabricmc:yarn:${prop("fabric", "yarn")}:v2")
+    modImplementation("net.fabricmc:fabric-loader:${prop("fabric", "loader")}")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabricApi")}")
-    modImplementation("maven.modrinth:jade:${property("deps.jade")}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${prop("deps", "fabricApi")}")
+    modImplementation("maven.modrinth:jade:${prop("deps", "jade")}")
 
-    modImplementation("com.terraformersmc:modmenu:${property("deps.modMenu")}")
-    modApi("me.shedaniel.cloth:cloth-config-fabric:${property("deps.clothConfig")}") {
+    modImplementation("com.terraformersmc:modmenu:${prop("deps", "modMenu")}")
+    modApi("me.shedaniel.cloth:cloth-config-fabric:${prop("deps", "clothConfig")}") {
         exclude("net.fabricmc.fabric-api")
     }
 
     include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
 }
-
-val modVersion = property("mod.version") as String
-val loaderVersion = property("fabric.loader") as String
-val minecraftDependency = property("deps.minecraft") as String
 
 tasks {
     processResources {
@@ -83,13 +82,19 @@ tasks {
             exclude()
         }
 
+        // We construct our minecraft dependency string based on the versions provided in gradle.properties
+        val gameVersions = prop("minecraft", "versions").split(",")
+        val first = gameVersions.firstOrNull()!!
+        val last = gameVersions.lastOrNull()!!
+        val minecraftDependency = if (gameVersions.size == 1) first else ">=$first <=$last"
+
         // For fabric.mod.json, we source some properties from gradle.properties.
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(
                 mapOf(
-                    "version" to modVersion,
-                    "loaderVersion" to loaderVersion,
+                    "modName" to prop("mod", "name"),
+                    "version" to prop("mod", "version"),
                     "minecraftDependency" to minecraftDependency,
                 )
             )
@@ -108,26 +113,15 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-fun fetchChangelog() =
-    rootProject.file("CHANGELOG.md").readText()
-        .replace("\r\n", "\n")
-        .substringAfter("## $modVersion\n")
-        .substringBefore("\n## ")
-
 publishMods {
-    val gameVersions = (property("modrinth.compatibleVersions") as String).split(',')
-
-    displayName.set("$modVersion - Fabric $minecraftVersion")
-    type.set(if (modVersion.contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
-    modLoaders.addAll("fabric", "quilt")
+    displayName.set("${prop("mod", "version")} - Fabric $minecraftVersion")
 
     file.set(tasks.remapJar.get().archiveFile)
+    changelog.set(providers.environmentVariable("CHANGELOG"))
+    type.set(if (prop("mod", "version").contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
+    modLoaders.addAll("fabric", "quilt")
 
-    // If the CHANGELOG environment variable is not set, we'll just fetch it ourselves.
-    changelog.set(
-        providers.environmentVariable("CHANGELOG")
-            .orElse(providers.provider(::fetchChangelog))
-    )
+    val gameVersions = prop("minecraft", "versions").split(",")
 
     modrinth {
         projectId.set(property("modrinth.id") as String)

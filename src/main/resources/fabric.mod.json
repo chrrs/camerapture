@@ -2,8 +2,8 @@
     "schemaVersion": 1,
     "id": "camerapture",
     "version": "${version}",
-    "name": "Camerapture",
-    "description": "Take photos and display pictures in Minecraft",
+    "name": "${modName}",
+    "description": "Take photos and display pictures in Minecraft.",
     "authors": [
         "chrrrs"
     ],
@@ -41,7 +41,7 @@
         ]
     },
     "depends": {
-        "fabricloader": ">=${loaderVersion}",
+        "fabricloader": ">=0.14",
         "fabric": "*",
         "minecraft": "${minecraftDependency}"
     }
