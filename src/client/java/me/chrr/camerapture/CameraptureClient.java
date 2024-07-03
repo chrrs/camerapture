@@ -121,14 +121,14 @@ public class CameraptureClient implements ClientModInitializer {
             if (stack.isOf(Camerapture.PICTURE)) {
                 // Right-clicking a picture item should open the picture screen.
                 if (PictureItem.getPictureData(stack) != null) {
-                    client.submit(() -> client.setScreen(new PictureScreen(List.of(stack))));
+                    client.executeSync(() -> client.setScreen(new PictureScreen(List.of(stack))));
                     return TypedActionResult.success(stack);
                 }
             } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
                 // Right-clicking the album should open the gallery screen.
                 List<ItemStack> pictures = AlbumItem.getPictures(stack);
                 if (!pictures.isEmpty()) {
-                    client.submit(() -> client.setScreen(new PictureScreen(pictures)));
+                    client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                     return TypedActionResult.success(stack);
                 }
             } else if (player.isSneaking()
@@ -136,7 +136,7 @@ public class CameraptureClient implements ClientModInitializer {
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
                 // Shift-right clicking the camera should open the upload screen.
-                client.submit(() -> client.setScreen(new UploadScreen()));
+                client.executeSync(() -> client.setScreen(new UploadScreen()));
                 return TypedActionResult.success(stack);
             }
 

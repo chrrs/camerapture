@@ -42,7 +42,7 @@ public class ClientPictureStore {
     }
 
     public void clearCache() {
-        MinecraftClient.getInstance().submit(() -> {
+        MinecraftClient.getInstance().executeSync(() -> {
             for (Picture picture : uuidPictures.values()) {
                 if (picture.identifier != null) {
                     MinecraftClient.getInstance()
@@ -108,7 +108,7 @@ public class ClientPictureStore {
 
         picture.setSize(nativeImage.getWidth(), nativeImage.getHeight());
 
-        MinecraftClient.getInstance().submit(() -> {
+        MinecraftClient.getInstance().executeSync(() -> {
             MinecraftClient.getInstance()
                     .getTextureManager()
                     .registerTexture(picture.getIdentifier(), (AbstractTexture) texture);
