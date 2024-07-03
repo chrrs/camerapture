@@ -1,13 +1,13 @@
 package me.chrr.camerapture.util;
 
-import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.text.Text;
 
 public class PictureDrawingUtil {
-    public static void drawPicture(DrawContext context, TextRenderer textRenderer, ClientPictureStore.Picture picture, int x, int y, int width, int height) {
+    public static void drawPicture(DrawContext context, TextRenderer textRenderer, RemotePicture picture, int x, int y, int width, int height) {
         switch (picture.getStatus()) {
             case FETCHING -> {
                 String loading = LoadingDisplay.get(System.currentTimeMillis());
@@ -31,7 +31,7 @@ public class PictureDrawingUtil {
                 int dx = x + width / 2 - newWidth / 2;
                 int dy = y + height / 2 - newHeight / 2;
 
-                context.drawTexture(picture.getIdentifier(), dx, dy, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
+                context.drawTexture(picture.getTextureIdentifier(), dx, dy, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
             }
         }
     }

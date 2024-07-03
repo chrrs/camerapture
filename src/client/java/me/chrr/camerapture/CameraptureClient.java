@@ -47,7 +47,7 @@ public class CameraptureClient implements ClientModInitializer {
             Camerapture.LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
         }
 
-        ClientPictureStore.getInstance().clearCache();
+        ClientPictureStore.getInstance().clear();
         PictureTaker.getInstance().resetConfig();
 
         HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
@@ -145,7 +145,7 @@ public class CameraptureClient implements ClientModInitializer {
 
         // When disconnecting, we clear the picture cache.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            ClientPictureStore.getInstance().clearCache();
+            ClientPictureStore.getInstance().clear();
             PictureTaker.getInstance().resetConfig();
         });
     }

@@ -5,6 +5,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -112,7 +113,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
         if (pictureSlot.hasStack()) {
             PictureItem.PictureData pictureData = PictureItem.getPictureData(slot.getStack());
             if (pictureData != null) {
-                ClientPictureStore.Picture picture = ClientPictureStore.getInstance().ensureServerPicture(pictureData.id());
+                RemotePicture picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
                 PictureDrawingUtil.drawPicture(context, textRenderer, picture,
                         slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
             }

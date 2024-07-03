@@ -16,6 +16,7 @@ import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
+import me.chrr.camerapture.picture.StoredPicture;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
 import me.chrr.camerapture.screen.PictureFrameScreenHandler;
 import net.fabricmc.api.ModInitializer;
@@ -105,7 +106,7 @@ public class Camerapture implements ModInitializer {
             .build();
     //?}
 
-    private final Queue<QueuedPicture> pictureQueue = new LinkedList<>();
+    private final Queue<QueuedPicture> downloadQueue = new LinkedList<>();
 
     @Override
     public void onInitialize() {
@@ -181,7 +182,7 @@ public class Camerapture implements ModInitializer {
 
             player.incrementStat(PICTURES_TAKEN);
 
-            UUID uuid = ServerPictureStore.getInstance().reserveUuid();
+            UUID uuid = ServerPictureStore.getInstance().reserveId();
             Networking.sendTo(player, new RequestUploadPacket(uuid));
         });
 
@@ -196,7 +197,7 @@ public class Camerapture implements ModInitializer {
             if (packet.bytesLeft() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
                 LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
                 collectors.remove(packet.uuid());
-                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
+                ServerPictureStore.getInstance().unreserveId(packet.uuid());
             }
 
             ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
@@ -208,7 +209,7 @@ public class Camerapture implements ModInitializer {
                             return;
                         }
 
-                        ServerPictureStore.getInstance().put(server, uuid, new ServerPictureStore.Picture(bytes));
+                        ServerPictureStore.getInstance().put(server, uuid, new StoredPicture(bytes));
                         ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
 
                         // We have to do this on a separate thread, because it might spawn an item entity.
@@ -223,20 +224,20 @@ public class Camerapture implements ModInitializer {
             if (!collector.push(packet.bytes(), packet.bytesLeft())) {
                 LOGGER.error("{} sent a malformed byte section", player.getName().getString());
                 collectors.remove(packet.uuid());
-                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
+                ServerPictureStore.getInstance().unreserveId(packet.uuid());
             }
 
             if (collector.getCurrentLength() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
                 LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
                 collectors.remove(packet.uuid());
-                ServerPictureStore.getInstance().unreserveUuid(packet.uuid());
+                ServerPictureStore.getInstance().unreserveId(packet.uuid());
             }
         });
 
         // Client requests a picture with a certain UUID
         Networking.onServerPacketReceive(RequestDownloadPacket.class, (packet, player) -> {
             try {
-                ServerPictureStore.Picture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
+                StoredPicture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
 
                 if (picture == null) {
                     LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
@@ -244,7 +245,7 @@ public class Camerapture implements ModInitializer {
                     return;
                 }
 
-                pictureQueue.add(new QueuedPicture(player, packet.uuid(), picture));
+                downloadQueue.add(new QueuedPicture(player, packet.uuid(), picture));
             } catch (Exception e) {
                 LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                 Networking.sendTo(player, new PictureErrorPacket(packet.uuid()));
@@ -268,7 +269,7 @@ public class Camerapture implements ModInitializer {
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
-                    QueuedPicture item = pictureQueue.poll();
+                    QueuedPicture item = downloadQueue.poll();
                     if (item == null || item.recipient.isDisconnected()) {
                         return;
                     }
@@ -321,6 +322,6 @@ public class Camerapture implements ModInitializer {
         /*return new Identifier("camerapture", path);*/
     }
 
-    private record QueuedPicture(ServerPlayerEntity recipient, UUID uuid, ServerPictureStore.Picture picture) {
+    private record QueuedPicture(ServerPlayerEntity recipient, UUID uuid, StoredPicture picture) {
     }
 }

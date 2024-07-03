@@ -22,10 +22,10 @@ public class ServerPictureStore {
 
     private static final ServerPictureStore INSTANCE = new ServerPictureStore();
 
-    private final Set<UUID> reservedUuids = new HashSet<>();
-    private final Map<UUID, Picture> imageCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
+    private final Set<UUID> reservedIds = new HashSet<>();
+    private final Map<UUID, StoredPicture> pictureCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<UUID, Picture> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<UUID, StoredPicture> eldest) {
             return size() > CACHE_SIZE;
         }
     };
@@ -33,22 +33,22 @@ public class ServerPictureStore {
     private ServerPictureStore() {
     }
 
-    public UUID reserveUuid() {
-        UUID uuid = UUID.randomUUID();
-        reservedUuids.add(uuid);
-        return uuid;
+    public UUID reserveId() {
+        UUID id = UUID.randomUUID();
+        reservedIds.add(id);
+        return id;
     }
 
-    public boolean unreserveUuid(UUID uuid) {
-        return reservedUuids.remove(uuid);
+    public boolean unreserveId(UUID id) {
+        return reservedIds.remove(id);
     }
 
-    public boolean isReserved(UUID uuid) {
-        return reservedUuids.contains(uuid);
+    public boolean isReserved(UUID id) {
+        return reservedIds.contains(id);
     }
 
-    public void put(MinecraftServer server, UUID uuid, Picture picture) throws IOException {
-        if (!unreserveUuid(uuid)) {
+    public void put(MinecraftServer server, UUID id, StoredPicture picture) throws IOException {
+        if (!unreserveId(id)) {
             throw new IOException("UUID not reserved");
         }
 
@@ -57,27 +57,26 @@ public class ServerPictureStore {
             throw new IOException("image larger than " + maxImageBytes + " bytes");
         }
 
-        imageCache.put(uuid, picture);
+        pictureCache.put(id, picture);
 
-        Path path = getFilePath(server, uuid);
+        Path path = getFilePath(server, id);
         Files.createDirectories(path.getParent());
-        Files.write(path, picture.bytes);
+        Files.write(path, picture.bytes());
     }
 
     @Nullable
-    public Picture get(MinecraftServer server, UUID uuid) throws IOException {
-        if (imageCache.containsKey(uuid)) {
-            return imageCache.get(uuid);
+    public StoredPicture get(MinecraftServer server, UUID id) throws IOException {
+        if (pictureCache.containsKey(id)) {
+            return pictureCache.get(id);
         }
 
-        Path path = getFilePath(server, uuid);
-
+        Path path = getFilePath(server, id);
         if (!Files.exists(path)) {
             return null;
         }
 
-        Picture picture = new Picture(Files.readAllBytes(path));
-        imageCache.put(uuid, picture);
+        StoredPicture picture = new StoredPicture(Files.readAllBytes(path));
+        pictureCache.put(id, picture);
         return picture;
     }
 
@@ -88,8 +87,5 @@ public class ServerPictureStore {
 
     public static ServerPictureStore getInstance() {
         return INSTANCE;
-    }
-
-    public record Picture(byte[] bytes) {
     }
 }

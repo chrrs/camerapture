@@ -3,6 +3,7 @@ package me.chrr.camerapture.screen;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -32,7 +33,7 @@ public class PictureScreen extends InGameScreen {
     private final List<ItemStack> pictures;
     private int index = 0;
 
-    private ClientPictureStore.Picture picture;
+    private RemotePicture picture;
 
     private Text pageNumber;
     private Text customName;
@@ -104,11 +105,11 @@ public class PictureScreen extends InGameScreen {
     public NativeImage getNativeImage() {
         if (this.client == null ||
                 this.picture == null
-                || this.picture.getStatus() != ClientPictureStore.Status.SUCCESS) {
+                || this.picture.getStatus() != RemotePicture.Status.SUCCESS) {
             return null;
         }
 
-        AbstractTexture texture = client.getTextureManager().getTexture(this.picture.getIdentifier());
+        AbstractTexture texture = client.getTextureManager().getTexture(this.picture.getTextureIdentifier());
         if (!(texture instanceof NativeImageBackedTexture backedTexture)) {
             return null;
         }
@@ -154,7 +155,7 @@ public class PictureScreen extends InGameScreen {
     //? if >=1.20.4 {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         //?} else
-    /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
+        /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
         this.index = Math.floorMod(this.index - (int) verticalAmount, pictures.size());
         forceRefresh();
         return true;
@@ -167,7 +168,7 @@ public class PictureScreen extends InGameScreen {
             return;
         }
 
-        this.picture = ClientPictureStore.getInstance().ensureServerPicture(pictureData.id());
+        this.picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
         this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
 
         //? if >=1.20.5 {

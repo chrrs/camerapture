@@ -128,8 +128,8 @@ public class PictureTaker {
                     ClientNetworking.sendToServer(new UploadPartialPicturePacket(uuid, section, bytesLeft)));
 
             // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
-            ClientPictureStore.getInstance().processImage(uuid, picture);
-            ClientPictureStore.getInstance().cacheToDisk(uuid, bytes);
+            ClientPictureStore.getInstance().processReceivedImage(uuid, picture);
+            ClientPictureStore.getInstance().cacheBytesToDisk(uuid, bytes);
             this.picture = null;
         } catch (IOException e) {
             Camerapture.LOGGER.error("failed to send picture to server", e);

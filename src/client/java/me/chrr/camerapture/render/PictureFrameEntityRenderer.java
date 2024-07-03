@@ -5,6 +5,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.LoadingDisplay;
@@ -57,11 +58,11 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
                 // Picture item has no picture data.
                 renderErrorText(matrices, vertexConsumers);
             } else {
-                ClientPictureStore.Picture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
-                if (picture == null || picture.getStatus() == ClientPictureStore.Status.ERROR) {
+                RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
+                if (picture == null || picture.getStatus() == RemotePicture.Status.ERROR) {
                     // Picture failed to load.
                     renderErrorText(matrices, vertexConsumers);
-                } else if (picture.getStatus() == ClientPictureStore.Status.FETCHING) {
+                } else if (picture.getStatus() == RemotePicture.Status.FETCHING) {
                     // Picture is still fetching.
                     renderFetching(matrices, vertexConsumers);
                 } else {
@@ -79,7 +80,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, ClientPictureStore.Picture picture, int rotation, float frameWidth, float frameHeight, boolean glowing, int light) {
+    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, RemotePicture picture, int rotation, float frameWidth, float frameHeight, boolean glowing, int light) {
         float pictureWidth = picture.getWidth();
         float pictureHeight = picture.getHeight();
 
@@ -111,7 +112,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             RenderSystem.depthMask(true);
 
             RenderSystem.setShader(GameRenderer::getPositionColorTexLightmapProgram);
-            RenderSystem.setShaderTexture(0, picture.getIdentifier());
+            RenderSystem.setShaderTexture(0, picture.getTextureIdentifier());
 
             //? if >=1.21 {
             BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
@@ -134,7 +135,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
             RenderSystem.disableDepthTest();
             RenderSystem.disableBlend();
         } else {
-            RenderLayer renderLayer = RenderLayer.getEntityCutout(picture.getIdentifier());
+            RenderLayer renderLayer = RenderLayer.getEntityCutout(picture.getTextureIdentifier());
             VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
             MatrixStack.Entry matrix = matrices.peek();
