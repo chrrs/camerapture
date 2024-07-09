@@ -47,9 +47,10 @@ public class UploadScreen extends InGameScreen {
         context.drawTexture(TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0, 0, backgroundWidth, backgroundHeight);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - textRenderer.fontHeight - 16, 0xffffff);
 
-        int paper = CameraptureClient.paperInInventory();
-        browseButton.visible = paper > 0;
-        if (paper == 0) {
+        boolean canTakePicture = CameraptureClient.canTakePicture();
+        browseButton.visible = canTakePicture;
+
+        if (!canTakePicture) {
             if (System.currentTimeMillis() % 1000 < 500) {
                 int y = this.height / 2 + textRenderer.fontHeight + 4;
                 context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.no_paper"), this.width / 2, y, 0xffff0000);
@@ -92,7 +93,7 @@ public class UploadScreen extends InGameScreen {
     }
 
     private boolean tryUpload(Path path) {
-        if (CameraptureClient.paperInInventory() == 0) {
+        if (!CameraptureClient.canTakePicture()) {
             return false;
         }
 

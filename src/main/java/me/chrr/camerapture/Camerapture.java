@@ -173,8 +173,11 @@ public class Camerapture implements ModInitializer {
                 return;
             }
 
-            if (Inventories.remove(player.getInventory(), (stack) -> stack.isOf(Items.PAPER), 1, false) != 1) {
-                return;
+            // If the player is in creative mode, skip taking any paper.
+            if (!player.isInCreativeMode()) {
+                if (Inventories.remove(player.getInventory(), (stack) -> stack.isOf(Items.PAPER), 1, false) != 1) {
+                    return;
+                }
             }
 
             // We don't want to play the sound when the player is uploading a picture, only when it's being taken.

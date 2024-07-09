@@ -78,8 +78,7 @@ public abstract class InGameHudMixin {
 
         context.drawText(getTextRenderer(), Text.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh, 0xffffffff, false);
 
-        int paper = CameraptureClient.paperInInventory();
-        if (paper == 0) {
+        if (!CameraptureClient.canTakePicture()) {
             if (System.currentTimeMillis() % 1000 < 500) {
                 int w = getTextRenderer().getWidth(Text.translatable("text.camerapture.no_paper"));
                 int x = width / 2 - w / 2;
@@ -87,6 +86,8 @@ public abstract class InGameHudMixin {
                 context.drawText(getTextRenderer(), Text.translatable("text.camerapture.no_paper"), x, y, 0xffff0000, false);
             }
         } else {
+            int paper = CameraptureClient.paperInInventory();
+
             Text text = Text.translatable("text.camerapture.paper_available", paper);
             int w = getTextRenderer().getWidth(text);
             int x = width - 25 - w;

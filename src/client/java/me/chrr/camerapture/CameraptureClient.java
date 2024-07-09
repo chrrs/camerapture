@@ -101,7 +101,7 @@ public class CameraptureClient implements ClientModInitializer {
     private void registerEvents() {
         // Attacking when a camera is active should take a picture!
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-            if (Camerapture.hasActiveCamera(player) && paperInInventory() > 0) {
+            if (Camerapture.hasActiveCamera(player) && canTakePicture()) {
                 PictureTaker.getInstance().uploadScreenPicture();
                 return true;
             }
@@ -158,5 +158,14 @@ public class CameraptureClient implements ClientModInitializer {
     public static int paperInInventory() {
         MinecraftClient client = MinecraftClient.getInstance();
         return client.player == null ? 0 : client.player.getInventory().count(Items.PAPER);
+    }
+
+    /**
+     * Returns if the player can currently take a picture. The player can take a picture
+     * either if they're in creative mode, or they have paper in their inventory.
+     */
+    public static boolean canTakePicture() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return paperInInventory() > 0 || (client.player != null && client.player.isInCreativeMode());
     }
 }
