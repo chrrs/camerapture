@@ -3,6 +3,7 @@ package me.chrr.camerapture.screen;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.picture.PictureTaker;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.PressableTextWidget;
 import net.minecraft.text.Text;
@@ -84,9 +85,10 @@ public class UploadScreen extends InGameScreen {
 
                 try {
                     if (tryUpload(Path.of(path))) {
-                        this.close();
+                        MinecraftClient.getInstance().executeSync(this::close);
                     }
                 } catch (InvalidPathException ignored) {
+                    // Hopefully the path returned by tinyfd is valid.
                 }
             }
         }).start();
