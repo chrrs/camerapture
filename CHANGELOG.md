@@ -1,3 +1,9 @@
+## 1.6.0
+
+- Allow for placing album items on lecterns.
+- Don't require paper when taking photos in creative mode.
+- Stop the huge error trace when uploading a picture.
+
 ## 1.5.0
 
 - Rework networking backend to use codecs.
