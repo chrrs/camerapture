@@ -24,11 +24,18 @@ import java.util.List;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 //?} else {
-/*import net.minecraft.inventory.Inventories;
+/*import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.math.BlockPos;
+
 import java.util.ArrayList;
 *///?}
 
@@ -170,7 +177,7 @@ public class AlbumItem extends Item {
         public void onClose(PlayerEntity player) {
             //? if >=1.20.5 {
             this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
-            //?} else
+             //?} else
             /*Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());*/
             super.onClose(player);
         }

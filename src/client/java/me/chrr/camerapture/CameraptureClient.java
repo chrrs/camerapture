@@ -166,6 +166,6 @@ public class CameraptureClient implements ClientModInitializer {
      */
     public static boolean canTakePicture() {
         MinecraftClient client = MinecraftClient.getInstance();
-        return paperInInventory() > 0 || (client.player != null && client.player.isInCreativeMode());
+        return paperInInventory() > 0 || (client.player != null && client.player.isCreative());
     }
 }

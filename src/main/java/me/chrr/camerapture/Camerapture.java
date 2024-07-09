@@ -85,7 +85,7 @@ public class Camerapture implements ModInitializer {
     public static final Item ALBUM = new AlbumItem(new Item.Settings().maxCount(1));
     //? if >=1.20.5 {
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new, PacketCodecs.INTEGER);
-    //?} else
+     //?} else
     /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);*/
 
     public static final ScreenHandlerType<AlbumLecternScreenHandler> ALBUM_LECTERN_SCREEN_HANDLER =
@@ -174,7 +174,7 @@ public class Camerapture implements ModInitializer {
             }
 
             // If the player is in creative mode, skip taking any paper.
-            if (!player.isInCreativeMode()) {
+            if (!player.isCreative()) {
                 if (Inventories.remove(player.getInventory(), (stack) -> stack.isOf(Items.PAPER), 1, false) != 1) {
                     return;
                 }
@@ -327,7 +327,7 @@ public class Camerapture implements ModInitializer {
     public static Identifier id(String path) {
         //? if >=1.21 {
         return Identifier.of("camerapture", path);
-        //?} else
+         //?} else
         /*return new Identifier("camerapture", path);*/
     }
 
