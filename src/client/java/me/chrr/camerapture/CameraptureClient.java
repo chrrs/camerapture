@@ -12,10 +12,7 @@ import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
-import me.chrr.camerapture.screen.AlbumScreen;
-import me.chrr.camerapture.screen.PictureFrameScreen;
-import me.chrr.camerapture.screen.PictureScreen;
-import me.chrr.camerapture.screen.UploadScreen;
+import me.chrr.camerapture.screen.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -51,9 +48,14 @@ public class CameraptureClient implements ClientModInitializer {
         PictureTaker.getInstance().resetConfig();
 
         HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
-        EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
-
         HandledScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
+
+        //noinspection RedundantTypeArguments for some reason we need type arguments here.
+        HandledScreens.<AlbumLecternScreenHandler, AlbumLecternScreen>register(
+                Camerapture.ALBUM_LECTERN_SCREEN_HANDLER,
+                (handler, pi, title) -> new AlbumLecternScreen(handler));
+
+        EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
 
         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
             Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config");

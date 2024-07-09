@@ -41,6 +41,24 @@ public class AlbumItem extends Item {
         super(settings);
     }
 
+    // In newer versions, you can place any items with the `lectern_books` tag in lecterns automatically.
+    //? if <1.20.5 {
+    /*@Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        BlockPos pos = context.getBlockPos();
+        BlockState state = world.getBlockState(pos);
+
+        if (state.isOf(Blocks.LECTERN)) {
+            return LecternBlock.putBookIfAbsent(context.getPlayer(), world, pos, state, context.getStack())
+                    ? ActionResult.success(world.isClient)
+                    : ActionResult.PASS;
+        }
+
+        return ActionResult.PASS;
+    }
+    *///?}
+
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
@@ -50,6 +68,7 @@ public class AlbumItem extends Item {
             // the offhand, we can ignore it.
             int albumSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot : -1;
 
+            //noinspection rawtypes
             player.openHandledScreen(new ExtendedScreenHandlerFactory() {
                 //? if >=1.20.5 {
                 @Override

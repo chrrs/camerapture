@@ -17,6 +17,7 @@ import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.picture.StoredPicture;
+import me.chrr.camerapture.screen.AlbumLecternScreenHandler;
 import me.chrr.camerapture.screen.AlbumScreenHandler;
 import me.chrr.camerapture.screen.PictureFrameScreenHandler;
 import net.fabricmc.api.ModInitializer;
@@ -87,6 +88,10 @@ public class Camerapture implements ModInitializer {
     //?} else
     /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);*/
 
+    public static final ScreenHandlerType<AlbumLecternScreenHandler> ALBUM_LECTERN_SCREEN_HANDLER =
+            new ScreenHandlerType<>((syncId, pi) -> new AlbumLecternScreenHandler(syncId), FeatureSet.empty());
+
+
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
@@ -138,6 +143,7 @@ public class Camerapture implements ModInitializer {
         // Album
         Registry.register(Registries.ITEM, id("album"), ALBUM);
         Registry.register(Registries.SCREEN_HANDLER, id("album"), ALBUM_SCREEN_HANDLER);
+        Registry.register(Registries.SCREEN_HANDLER, id("album_lectern"), ALBUM_LECTERN_SCREEN_HANDLER);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(ALBUM));
 
         // Picture Frame

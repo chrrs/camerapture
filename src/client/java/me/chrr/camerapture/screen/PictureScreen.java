@@ -27,10 +27,10 @@ import java.util.List;
 import net.minecraft.component.DataComponentTypes;
 
 public class PictureScreen extends InGameScreen {
-    public static final int BAR_WIDTH = 360;
+    public static final int MAX_BAR_WIDTH = 360;
     public static final int BORDER_THICKNESS = 24;
 
-    private final List<ItemStack> pictures;
+    private List<ItemStack> pictures;
     private int index = 0;
 
     private RemotePicture picture;
@@ -52,20 +52,16 @@ public class PictureScreen extends InGameScreen {
         super.init();
 
         if (!isSinglePicture()) {
-            int barX = width / 2 - BAR_WIDTH / 2;
+            int barWidth = Math.min(MAX_BAR_WIDTH, width - BORDER_THICKNESS * 2);
+
+            int barX = width / 2 - barWidth / 2;
             int barY = height - BORDER_THICKNESS - 20;
 
-            addDrawableChild(ButtonWidget.builder(Text.of("←"), button -> {
-                        this.index = Math.floorMod(this.index - 1, pictures.size());
-                        forceRefresh();
-                    })
+            addDrawableChild(ButtonWidget.builder(Text.of("←"), button -> this.changeIndexBy(-1))
                     .dimensions(barX, barY, 20, 20)
                     .build());
-            addDrawableChild(ButtonWidget.builder(Text.of("→"), button -> {
-                        this.index = Math.floorMod(this.index + 1, pictures.size());
-                        forceRefresh();
-                    })
-                    .dimensions(barX + BAR_WIDTH - 20, barY, 20, 20)
+            addDrawableChild(ButtonWidget.builder(Text.of("→"), button -> this.changeIndexBy(1))
+                    .dimensions(barX + barWidth - 20, barY, 20, 20)
                     .build());
         }
     }
@@ -129,12 +125,10 @@ public class PictureScreen extends InGameScreen {
                 return true;
             }
         } else if (keyCode == GLFW.GLFW_KEY_LEFT) {
-            this.index = Math.floorMod(this.index - 1, pictures.size());
-            forceRefresh();
+            this.changeIndexBy(-1);
             return true;
         } else if (keyCode == GLFW.GLFW_KEY_RIGHT) {
-            this.index = Math.floorMod(this.index + 1, pictures.size());
-            forceRefresh();
+            this.changeIndexBy(1);
             return true;
         }
 
@@ -156,12 +150,32 @@ public class PictureScreen extends InGameScreen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         //?} else
         /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
-        this.index = Math.floorMod(this.index - (int) verticalAmount, pictures.size());
-        forceRefresh();
+        this.changeIndexBy((int) -verticalAmount);
         return true;
     }
 
+    public void changeIndexBy(int delta) {
+        if (!this.pictures.isEmpty()) {
+            this.index = Math.floorMod(this.index + delta, pictures.size());
+            forceRefresh();
+        }
+    }
+
+    public void setPictures(List<ItemStack> pictures) {
+        this.pictures = pictures;
+        this.index = 0;
+        this.clearAndInit();
+        this.forceRefresh();
+    }
+
     private void forceRefresh() {
+        this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
+        if (this.index >= this.pictures.size()) {
+            this.picture = null;
+            this.customName = null;
+            return;
+        }
+
         ItemStack stack = pictures.get(index);
         PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
         if (pictureData == null) {
@@ -169,7 +183,6 @@ public class PictureScreen extends InGameScreen {
         }
 
         this.picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
-        this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
 
         //? if >=1.20.5 {
         this.customName = stack.get(DataComponentTypes.CUSTOM_NAME);

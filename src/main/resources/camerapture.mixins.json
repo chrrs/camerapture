@@ -5,6 +5,7 @@
     "compatibilityLevel": "JAVA_17",
     "mixins": [
         "ItemStackComponentizationFixMixin",
+        "LecternBlockEntityMixin",
         "Schema1460Mixin"
     ],
     "injectors": {
