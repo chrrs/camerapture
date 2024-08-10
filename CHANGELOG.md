@@ -1,3 +1,7 @@
+## 1.6.1
+
+- Add support for 1.21.1.
+
 ## 1.6.0
 
 - Allow for placing album items on lecterns.
