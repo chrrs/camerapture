@@ -1,5 +1,7 @@
 package me.chrr.camerapture.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import net.fabricmc.api.EnvType;
@@ -14,7 +16,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,10 +43,10 @@ public abstract class InGameHudMixin {
     public abstract TextRenderer getTextRenderer();
 
     //? if >=1.21 {
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/LayeredDrawer;render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"))
-    private void render(LayeredDrawer instance, DrawContext context, RenderTickCounter tickCounter) {
+    @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/LayeredDrawer;render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"))
+    private void render(LayeredDrawer instance, DrawContext context, RenderTickCounter tickCounter, Operation<Void> original) {
         if (!Camerapture.hasActiveCamera(client.player) || this.client.options.hudHidden) {
-            instance.render(context, tickCounter);
+            original.call(instance, context, tickCounter);
         } else {
             drawOverlay(context);
         }
@@ -58,9 +59,9 @@ public abstract class InGameHudMixin {
         }
     }
 
-    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/option/GameOptions;hudHidden:Z"))
-    private boolean isHudHidden(GameOptions options) {
-        return Camerapture.hasActiveCamera(client.player) || options.hudHidden;
+    @WrapOperation(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/option/GameOptions;hudHidden:Z"))
+    private boolean isHudHidden(GameOptions instance, Operation<Boolean> original) {
+        return Camerapture.hasActiveCamera(client.player) || original.call(instance);
     }
     *///?}
 
