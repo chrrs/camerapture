@@ -1,3 +1,8 @@
+## 1.6.2
+
+- Fix compatibility with PolyLib and First-person Model.
+- Allow for placing album items in chiseled bookshelves.
+
 ## 1.6.1
 
 - Add support for 1.21.1.
