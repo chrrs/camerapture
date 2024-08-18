@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
+import me.chrr.camerapture.compat.FirstPersonModelCompat;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
@@ -42,6 +43,10 @@ public class CameraptureClient implements ClientModInitializer {
 
         if (!WebP.loadNativeLibrary()) {
             Camerapture.LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
+        }
+
+        if (FabricLoader.getInstance().isModLoaded("firstperson")) {
+            FirstPersonModelCompat.register();
         }
 
         ClientPictureStore.getInstance().clear();

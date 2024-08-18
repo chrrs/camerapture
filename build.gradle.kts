@@ -60,6 +60,7 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${prop("deps", "fabricApi")}")
     modImplementation("maven.modrinth:jade:${prop("deps", "jade")}")
+    modCompileOnlyApi("maven.modrinth:first-person-model:${prop("deps", "firstPersonModel")}")
 
     modImplementation("com.terraformersmc:modmenu:${prop("deps", "modMenu")}")
     modApi("me.shedaniel.cloth:cloth-config-fabric:${prop("deps", "clothConfig")}") {
