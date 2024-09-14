@@ -85,7 +85,7 @@ public class Camerapture implements ModInitializer {
     public static final Item ALBUM = new AlbumItem(new Item.Settings().maxCount(1));
     //? if >=1.20.5 {
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new, PacketCodecs.INTEGER);
-     //?} else
+    //?} else
     /*public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ExtendedScreenHandlerType<>(AlbumScreenHandler::new);*/
 
     public static final ScreenHandlerType<AlbumLecternScreenHandler> ALBUM_LECTERN_SCREEN_HANDLER =
@@ -270,12 +270,14 @@ public class Camerapture implements ModInitializer {
         });
 
         // Every so often, we send a picture from the queue.
-        Timer timer = new Timer("Picture Sender");
-        Mutable<TimerTask> sendTask = new MutableObject<>();
+        Mutable<Timer> timer = new MutableObject<>();
 
         // When the server is running, we start the timer that sends the pictures.
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            TimerTask task = new TimerTask() {
+            Timer timerObject = new Timer("Picture sender");
+            timer.setValue(timerObject);
+            
+            timerObject.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     QueuedPicture item = downloadQueue.poll();
@@ -287,14 +289,11 @@ public class Camerapture implements ModInitializer {
                             Networking.sendTo(item.recipient, new DownloadPartialPicturePacket(item.uuid, section, bytesLeft)));
 
                 }
-            };
-
-            timer.scheduleAtFixedRate(task, 0L, CONFIG_MANAGER.getConfig().server.msPerPicture);
-            sendTask.setValue(task);
+            }, 0L, CONFIG_MANAGER.getConfig().server.msPerPicture);
         });
 
         // When the server stops, we also stop the timer.
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> sendTask.getValue().cancel());
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> timer.getValue().cancel());
     }
 
     /**
@@ -327,7 +326,7 @@ public class Camerapture implements ModInitializer {
     public static Identifier id(String path) {
         //? if >=1.21 {
         return Identifier.of("camerapture", path);
-         //?} else
+        //?} else
         /*return new Identifier("camerapture", path);*/
     }
 
