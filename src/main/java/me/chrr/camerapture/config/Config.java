@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 
 public class Config {
     public Client client = new Client();
+    public Server server = new Server();
+
     public static class Client {
         public static int VERSION = 1;
 
@@ -18,7 +20,6 @@ public class Config {
         }
     }
 
-    public Server server = new Server();
     public static class Server {
         public static int VERSION = 3;
 

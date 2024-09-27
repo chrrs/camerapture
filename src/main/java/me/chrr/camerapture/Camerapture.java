@@ -276,7 +276,7 @@ public class Camerapture implements ModInitializer {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             Timer timerObject = new Timer("Picture sender");
             timer.setValue(timerObject);
-            
+
             timerObject.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {

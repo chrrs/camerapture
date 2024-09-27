@@ -177,7 +177,7 @@ public class AlbumItem extends Item {
         public void onClose(PlayerEntity player) {
             //? if >=1.20.5 {
             this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
-             //?} else
+            //?} else
             /*Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());*/
             super.onClose(player);
         }

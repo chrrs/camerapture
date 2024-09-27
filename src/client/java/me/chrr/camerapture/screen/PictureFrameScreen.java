@@ -83,14 +83,14 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
                         .build());
 
         glowingCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.glowing"), (glowing) -> {
-                    this.sendButtonPressPacket(8);
-                    this.glowing = glowing;
-                }, width / 2 - backgroundWidth / 2 + 7, height / 2 - backgroundHeight / 2 + 34, false, this.glowing));
+            this.sendButtonPressPacket(8);
+            this.glowing = glowing;
+        }, width / 2 - backgroundWidth / 2 + 7, height / 2 - backgroundHeight / 2 + 34, false, this.glowing));
 
         fixedCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.fixed"), (fixed) -> {
-                    this.sendButtonPressPacket(9);
-                    this.fixed = fixed;
-                }, width / 2 + backgroundWidth / 2 - 7 - 11, height / 2 - backgroundHeight / 2 + 34, true, this.fixed));
+            this.sendButtonPressPacket(9);
+            this.fixed = fixed;
+        }, width / 2 + backgroundWidth / 2 - 7 - 11, height / 2 - backgroundHeight / 2 + 34, true, this.fixed));
 
         updateButtons();
     }
@@ -219,7 +219,7 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
         }
 
         @Override
-        //? if >=1.20.4 {
+                //? if >=1.20.4 {
         protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
             //?} else
             /*protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {*/
