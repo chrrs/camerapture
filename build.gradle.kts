@@ -1,8 +1,8 @@
 import me.modmuss50.mpp.ReleaseType
 
 plugins {
-    id("fabric-loom") version "1.6-SNAPSHOT"
-    id("me.modmuss50.mod-publish-plugin") version "0.5.1"
+    id("fabric-loom") version "1.7-SNAPSHOT"
+    id("me.modmuss50.mod-publish-plugin") version "0.7.4"
 }
 
 fun Project.prop(namespace: String, key: String) =
