@@ -5,6 +5,7 @@ import me.chrr.camerapture.compat.FirstPersonModelCompat;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.item.PictureTooltipData;
 import me.chrr.camerapture.net.*;
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
 import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
@@ -14,9 +15,11 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.screen.*;
+import me.chrr.camerapture.tooltip.PictureTooltipComponent;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -154,6 +157,15 @@ public class CameraptureClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientPictureStore.getInstance().clear();
             PictureTaker.getInstance().resetConfig();
+        });
+
+        // Register picture tooltip.
+        TooltipComponentCallback.EVENT.register((data) -> {
+            if (data instanceof PictureTooltipData pictureTooltipData) {
+                return new PictureTooltipComponent(pictureTooltipData.uuid());
+            }
+
+            return null;
         });
     }
 
