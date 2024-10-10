@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -29,9 +30,13 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
-//?} else {
-/*import net.minecraft.nbt.NbtCompound;
-*///?}
+//?} else
+/*import net.minecraft.nbt.NbtCompound;*/
+
+//? if >=1.21 {
+import net.minecraft.item.tooltip.TooltipData;
+        //?} else
+/*import net.minecraft.client.item.TooltipData;*/
 
 public class PictureItem extends Item {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy 'at' HH:mm");
@@ -159,6 +164,11 @@ public class PictureItem extends Item {
             return null;
         }
         *///?}
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        return Optional.ofNullable(PictureItem.getPictureData(stack)).map(data -> new PictureTooltipData(data.id()));
     }
 
     public record PictureData(UUID id, String creator, long timestamp) {

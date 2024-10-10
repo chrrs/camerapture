@@ -2,18 +2,28 @@ package me.chrr.camerapture.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import me.chrr.camerapture.item.PictureTooltipData;
 import me.chrr.camerapture.screen.PictureSlot;
 import me.chrr.camerapture.screen.SizedSlot;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
+
+//? if >=1.21 {
+import net.minecraft.item.tooltip.TooltipData;
+ //?} else
+/*import net.minecraft.client.item.TooltipData;*/
 
 @Mixin(HandledScreen.class)
 public abstract class HandledScreenMixin {
@@ -44,6 +54,18 @@ public abstract class HandledScreenMixin {
         } else if (slot instanceof SizedSlot sizedSlot) {
             cir.setReturnValue(isPointWithinBounds(slot.x, slot.y, sizedSlot.getWidth(), sizedSlot.getHeight(), pointX, pointY));
             cir.cancel();
+        }
+    }
+
+    @Redirect(method = "drawMouseoverTooltip", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;getTooltipData()Ljava/util/Optional;"))
+    private Optional<TooltipData> hidePictureTooltip(ItemStack stack) {
+        Optional<TooltipData> tooltipData = stack.getTooltipData();
+        if (this.focusedSlot instanceof PictureSlot
+                && tooltipData.isPresent()
+                && tooltipData.get() instanceof PictureTooltipData) {
+            return Optional.empty();
+        } else {
+            return tooltipData;
         }
     }
 }
