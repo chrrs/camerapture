@@ -1,3 +1,8 @@
+## 1.6.3
+
+- Properly shut down all threads when shutting down server.
+- Update depdencies.
+
 ## 1.6.2
 
 - Fix compatibility with PolyLib and First-person Model.
