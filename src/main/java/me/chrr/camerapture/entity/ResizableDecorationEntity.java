@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * ended up being less work.
  */
 public abstract class ResizableDecorationEntity extends Entity {
-    private static final double THICKNESS = 1.0 / 16.0;
+    public static final double THICKNESS = 1.0 / 16.0;
 
     private static final TrackedData<Integer> FRAME_WIDTH = DataTracker.registerData(ResizableDecorationEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> FRAME_HEIGHT = DataTracker.registerData(ResizableDecorationEntity.class, TrackedDataHandlerRegistry.INTEGER);

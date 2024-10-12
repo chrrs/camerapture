@@ -3,6 +3,7 @@ package me.chrr.camerapture.render;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.entity.ResizableDecorationEntity;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
@@ -28,6 +29,8 @@ import org.joml.Matrix4f;
 /*import org.joml.Matrix3f;*/
 
 public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity> {
+    public static final double DISTANCE_FROM_WALL = 0.01;
+
     public PictureFrameEntityRenderer(EntityRendererFactory.Context ctx) {
         super(ctx);
     }
@@ -37,22 +40,24 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         matrices.push();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
-        matrices.translate(0.5 - entity.getFrameWidth() / 2.0, -0.5 + entity.getFrameHeight() / 2.0, 0);
+        matrices.translate(0.5 - entity.getFrameWidth() / 2.0, -0.5 + entity.getFrameHeight() / 2.0, 0.0);
+
+        // When hovering, render a "block" outline to make the frame appear as a block.
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (!this.dispatcher.gameOptions.hudHidden
+                && !Camerapture.hasActiveCamera(client.player)
+                && client.crosshairTarget instanceof EntityHitResult hitResult
+                && hitResult.getEntity() == entity) {
+            renderOutline(matrices, vertexConsumers, entity.getFrameWidth(), entity.getFrameHeight());
+        }
+
+        matrices.translate(0.0, 0.0, (ResizableDecorationEntity.THICKNESS - DISTANCE_FROM_WALL) / 2.0);
         matrices.scale(0.0625F, 0.0625F, 0.0625F);
 
         ItemStack itemStack = entity.getItemStack();
         if (itemStack == null) {
             renderErrorText(matrices, vertexConsumers);
         } else {
-            // When hovering, render a "block" outline to make the frame appear as a block.
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (!this.dispatcher.gameOptions.hudHidden
-                    && !Camerapture.hasActiveCamera(client.player)
-                    && client.crosshairTarget instanceof EntityHitResult hitResult
-                    && hitResult.getEntity() == entity) {
-                renderOutline(matrices, vertexConsumers, entity.getFrameWidth() * 16f, entity.getFrameHeight() * 16f);
-            }
-
             PictureItem.PictureData pictureData = PictureItem.getPictureData(itemStack);
             if (pictureData == null) {
                 // Picture item has no picture data.
@@ -80,6 +85,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
+    // Assumes a scale of x16
     public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, RemotePicture picture, int rotation, float frameWidth, float frameHeight, boolean glowing, int light) {
         float pictureWidth = picture.getWidth();
         float pictureHeight = picture.getHeight();
@@ -168,11 +174,13 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         *///?}
     }
 
+    // Assumes a scale of x1
     public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
-        VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, 1.0);
-        WorldRenderer.drawShapeOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -0.5f, 0f, 0f, 0f, 0.4f, true);
+        VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, ResizableDecorationEntity.THICKNESS);
+        WorldRenderer.drawShapeOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -ResizableDecorationEntity.THICKNESS / 2f, 0f, 0f, 0f, 0.4f, true);
     }
 
+    // Assumes a scale of x16
     public void renderFetching(MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
         matrices.scale(-1f / 4f, -1f / 4f, 1f / 4f);
         String loading = LoadingDisplay.get(System.currentTimeMillis());
@@ -181,6 +189,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         drawCenteredText(getTextRenderer(), Text.literal(loading), 0f, 0.5f, 0x808080, matrices, vertexConsumers);
     }
 
+    // Assumes a scale of x16
     public void renderErrorText(MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
         matrices.scale(-1f / 4f, -1f / 4f, 1f / 4f);
         Text text = Text.translatable("text.camerapture.fetching_failed").formatted(Formatting.RED);
