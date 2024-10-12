@@ -13,15 +13,18 @@ import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
+import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.screen.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.TypedActionResult;
@@ -61,6 +64,7 @@ public class CameraptureClient implements ClientModInitializer {
                 (handler, pi, title) -> new AlbumLecternScreen(handler));
 
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
+        BuiltinItemRendererRegistry.INSTANCE.register(Camerapture.PICTURE, new PictureItemRenderer());
 
         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
             Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config");
