@@ -104,7 +104,11 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
             }
         }
 
-        return Optional.of(new Pair<>(picture.copyWithCount(paper), remainder));
+        if (picture.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new Pair<>(picture.copyWithCount(paper), remainder));
+        }
     }
 
     @Override
