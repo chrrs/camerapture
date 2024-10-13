@@ -42,9 +42,9 @@ public class ClientNetworking implements ClientAdapter {
         DataResult<NbtElement> result = dataCodec.encoder().encodeStart(NbtOps.INSTANCE, packet);
 
         //? if >=1.20.3 {
-        buf.writeNbt(result.get().left().orElseThrow());
-         //?} else
-        /^buf.writeNbt((NbtCompound) result.get().left().orElseThrow());^/
+        /^buf.writeNbt(result.get().left().orElseThrow());
+         ^///?} else
+        buf.writeNbt((NbtCompound) result.get().left().orElseThrow());
 
         ClientPlayNetworking.send(type.netCodec().id(), buf);
         *///?}
