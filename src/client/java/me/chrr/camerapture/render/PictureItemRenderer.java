@@ -1,6 +1,5 @@
 package me.chrr.camerapture.render;
 
-import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
@@ -15,29 +14,25 @@ import org.joml.Matrix4f;
 /*import org.joml.Matrix3f;*/
 
 public class PictureItemRenderer implements BuiltinItemRendererRegistry.DynamicItemRenderer {
-    private void renderEmptyPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-        matrices.push();
-        matrices.translate(0f, 0f, 0.5f);
+    public boolean canRender(ItemStack stack) {
+        PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
+        if (pictureData == null) {
+            return false;
+        }
 
-        RenderLayer renderLayer = RenderLayer.getEntityCutoutNoCull(Camerapture.id("textures/item/picture.png"));
-        VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
-        addQuad(buffer, matrices.peek(), 0f, 0f, 1f, 1f, 0f, overlay, light);
-
-        matrices.pop();
+        RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
+        return picture.getStatus() == RemotePicture.Status.SUCCESS;
     }
-
 
     @Override
     public void render(ItemStack stack, ModelTransformationMode mode, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
         if (pictureData == null) {
-            this.renderEmptyPicture(matrices, vertexConsumers, light, overlay);
             return;
         }
 
         RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
         if (picture.getStatus() != RemotePicture.Status.SUCCESS) {
-            this.renderEmptyPicture(matrices, vertexConsumers, light, overlay);
             return;
         }
 
