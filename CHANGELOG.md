@@ -1,7 +1,12 @@
+## 1.6.4
+
+- Render picture items in your inventory, on the ground, and everywhere else.
+- Fix picture cloning recipe matching too often.
+
 ## 1.6.3
 
 - Properly shut down all threads when shutting down server.
-- Update depdencies.
+- Update dependencies.
 
 ## 1.6.2
 
