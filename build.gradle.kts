@@ -18,6 +18,18 @@ val resourceVersion = if (stonecutter.eval(minecraftVersion, ">=1.20.5")) "1.20.
 group = prop("mod", "group")
 version = "${prop("mod", "version")}+mc$minecraftVersion"
 
+if (stonecutter.current.isActive) {
+    rootProject.tasks.register("runActiveClient") {
+        group = "project"
+        dependsOn(tasks.named("runClient"))
+    }
+
+    rootProject.tasks.register("runActiveServer") {
+        group = "project"
+        dependsOn(tasks.named("runServer"))
+    }
+}
+
 base {
     archivesName.set(prop("mod", "name"))
 }
@@ -45,12 +57,9 @@ loom {
 
     accessWidenerPath = rootProject.file("src/main/resources/[$resourceVersion]/camerapture.accesswidener")
 
+    runConfigs.forEach { it.ideConfigGenerated(false) }
     runConfigs["client"].runDir = "../../run"
     runConfigs["server"].runDir = "../../run/server"
-
-    if (stonecutter.current.isActive) {
-        runConfigs.all { ideConfigGenerated(true) }
-    }
 }
 
 dependencies {
