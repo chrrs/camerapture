@@ -36,7 +36,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CameraptureClient implements ClientModInitializer {
+    public static final float MIN_ZOOM = 1.0f;
+    public static final float MAX_ZOOM = 6.0f;
+
+    // FIXME: There should definitely be a better place to put this, though
+    //        I'm not sure where.
+    public static float zoomLevel = MIN_ZOOM;
+
     public static boolean replayModInstalled = false;
+
 
     @Override
     public void onInitializeClient() {

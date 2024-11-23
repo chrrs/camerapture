@@ -29,6 +29,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 *///?}
 
+import static me.chrr.camerapture.CameraptureClient.MAX_ZOOM;
+import static me.chrr.camerapture.CameraptureClient.MIN_ZOOM;
+
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
 public abstract class InGameHudMixin {
@@ -45,7 +48,15 @@ public abstract class InGameHudMixin {
     //? if >=1.21 {
     @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/LayeredDrawer;render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V"))
     private void render(LayeredDrawer instance, DrawContext context, RenderTickCounter tickCounter, Operation<Void> original) {
-        if (!Camerapture.hasActiveCamera(client.player) || this.client.options.hudHidden) {
+        boolean hasActiveCamera = Camerapture.hasActiveCamera(client.player);
+
+        // Reset zoom level if no camera is active anymore.
+        // FIXME: There should be a better place to set this rather than every frame.
+        if (!hasActiveCamera) {
+            CameraptureClient.zoomLevel = MIN_ZOOM;
+        }
+
+        if (!hasActiveCamera || this.client.options.hudHidden) {
             original.call(instance, context, tickCounter);
         } else {
             drawOverlay(context);
@@ -56,6 +67,10 @@ public abstract class InGameHudMixin {
     private void onRender(DrawContext context, float tickDelta, CallbackInfo ci) {
         if (Camerapture.hasActiveCamera(client.player)) {
             drawOverlay(context);
+        } else {
+            // Reset zoom level if no camera is active anymore.
+            // FIXME: There should be a better place to set this rather than every frame.
+            CameraptureClient.zoomLevel = CameraptureClient.MIN_ZOOM;
         }
     }
 
@@ -72,6 +87,8 @@ public abstract class InGameHudMixin {
 
         drawViewFinder(context, 10, 10, width - 10, height - 10, 2, 30);
         drawViewFinder(context, width / 2 - 20, height / 2 - 20, width / 2 + 20, height / 2 + 20, 1, 10);
+
+        drawZoomBar(context, width - 10, height / 2 - height / 6, height / 3);
 
         int fh = getTextRenderer().fontHeight;
         int textX = 25;
@@ -110,5 +127,25 @@ public abstract class InGameHudMixin {
 
         context.fill(x2 - length, y2 - thickness, x2, y2, 0xffffffff);
         context.fill(x2 - thickness, y2 - length, x2, y2, 0xffffffff);
+    }
+
+    @Unique
+    private void drawZoomBar(DrawContext context, int x, int y, int height) {
+        // Draw the ticks along the whole zoom bar.
+        int ticks = height / 10;
+        for (int i = 0; i < ticks; i++) {
+            int ty = y + (height * i) / (ticks - 1);
+            context.fill(x - 6, ty, x, ty + 1, 0xafffffff);
+        }
+
+        // Draw a line where the current zoom level is.
+        float zoomProgress = 1f - (CameraptureClient.zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+        int ty = y + (int) ((float) height * zoomProgress);
+        context.fill(x - 10, ty - 1, x, ty + 1, 0xffffffff);
+
+        // Show the current zoom level besides the line.
+        String zoomLevel = String.format("%.1fx", CameraptureClient.zoomLevel);
+        int textWidth = getTextRenderer().getWidth(zoomLevel);
+        context.drawText(getTextRenderer(), zoomLevel, x - 12 - textWidth, ty - 4, 0xffffffff, false);
     }
 }
