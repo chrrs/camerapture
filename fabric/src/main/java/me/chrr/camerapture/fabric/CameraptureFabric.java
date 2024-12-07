@@ -86,7 +86,7 @@ public class CameraptureFabric implements ModInitializer {
         // Run the download queue while the server is started.
         ServerLifecycleEvents.SERVER_STARTED.register(server ->
                 DownloadQueue.getInstance().start(Camerapture.CONFIG_MANAGER.getConfig().server.msPerPicture));
-        ServerLifecycleEvents.SERVER_STOPPED.register(server ->
+        ServerLifecycleEvents.SERVER_STOPPING.register(server ->
                 DownloadQueue.getInstance().stop());
     }
 }

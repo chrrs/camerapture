@@ -43,13 +43,12 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class Camerapture {
     public static final String MOD_ID = "camerapture";
     public static final Logger LOGGER = LogManager.getLogger();
 
-    public static final Executor EXECUTOR = Executors.newCachedThreadPool();
+    public static final Executor EXECUTOR = (runnable) -> new Thread(runnable, "Camerapture Worker").start();
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     public static final PlatformAdapter PLATFORM = ServiceLoader.load(PlatformAdapter.class).iterator().next();

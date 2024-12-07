@@ -26,7 +26,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -114,13 +114,13 @@ public class CameraptureNeoForge {
 
         /// When the server is running, we start the timer that sends the pictures.
         @SubscribeEvent
-        public void onServerStart(ServerStartedEvent event) {
+        public void onServerStarted(ServerStartedEvent event) {
             DownloadQueue.getInstance().start(Camerapture.CONFIG_MANAGER.getConfig().server.msPerPicture);
         }
 
         /// When the server stops, we also stop the timer.
         @SubscribeEvent
-        public void onServerStop(ServerStoppedEvent event) {
+        public void onServerStopping(ServerStoppingEvent event) {
             DownloadQueue.getInstance().stop();
         }
     }
