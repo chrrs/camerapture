@@ -10,6 +10,7 @@ displayName = "${modName}"
 description = "Take photos and display pictures in Minecraft."
 authors = "chrrrs"
 logoFile = "assets/camerapture/icon.png"
+displayURL = "https://modrinth.com/mod/camerapture"
 
 [[mixins]]
 config = "camerapture.mixins.json"
