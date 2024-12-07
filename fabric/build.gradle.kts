@@ -1,8 +1,6 @@
 fun Project.hasProp(namespace: String, key: String) = hasProperty("$namespace.$key")
 fun Project.prop(namespace: String, key: String) = property("$namespace.$key") as String
 
-base.archivesName.set(rootProject.prop("mod", "name"))
-
 architectury {
     platformSetupLoomIde()
     fabric()
@@ -13,6 +11,9 @@ loom {
     runConfigs.all { ideConfigGenerated(false) }
     runConfigs["client"].runDir = "../run"
     runConfigs["server"].runDir = "../run/server"
+
+    @Suppress("UnstableApiUsage")
+    mixin.useLegacyMixinAp = false
 }
 
 val common: Configuration by configurations.creating {

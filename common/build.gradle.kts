@@ -8,6 +8,9 @@ architectury {
 loom {
     accessWidenerPath.set(file("src/main/resources/camerapture.accesswidener"))
     splitEnvironmentSourceSets()
+
+    @Suppress("UnstableApiUsage")
+    mixin.useLegacyMixinAp = false
 }
 
 repositories {

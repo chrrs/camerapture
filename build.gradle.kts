@@ -35,6 +35,9 @@ subprojects {
     group = rootProject.group
     version = "${rootProject.version}-$name"
 
+    val base = extensions.getByType<BasePluginExtension>()
+    base.archivesName.set(rootProject.prop("mod", "name"))
+
     configure<LoomGradleExtensionAPI> {
         dependencies {
             "minecraft"("com.mojang:minecraft:${versions.last()}")
