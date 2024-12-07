@@ -1,0 +1,22 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+issueTrackerURL = "https://github.com/chrrs/camerapture/issues"
+license = "MIT"
+
+[[mods]]
+modId = "camerapture"
+version = "${version}"
+displayName = "${modName}"
+description = "Take photos and display pictures in Minecraft."
+authors = "chrrrs"
+logoFile = "assets/camerapture/icon.png"
+
+[[mixins]]
+config = "camerapture.mixins.json"
+
+[[mixins]]
+config = "camerapture-client.mixins.json"
+
+[[dependencies.camerapture]]
+modId = "minecraft"
+versionRange = "${minecraftDependency}"

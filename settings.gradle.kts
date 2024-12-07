@@ -1,26 +1,10 @@
-import dev.kikugie.stonecutter.StonecutterSettings
-
 pluginManagement {
     repositories {
         maven("https://maven.fabricmc.net/")
-        maven("https://maven.kikugie.dev/releases")
+        maven("https://maven.architectury.dev")
+        maven("https://maven.neoforged.net/releases/")
         gradlePluginPortal()
     }
 }
 
-plugins {
-    id("dev.kikugie.stonecutter") version "0.4.4"
-}
-
-extensions.configure<StonecutterSettings> {
-    shared {
-        versions("1.20.1", "1.20.4", "1.21")
-        vcsVersion = "1.21"
-    }
-
-    kotlinController = true
-    centralScript = "build.gradle.kts"
-    create(rootProject)
-}
-
-rootProject.name = "Camerapture"
+include("common", "fabric", "neoforge")
