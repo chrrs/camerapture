@@ -2,9 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "1.*" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
@@ -22,4 +21,4 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - run: ./gradlew chiseledBuild
+      - run: ./gradlew buildAll
