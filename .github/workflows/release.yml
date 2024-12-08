@@ -2,19 +2,10 @@ name: Publish
 
 on:
   workflow_dispatch:
-    inputs:
-      publishedVersions:
-        required: false
-        description: Published Minecraft versions
-        type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        version: ${{ fromJSON(inputs.publishedVersions || '["1.21.4"]') }}
 
     permissions:
       contents: write
@@ -30,17 +21,8 @@ jobs:
 
       - run: ./gradlew buildAll
 
-      - name: Fetch changelog
-        run: |
-          {
-            echo "CHANGELOG<<EOF"
-            tr -d '\r' < CHANGELOG.md | awk -vver="${GITHUB_REF_NAME#v}" '/^## / { if (p) { exit }; if ($2 == ver) { p=1; next } } p'
-            echo "EOF"
-          } >> $GITHUB_ENV
-
       - run: ./gradlew publishMods
         env:
-          CHANGELOG: ${{ env.CHANGELOG }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

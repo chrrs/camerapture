@@ -89,16 +89,24 @@ subprojects {
     }
 }
 
+/// Find the changelog entry for the given version in `CHANGELOG.md`.
+fun fetchChangelog(modVersion: String): String {
+    val regex = Regex("## ${Regex.escape(modVersion)}\\n+([\\S\\s]*?)(?:\$|\\n+##)")
+    val content = file("CHANGELOG.md").readText().replace("\r\n", "\n")
+    return regex.find(content)?.groupValues?.get(1) ?: "*No changelog.*"
+}
+
 publishMods {
-    changelog.set(providers.environmentVariable("CHANGELOG"))
-    type.set(if (prop("mod", "version").contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
+    val modVersion = prop("mod", "version")
+    changelog.set(fetchChangelog(modVersion))
+    type.set(if (modVersion.contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
 
     /// Generate some common options between Modrinth and CurseForge publishing.
     fun platformOptions(platform: String) = publishOptions {
         val project = project(":$platform")
         val name = if (platform == "neoforge") "NeoForge" else platform.capitalized()
 
-        displayName.set("${prop("mod", "version")} - $name ${versions.last()}")
+        displayName.set("$modVersion - $name ${versions.last()}")
         version.set(project.version.toString())
         modLoaders.addAll(project.prop("platform", "loaders").split(","))
         file.set(project.tasks.getByName<RemapJarTask>("remapJar").archiveFile)
@@ -146,7 +154,7 @@ publishMods {
         repository.set(prop("github", "repository"))
         accessToken = providers.environmentVariable("GITHUB_TOKEN")
 
-        tagName.set("v${prop("mod", "version")}")
+        tagName.set("v$modVersion")
         displayName.set(tagName)
         commitish.set(tagName)
 

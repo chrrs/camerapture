@@ -22,11 +22,9 @@ Currently, the main branch is `1.21.4`, which all other versions are rebased on.
 - Create a new branch based on the main branch.
 - Update minecraft version.
     - Change in `gradle.properties` and update all dependencies.
+    - **Optional:** Deprecate older version by adding `old/` to the branch name.
 - Fix all conflicts and test on all loaders.
 - Release new version as described below.
-    - Add new minecraft version to `.github/release.yml` on the main branch.
-    - **Optional:** Deprecate older version by removing it from `.github/release.yml` and adding `old/` to the branch
-      name.
 
 ### Release checklist
 
@@ -36,7 +34,7 @@ Currently, the main branch is `1.21.4`, which all other versions are rebased on.
 - Commit and push a new tag. (example: `v1.2.3`)
     - Tag name is the version number prefixed by `v`.
 - Rebase other versions onto the main branch and fix all conflicts.
-- Manually trigger the Publish workflow on GitHub.
+- Manually trigger the Publish workflow on GitHub for every version.
 
 ## Credits
 

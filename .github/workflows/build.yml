@@ -21,4 +21,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - run: ./gradlew buildAll
+      - name: Build for all platforms
+        run: ./gradlew buildAll
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'mod-jars'
+          path: 'build/libs/*.jar'
