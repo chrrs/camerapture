@@ -11,14 +11,9 @@ public abstract class InGameScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderInGameBackground(context);
+        this.renderBackground(context);
         this.renderScreen(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
-    }
-
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // We don't want to render the background here, as we call `render` after our own render calls.
     }
 
     public abstract void renderScreen(DrawContext context, int mouseX, int mouseY, float delta);

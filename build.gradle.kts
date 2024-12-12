@@ -1,6 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import me.modmuss50.mpp.ReleaseType
-import net.fabricmc.loom.api.LoomGradleExtensionAPI
 import net.fabricmc.loom.task.RemapJarTask
 import org.gradle.internal.extensions.stdlib.capitalized
 
@@ -46,22 +45,14 @@ subprojects {
     val base = extensions.getByType<BasePluginExtension>()
     base.archivesName.set(rootProject.prop("mod", "name"))
 
-    configure<LoomGradleExtensionAPI> {
-        dependencies {
-            "minecraft"("com.mojang:minecraft:${versions.last()}")
-
-            // Patch Yarn to work properly with NeoForge.
-            @Suppress("UnstableApiUsage")
-            "mappings"(layered {
-                mappings("net.fabricmc:yarn:${prop("fabric", "yarnVersion")}:v2")
-                mappings("dev.architectury:yarn-mappings-patch-neoforge:${prop("neoforge", "yarnPatch")}")
-            })
-        }
+    dependencies {
+        "minecraft"("com.mojang:minecraft:${versions.last()}")
+        "mappings"("net.fabricmc:yarn:${prop("fabric", "yarnVersion")}:v2")
     }
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.release.set(21)
+        options.release.set(17)
     }
 
     // Shadow `common` into all loader projects.
@@ -109,7 +100,7 @@ publishMods {
     /// Generate some common options between Modrinth and CurseForge publishing.
     fun platformOptions(platform: String) = publishOptions {
         val project = project(":$platform")
-        val name = if (platform == "neoforge") "NeoForge" else platform.capitalized()
+        val name = platform.capitalized()
 
         displayName.set("$modVersion - $name ${versions.last()}")
         version.set(project.version.toString())
@@ -127,11 +118,11 @@ publishMods {
         optional("cloth-config")
     }
 
-    modrinth("modrinthNeoForge") {
+    modrinth("modrinthForge") {
         projectId.set(prop("modrinth", "id"))
         accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
 
-        from(platformOptions("neoforge"))
+        from(platformOptions("forge"))
         minecraftVersions.addAll(versions)
         optional("cloth-config")
     }
@@ -146,11 +137,11 @@ publishMods {
         optional("cloth-config")
     }
 
-    curseforge("curseforgeNeoForge") {
+    curseforge("curseforgeForge") {
         projectId.set(prop("curseforge", "id"))
         accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
 
-        from(platformOptions("neoforge"))
+        from(platformOptions("forge"))
         minecraftVersions.addAll(versions)
         optional("cloth-config")
     }

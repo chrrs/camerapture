@@ -1,4 +1,4 @@
-package me.chrr.camerapture.neoforge;
+package me.chrr.camerapture.forge;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.DownloadQueue;
@@ -19,23 +19,28 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.neoforged.neoforge.registries.RegisterEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.RegisterEvent;
 
 @Mod(Camerapture.MOD_ID)
-public class CameraptureNeoForge {
-    public CameraptureNeoForge(IEventBus modBus) {
+public class CameraptureForge {
+    public CameraptureForge() {
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+
         modBus.register(this);
-        NeoForge.EVENT_BUS.register(new ServerEvents());
+        MinecraftForge.EVENT_BUS.register(new ServerEvents());
+
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> new CameraptureClientForge(modBus));
     }
 
     @SubscribeEvent
@@ -73,25 +78,19 @@ public class CameraptureNeoForge {
         event.register(RegistryKeys.SCREEN_HANDLER, registry ->
                 registry.register(Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER));
 
-        // Data components
-        event.register(RegistryKeys.DATA_COMPONENT_TYPE, registry ->
-                registry.register(Camerapture.id("picture_data"), Camerapture.PICTURE_DATA));
-        event.register(RegistryKeys.DATA_COMPONENT_TYPE, registry ->
-                registry.register(Camerapture.id("camera_active"), Camerapture.CAMERA_ACTIVE));
+        this.registerPackets();
     }
 
-    @SubscribeEvent
-    public void registerPackets(RegisterPayloadHandlersEvent event) {
-        NeoForgeNetworkAdapter networkAdapter = (NeoForgeNetworkAdapter) Camerapture.NETWORK;
-        PayloadRegistrar registrar = event.registrar("1");
+    public void registerPackets() {
+        ForgeNetworkAdapter networkAdapter = (ForgeNetworkAdapter) Camerapture.NETWORK;
 
-        networkAdapter.registerServerBound(registrar, NewPicturePacket.class, NewPicturePacket.NET_CODEC);
-        networkAdapter.registerServerBound(registrar, RequestDownloadPacket.class, RequestDownloadPacket.NET_CODEC);
-        networkAdapter.registerServerBound(registrar, UploadPartialPicturePacket.class, UploadPartialPicturePacket.NET_CODEC);
-        networkAdapter.registerClientBound(registrar, PictureErrorPacket.class, PictureErrorPacket.NET_CODEC);
-        networkAdapter.registerClientBound(registrar, RequestUploadPacket.class, RequestUploadPacket.NET_CODEC);
-        networkAdapter.registerClientBound(registrar, SyncConfigPacket.class, SyncConfigPacket.NET_CODEC);
-        networkAdapter.registerClientBound(registrar, DownloadPartialPicturePacket.class, DownloadPartialPicturePacket.NET_CODEC);
+        networkAdapter.registerServerBound(NewPicturePacket.class, NewPicturePacket.NET_CODEC);
+        networkAdapter.registerServerBound(RequestDownloadPacket.class, RequestDownloadPacket.NET_CODEC);
+        networkAdapter.registerServerBound(UploadPartialPicturePacket.class, UploadPartialPicturePacket.NET_CODEC);
+        networkAdapter.registerClientBound(PictureErrorPacket.class, PictureErrorPacket.NET_CODEC);
+        networkAdapter.registerClientBound(RequestUploadPacket.class, RequestUploadPacket.NET_CODEC);
+        networkAdapter.registerClientBound(SyncConfigPacket.class, SyncConfigPacket.NET_CODEC);
+        networkAdapter.registerClientBound(DownloadPartialPicturePacket.class, DownloadPartialPicturePacket.NET_CODEC);
 
         Camerapture.registerPacketHandlers();
     }

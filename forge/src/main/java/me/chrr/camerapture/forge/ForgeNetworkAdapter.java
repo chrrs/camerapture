@@ -1,4 +1,4 @@
-package me.chrr.camerapture.fabric;
+package me.chrr.camerapture.forge;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
@@ -6,29 +6,37 @@ import com.mojang.serialization.MapCodec;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.net.NetCodec;
 import me.chrr.camerapture.net.NetworkAdapter;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.simple.SimpleChannel;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/// Fabric implementation of {@link NetworkAdapter}. This uses the networking API
-/// as provided by Fabric API. We need to keep track of handlers per packet, as
+/// Forge implementation of {@link NetworkAdapter}. This uses the networking API
+/// as provided by Forge. We need to keep track of handlers per packet, as
 /// you can't have multiple listeners for a single packet usually.
-public class FabricNetworkAdapter implements NetworkAdapter {
+public class ForgeNetworkAdapter implements NetworkAdapter {
+    private static final String PROTOCOL_VERSION = "1";
+    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+            Camerapture.id("main"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals
+    );
+
+    private static int nextId = 0;
+
     private final Map<Class<?>, ServerPacketType<?>> serverPackets = new HashMap<>();
     private final Map<Class<?>, ClientPacketType<?>> clientPackets = new HashMap<>();
 
@@ -36,37 +44,39 @@ public class FabricNetworkAdapter implements NetworkAdapter {
         ClientPacketType<P> type = new ClientPacketType<>(netCodec, new ArrayList<>());
         this.clientPackets.put(clazz, type);
 
-        ServerPlayNetworking.registerGlobalReceiver(netCodec.id(),
-                (server, player, networkHandler, buf, sender) -> {
-                    P packet = decodePacket(buf, type.netCodec());
+        CHANNEL.registerMessage(nextId++, clazz,
+                (packet, buf) -> encodePacket(packet, buf, type.netCodec()),
+                (buf) -> decodePacket(buf, type.netCodec()),
+                (packet, context) -> {
                     if (packet != null) {
-                        type.handlers().forEach(handler -> handler.accept(packet, player));
+                        type.handlers().forEach(handler -> handler.accept(packet, context.get().getSender()));
                     }
-                }
-        );
+
+                    context.get().setPacketHandled(true);
+                },
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public <P> void registerClientBound(Class<P> clazz, NetCodec<P> netCodec) {
         ServerPacketType<P> type = new ServerPacketType<>(netCodec, new ArrayList<>());
         this.serverPackets.put(clazz, type);
 
-        ClientPlayNetworking.registerGlobalReceiver(type.netCodec().id(),
-                (client, networkHandler, buf, sender) -> {
-                    P packet = decodePacket(buf, type.netCodec());
+        CHANNEL.registerMessage(nextId++, clazz,
+                (packet, buf) -> encodePacket(packet, buf, type.netCodec()),
+                (buf) -> decodePacket(buf, type.netCodec()),
+                (packet, context) -> {
                     if (packet != null) {
                         type.handlers().forEach(handler -> handler.accept(packet));
                     }
-                }
-        );
+
+                    context.get().setPacketHandled(true);
+                },
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     @Override
     public <P> void sendToClient(ServerPlayerEntity player, P packet) {
-        @SuppressWarnings("unchecked") ServerPacketType<P> type = (ServerPacketType<P>) getServerPacketType(packet.getClass());
-
-        PacketByteBuf buf = PacketByteBufs.create();
-        encodePacket(packet, buf, type.netCodec());
-        ServerPlayNetworking.send(player, type.netCodec().id(), buf);
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
     @Override
@@ -75,17 +85,13 @@ public class FabricNetworkAdapter implements NetworkAdapter {
     }
 
     @Override
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public <P> void sendToServer(P packet) {
-        @SuppressWarnings("unchecked") ClientPacketType<P> type = (ClientPacketType<P>) getClientPacketType(packet.getClass());
-
-        PacketByteBuf buf = PacketByteBufs.create();
-        encodePacket(packet, buf, type.netCodec());
-        ClientPlayNetworking.send(type.netCodec().id(), buf);
+        CHANNEL.sendToServer(packet);
     }
 
     @Override
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public <P> void onReceiveFromServer(Class<P> clazz, Consumer<P> handler) {
         this.getServerPacketType(clazz).handlers().add(handler);
     }

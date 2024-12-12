@@ -10,7 +10,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,7 +25,7 @@ public abstract class InGameHudMixin {
     /// Hide the GUI and draw the camera overlay and viewfinder
     /// when the player is holding an active camera.
     @Inject(method = "render", at = @At(value = "HEAD"), cancellable = true)
-    public void onHudRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+    public void onHudRender(DrawContext context, float tickDelta, CallbackInfo ci) {
         CameraItem.HeldCamera camera = CameraItem.find(MinecraftClient.getInstance().player, true);
         if (camera != null) {
             ci.cancel();

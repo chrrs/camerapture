@@ -1,5 +1,7 @@
-package me.chrr.camerapture.neoforge;
+package me.chrr.camerapture.forge;
 
+import com.luciad.imageio.webp.WebPImageReaderSpi;
+import com.luciad.imageio.webp.WebPImageWriterSpi;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
@@ -12,81 +14,63 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.LogicalSide;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.*;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.registries.RegisterEvent;
-import org.jetbrains.annotations.NotNull;
+import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.event.*;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
+import javax.imageio.spi.IIORegistry;
 import java.util.List;
-import java.util.Objects;
 
-@Mod(value = Camerapture.MOD_ID, dist = Dist.CLIENT)
-public class CameraptureClientNeoForge {
-    public CameraptureClientNeoForge(ModContainer mod) {
-        Objects.requireNonNull(mod.getEventBus()).register(this);
-        NeoForge.EVENT_BUS.register(new ClientEvents());
+public class CameraptureClientForge {
+    public CameraptureClientForge(IEventBus modBus) {
+        modBus.register(this);
+        MinecraftForge.EVENT_BUS.register(new ClientEvents());
 
         if (ModList.get().isLoaded("cloth_config")) {
-            mod.registerExtensionPoint(IConfigScreenFactory.class,
-                    (container, parent) -> ClothConfigScreenFactory.create(parent));
+            ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+                    () -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> ClothConfigScreenFactory.create(parent)));
         }
     }
 
     @SubscribeEvent
-    public void registerContent(RegisterEvent event) {
+    public void clientSetup(FMLClientSetupEvent event) {
         CameraptureClient.init();
-
-        // Picture
-        ModelPredicateProviderRegistry.register(Camerapture.PICTURE, Camerapture.id("should_render_picture"),
-                (stack, world, entity, seed) -> PictureItemRenderer.canRender(stack) ? 1f : 0f);
-    }
-
-    @SubscribeEvent
-    public void registerHandledScreens(RegisterMenuScreensEvent event) {
-        event.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
-        event.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
-        event.register(Camerapture.ALBUM_LECTERN_SCREEN_HANDLER, AlbumLecternScreen::new);
-    }
-
-    @SubscribeEvent
-    public void registerPackets(RegisterPayloadHandlersEvent event) {
         CameraptureClient.registerPacketHandlers();
+
+        // FIXME: Figure out why this is necessary. This isn't needed in built versions, however
+        //        the development environment doesn't detect the WebP-ImageIO services.
+        IIORegistry.getDefaultInstance().registerServiceProvider(new WebPImageReaderSpi());
+        IIORegistry.getDefaultInstance().registerServiceProvider(new WebPImageWriterSpi());
+
+        event.enqueueWork(() -> {
+            // Picture
+            ModelPredicateProviderRegistry.register(Camerapture.PICTURE, Camerapture.id("should_render_picture"),
+                    (stack, world, entity, seed) -> PictureItemRenderer.canRender(stack) ? 1f : 0f);
+
+            // Handled screens
+            HandledScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
+            HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
+            HandledScreens.register(Camerapture.ALBUM_LECTERN_SCREEN_HANDLER, AlbumLecternScreen::new);
+        });
     }
 
     @SubscribeEvent
     public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
-    }
-
-    @SubscribeEvent
-    public void registerClientExtensions(RegisterClientExtensionsEvent event) {
-        // If we're holding a camera, we want to have the arm pose as if we're
-        // charging a bow and arrow, so we hold the camera up.
-        event.registerItem(new IClientItemExtensions() {
-            @Override
-            public BipedEntityModel.ArmPose getArmPose(@NotNull LivingEntity entity, @NotNull Hand hand, @NotNull ItemStack stack) {
-                return CameraItem.isActive(stack) ? BipedEntityModel.ArmPose.BOW_AND_ARROW : null;
-            }
-        }, Camerapture.CAMERA);
     }
 
     private static class ClientEvents {
@@ -157,8 +141,10 @@ public class CameraptureClientNeoForge {
 
         /// We need to notify the picture taker when the render tick ends.
         @SubscribeEvent
-        public void onRenderTickEnd(RenderFrameEvent.Post event) {
-            PictureTaker.getInstance().renderTickEnd();
+        public void onRenderTickEnd(TickEvent.RenderTickEvent event) {
+            if (event.phase == TickEvent.Phase.END) {
+                PictureTaker.getInstance().renderTickEnd();
+            }
         }
 
         /// Clear cache and reset the picture taker configuration when logging out of a world.
@@ -180,7 +166,7 @@ public class CameraptureClientNeoForge {
         /// Hide the GUI and draw the camera overlay and viewfinder
         /// when the player is holding an active camera.
         @SubscribeEvent
-        public void onRenderGui(RenderGuiLayerEvent.Pre event) {
+        public void onRenderGui(RenderGuiEvent.Pre event) {
             CameraItem.HeldCamera camera = CameraItem.find(MinecraftClient.getInstance().player, true);
             if (camera != null) {
                 event.setCanceled(true);
@@ -198,7 +184,7 @@ public class CameraptureClientNeoForge {
         @SubscribeEvent
         public void onScroll(InputEvent.MouseScrollingEvent event) {
             if (CameraItem.find(MinecraftClient.getInstance().player, true) != null) {
-                PictureTaker.getInstance().zoom((float) (event.getScrollDeltaY() / 4f));
+                PictureTaker.getInstance().zoom((float) (event.getScrollDelta() / 4f));
                 event.setCanceled(true);
             }
         }

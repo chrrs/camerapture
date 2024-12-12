@@ -1,18 +1,18 @@
-package me.chrr.camerapture.neoforge;
+package me.chrr.camerapture.forge;
 
 import me.chrr.camerapture.PlatformAdapter;
 import me.chrr.camerapture.net.NetworkAdapter;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.fml.loading.FMLPaths;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 
-public class NeoForgePlatformAdapter implements PlatformAdapter {
+public class ForgePlatformAdapter implements PlatformAdapter {
     @Override
     public NetworkAdapter createNetworkAdapter() {
-        return new NeoForgeNetworkAdapter();
+        return new ForgeNetworkAdapter();
     }
 
     @Override

@@ -7,8 +7,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.RenderTickCounter;
-import org.joml.Matrix4f;
+import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,13 +22,13 @@ public abstract class GameRendererMixin {
 
     /// We need to notify the picture taker when the render tick ends.
     @Inject(method = "render", at = @At(value = "TAIL"))
-    private void onRenderTickEnd(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
+    private void onRenderTickEnd(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         PictureTaker.getInstance().renderTickEnd();
     }
 
     /// Hide the hand when the player is holding an active camera.
     @Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
-    private void onRenderHand(Camera gameCamera, float tickDelta, Matrix4f matrix4f, CallbackInfo ci) {
+    private void onRenderHand(MatrixStack matrices, Camera gameCamera, float tickDelta, CallbackInfo ci) {
         CameraItem.HeldCamera camera = CameraItem.find(getClient().player, true);
         if (camera != null) {
             ci.cancel();

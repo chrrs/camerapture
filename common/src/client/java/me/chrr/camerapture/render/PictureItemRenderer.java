@@ -9,6 +9,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
@@ -55,10 +56,11 @@ public class PictureItemRenderer {
 
         MatrixStack.Entry matrix = matrices.peek();
         Matrix4f matrix4f = matrix.getPositionMatrix();
-        buffer.vertex(matrix4f, 1f, 0f, 0f).color(0xffffffff).texture(1f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 1f, 1f, 0f).color(0xffffffff).texture(1f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 0f, 1f, 0f).color(0xffffffff).texture(0f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 0f, 0f, 0f).color(0xffffffff).texture(0f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+        Matrix3f matrix3f = matrix.getNormalMatrix();
+        buffer.vertex(matrix4f, 1f, 0f, 0f).color(0xffffffff).texture(1f, 1f).overlay(overlay).light(light).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, 1f, 1f, 0f).color(0xffffffff).texture(1f, 0f).overlay(overlay).light(light).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, 0f, 1f, 0f).color(0xffffffff).texture(0f, 0f).overlay(overlay).light(light).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, 0f, 0f, 0f).color(0xffffffff).texture(0f, 1f).overlay(overlay).light(light).normal(matrix3f, 0f, 0f, 1f).next();
 
         matrices.pop();
     }

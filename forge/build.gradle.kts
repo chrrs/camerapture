@@ -3,7 +3,7 @@ fun Project.prop(namespace: String, key: String) = property("$namespace.$key") a
 
 architectury {
     platformSetupLoomIde()
-    neoForge()
+    forge()
 }
 
 loom {
@@ -11,26 +11,35 @@ loom {
     runConfigs.all { ideConfigGenerated(false) }
     runConfigs["client"].runDir = "../run"
     runConfigs["server"].runDir = "../run/server"
+
+    @Suppress("UnstableApiUsage")
+    mixin.useLegacyMixinAp = false
+
+    forge.convertAccessWideners.set(true)
+    forge.mixinConfigs("camerapture.mixins.json", "camerapture-client.mixins.json")
 }
 
 val common: Configuration by configurations.creating {
     configurations.compileClasspath.get().extendsFrom(this)
     configurations.runtimeClasspath.get().extendsFrom(this)
-    configurations.getByName("developmentNeoForge").extendsFrom(this)
+    configurations.getByName("developmentForge").extendsFrom(this)
 }
 
 repositories {
-    maven("https://maven.neoforged.net/releases/")
+    maven("https://files.minecraftforge.net/maven/")
 }
 
 dependencies {
-    "neoForge"("net.neoforged:neoforge:${rootProject.prop("neoforge", "version")}")
+    "forge"("net.minecraftforge:forge:${rootProject.prop("forge", "version")}")
 
-    include("io.github.darkxanter:webp-imageio:0.3.2")
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1")!!)
+    implementation(include("io.github.llamalad7:mixinextras-forge:0.4.1")!!)
+
+    implementation(include("io.github.darkxanter:webp-imageio:0.3.2")!!)
     forgeRuntimeLibrary("io.github.darkxanter:webp-imageio:0.3.2")
 
     common(project(":common", "namedElements")) { isTransitive = false }
-    shadowCommon(project(":common", "transformProductionNeoForge")) { isTransitive = false }
+    shadowCommon(project(":common", "transformProductionForge")) { isTransitive = false }
 }
 
 tasks.processResources {
@@ -42,8 +51,8 @@ tasks.processResources {
     val last = gameVersions.lastOrNull()!!
     val minecraftDependency = if (gameVersions.size == 1) "[$first]" else "[$first, $last]"
 
-    // For neoforge.mods.toml and pack.mcmeta, we source some properties from gradle.properties.
-    filesMatching(listOf("META-INF/neoforge.mods.toml", "pack.mcmeta")) {
+    // For mods.toml and pack.mcmeta, we source some properties from gradle.properties.
+    filesMatching(listOf("META-INF/mods.toml", "pack.mcmeta")) {
         expand(
             "modName" to rootProject.prop("mod", "name"),
             "version" to rootProject.prop("mod", "version"),

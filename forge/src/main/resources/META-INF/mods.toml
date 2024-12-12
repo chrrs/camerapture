@@ -20,4 +20,5 @@ config = "camerapture-client.mixins.json"
 
 [[dependencies.camerapture]]
 modId = "minecraft"
+mandatory = true
 versionRange = "${minecraftDependency}"

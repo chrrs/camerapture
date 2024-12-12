@@ -2,20 +2,30 @@ package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.gui.AlbumScreenHandler;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AlbumItem extends Item {
@@ -31,6 +41,21 @@ public class AlbumItem extends Item {
     }
 
     @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        BlockPos pos = context.getBlockPos();
+        BlockState state = world.getBlockState(pos);
+
+        if (state.isOf(Blocks.LECTERN)) {
+            return LecternBlock.putBookIfAbsent(context.getPlayer(), world, pos, state, context.getStack())
+                    ? ActionResult.success(world.isClient)
+                    : ActionResult.PASS;
+        }
+
+        return ActionResult.PASS;
+    }
+
+    @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
 
@@ -43,12 +68,21 @@ public class AlbumItem extends Item {
     }
 
     public static List<ItemStack> getPictures(ItemStack album) {
-        ContainerComponent container = album.get(DataComponentTypes.CONTAINER);
-        if (container != null) {
-            return container.streamNonEmpty().toList();
-        } else {
+        NbtCompound nbt = album.getNbt();
+        if (nbt == null || !nbt.contains("Items")) {
             return List.of();
         }
+
+        NbtList items = nbt.getList("Items", NbtElement.COMPOUND_TYPE);
+        List<ItemStack> pictures = new ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack itemStack = ItemStack.fromNbt(items.getCompound(i));
+            if (!itemStack.isEmpty() && itemStack.isOf(Camerapture.PICTURE)) {
+                pictures.add(itemStack);
+            }
+        }
+
+        return pictures;
     }
 
     public static class AlbumInventory extends SimpleInventory {
@@ -58,9 +92,9 @@ public class AlbumItem extends Item {
             super(SLOTS);
             this.hand = hand;
 
-            ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
-            if (container != null) {
-                container.copyTo(this.getHeldStacks());
+            NbtCompound nbt = stack.getNbt();
+            if (nbt != null) {
+                Inventories.readNbt(nbt, this.getHeldStacks());
             }
         }
 
@@ -73,7 +107,7 @@ public class AlbumItem extends Item {
 
         @Override
         public void onClose(PlayerEntity player) {
-            this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+            Inventories.writeNbt(getAlbumStack(player).getOrCreateNbt(), getHeldStacks());
             super.onClose(player);
         }
 
@@ -84,6 +118,10 @@ public class AlbumItem extends Item {
 
         private ItemStack getAlbumStack(PlayerEntity player) {
             return player.getStackInHand(this.hand);
+        }
+
+        private DefaultedList<ItemStack> getHeldStacks() {
+            return this.stacks;
         }
     }
 }

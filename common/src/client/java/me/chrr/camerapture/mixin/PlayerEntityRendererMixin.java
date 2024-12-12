@@ -1,4 +1,4 @@
-package me.chrr.camerapture.fabric.mixin;
+package me.chrr.camerapture.mixin;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.CameraItem;

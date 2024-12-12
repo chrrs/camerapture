@@ -6,7 +6,8 @@
     "client": [
         "BuiltInModelItemRendererMixin",
         "GameRendererMixin",
-        "HandledScreenMixin"
+        "HandledScreenMixin",
+        "PlayerEntityRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 1

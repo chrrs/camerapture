@@ -42,9 +42,9 @@ public abstract class ResizableDecorationEntity extends Entity {
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        builder.add(FRAME_WIDTH, 1);
-        builder.add(FRAME_HEIGHT, 1);
+    protected void initDataTracker() {
+        getDataTracker().startTracking(FRAME_WIDTH, 1);
+        getDataTracker().startTracking(FRAME_HEIGHT, 1);
     }
 
     @Override

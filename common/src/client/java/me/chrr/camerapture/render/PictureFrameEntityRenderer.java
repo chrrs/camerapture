@@ -22,6 +22,7 @@ import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 
@@ -108,12 +109,13 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
         MatrixStack.Entry matrix = matrices.peek();
         Matrix4f matrix4f = matrix.getPositionMatrix();
+        Matrix3f matrix3f = matrix.getNormalMatrix();
 
         int effectiveLight = entity.isPictureGlowing() ? 0xff : light;
-        buffer.vertex(matrix4f, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x2, y2, 0f).color(0xffffffff).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x2, y1, 0f).color(0xffffffff).texture(0f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+        buffer.vertex(matrix4f, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, x2, y2, 0f).color(0xffffffff).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix3f, 0f, 0f, 1f).next();
+        buffer.vertex(matrix4f, x2, y1, 0f).color(0xffffffff).texture(0f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix3f, 0f, 0f, 1f).next();
     }
 
     /// Calculate the picture scale so it fits inside the frame.
@@ -171,6 +173,17 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     @Override
     protected boolean hasLabel(PictureFrameEntity entity) {
-        return MinecraftClient.isHudEnabled() && super.hasLabel(entity);
+        if (MinecraftClient.isHudEnabled() && entity.hasCustomName()) {
+            // Ideally, we'd use `this.dispatcher.targetedEntity`, but that doesn't work for some reason.
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.crosshairTarget instanceof EntityHitResult hitResult && hitResult.getEntity() == entity) {
+                double d = this.dispatcher.getSquaredDistanceToCamera(entity);
+                float f = entity.isSneaky() ? 32f : 64f;
+                return d < f * f;
+            }
+
+        }
+
+        return false;
     }
 }

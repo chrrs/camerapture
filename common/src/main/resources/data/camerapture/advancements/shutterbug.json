@@ -2,7 +2,7 @@
     "parent": "minecraft:adventure/root",
     "display": {
         "icon": {
-            "id": "camerapture:camera"
+            "item": "camerapture:camera"
         },
         "title": {
             "translate": "advancements.camerapture.shutterbug.title"
@@ -17,7 +17,9 @@
             "conditions": {
                 "items": [
                     {
-                        "items": "camerapture:camera"
+                        "items": [
+                            "camerapture:camera"
+                        ]
                     }
                 ]
             }

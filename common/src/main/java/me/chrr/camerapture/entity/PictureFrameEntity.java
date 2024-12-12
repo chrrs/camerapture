@@ -2,7 +2,6 @@ package me.chrr.camerapture.entity;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.gui.PictureFrameScreenHandler;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.MovementType;
@@ -23,7 +22,6 @@ import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -35,8 +33,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public class PictureFrameEntity extends ResizableDecorationEntity implements NamedScreenHandlerFactory {
     public static final Identifier ID = Camerapture.id("picture_frame");
@@ -59,12 +55,12 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(ITEM_STACK, ItemStack.EMPTY);
-        builder.add(GLOWING, false);
-        builder.add(FIXED, false);
-        builder.add(ROTATION, 0);
+    protected void initDataTracker() {
+        super.initDataTracker();
+        getDataTracker().startTracking(ITEM_STACK, ItemStack.EMPTY);
+        getDataTracker().startTracking(GLOWING, false);
+        getDataTracker().startTracking(FIXED, false);
+        getDataTracker().startTracking(ROTATION, 0);
     }
 
     @Override
@@ -223,7 +219,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+    public Packet<ClientPlayPacketListener> createSpawnPacket() {
         return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
     }
 
@@ -239,7 +235,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
-            nbt.put("Item", itemStack.encode(getRegistryManager()));
+            nbt.put("Item", itemStack.writeNbt(new NbtCompound()));
         }
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
@@ -253,12 +249,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
         NbtCompound nbtCompound = nbt.getCompound("Item");
         if (nbtCompound != null && !nbtCompound.isEmpty()) {
-            Optional<ItemStack> itemStack = ItemStack.fromNbt(getRegistryManager(), nbtCompound);
-            if (itemStack.isEmpty()) {
-                Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
-            } else {
-                this.setItemStack(itemStack.get());
-            }
+            this.setItemStack(ItemStack.fromNbt(nbtCompound));
         }
 
         this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
@@ -273,7 +264,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
     @Override
     public boolean hasCustomName() {
-        return getItemStack().get(DataComponentTypes.CUSTOM_NAME) != null;
+        return getItemStack().hasCustomName();
     }
 
     @Nullable

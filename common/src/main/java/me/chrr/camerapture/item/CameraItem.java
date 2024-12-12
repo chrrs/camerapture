@@ -45,11 +45,11 @@ public class CameraItem extends Item {
     }
 
     public static void setActive(ItemStack stack, boolean active) {
-        stack.set(Camerapture.CAMERA_ACTIVE, active);
+        stack.getOrCreateNbt().putBoolean("active", active);
     }
 
     public static boolean isActive(ItemStack stack) {
-        return stack.get(Camerapture.CAMERA_ACTIVE) == Boolean.TRUE;
+        return stack.getOrCreateNbt().getBoolean("active");
     }
 
     /// Find the amount of paper that the player has.
@@ -60,7 +60,7 @@ public class CameraItem extends Item {
     /// Return if the player can take a picture. They can if they are
     /// either in creative mode, or have at least a single piece of paper.
     public static boolean canTakePicture(PlayerEntity player) {
-        return player.isInCreativeMode() || getPaperInInventory(player) > 0;
+        return player.isCreative() || getPaperInInventory(player) > 0;
     }
 
     /// Find the camera item that the player is holding, if any.

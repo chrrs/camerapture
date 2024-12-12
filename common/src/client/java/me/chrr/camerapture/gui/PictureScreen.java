@@ -10,7 +10,6 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -144,10 +143,7 @@ public class PictureScreen extends InGameScreen {
     }
 
     @Override
-    //? if >=1.20.4 {
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        //?} else
-        /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
+    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
         this.changeIndexBy((int) -verticalAmount);
         return true;
     }
@@ -182,7 +178,7 @@ public class PictureScreen extends InGameScreen {
 
         this.picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
 
-        this.customName = stack.get(DataComponentTypes.CUSTOM_NAME);
+        this.customName = stack.hasCustomName() ? stack.getName() : null;
     }
 
     private boolean isSinglePicture() {

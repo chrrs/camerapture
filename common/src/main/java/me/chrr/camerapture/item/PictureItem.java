@@ -1,19 +1,14 @@
 package me.chrr.camerapture.item;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
@@ -76,9 +71,9 @@ public class PictureItem extends Item {
         }
 
         // Correctly handle (+NBT) items
-        NbtComponent nbtComponent = itemStack.getOrDefault(DataComponentTypes.ENTITY_DATA, NbtComponent.DEFAULT);
-        if (!nbtComponent.isEmpty()) {
-            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtComponent);
+        NbtCompound nbtCompound = itemStack.getNbt();
+        if (nbtCompound != null) {
+            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtCompound);
         }
 
         pictureFrameEntity.setItemStack(itemStack.copyWithCount(1));
@@ -95,12 +90,15 @@ public class PictureItem extends Item {
 
     public static ItemStack create(String creator, UUID uuid) {
         ItemStack stack = new ItemStack(Camerapture.PICTURE, 1);
-        stack.set(Camerapture.PICTURE_DATA, new PictureData(uuid, creator, System.currentTimeMillis()));
+        NbtCompound nbt = stack.getOrCreateNbt();
+        nbt.putString("creator", creator);
+        nbt.putUuid("uuid", uuid);
+        nbt.putLong("timestamp", System.currentTimeMillis());
         return stack;
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, net.minecraft.item.tooltip.TooltipType type) {
+    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         getTooltip(tooltip::add, stack);
     }
 
@@ -124,16 +122,18 @@ public class PictureItem extends Item {
 
     @Nullable
     public static PictureData getPictureData(ItemStack stack) {
-        return stack.get(Camerapture.PICTURE_DATA);
+        NbtCompound nbt = stack.getOrCreateNbt();
+        if (nbt.contains("uuid")) {
+            return new PictureData(
+                    nbt.getUuid("uuid"),
+                    nbt.getString("creator"),
+                    nbt.getLong("timestamp")
+            );
+        } else {
+            return null;
+        }
     }
 
     public record PictureData(UUID id, String creator, long timestamp) {
-        public static Codec<PictureData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Uuids.CODEC.fieldOf("id").forGetter(component -> component.id),
-                Codec.STRING.fieldOf("creator").forGetter(component -> component.creator),
-                Codec.LONG.fieldOf("timestamp").forGetter(component -> component.timestamp)
-        ).apply(instance, PictureData::new));
-
-        public static PacketCodec<ByteBuf, PictureData> PACKET_CODEC = PacketCodecs.codec(CODEC);
     }
 }

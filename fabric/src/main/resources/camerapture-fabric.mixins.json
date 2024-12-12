@@ -7,8 +7,7 @@
         "AbstractClientPlayerEntityMixin",
         "GameRendererMixin",
         "InGameHudMixin",
-        "MouseMixin",
-        "PlayerEntityRendererMixin"
+        "MouseMixin"
     ],
     "injectors": {
         "defaultRequire": 1

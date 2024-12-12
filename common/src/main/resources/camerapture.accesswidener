@@ -7,5 +7,5 @@ extendable method net/minecraft/client/gui/screen/ingame/HandledScreen drawSlot 
 transitive-accessible class net/minecraft/screen/ScreenHandlerType$Factory
 accessible method net/minecraft/screen/ScreenHandlerType <init> (Lnet/minecraft/screen/ScreenHandlerType$Factory;Lnet/minecraft/resource/featuretoggle/FeatureSet;)V
 
-# Used when upgrading NBT to data components
-accessible class net/minecraft/datafixer/fix/ItemStackComponentizationFix$StackData
+# Marked private by Forge
+accessible field net/minecraft/inventory/SimpleInventory stacks Lnet/minecraft/util/collection/DefaultedList;

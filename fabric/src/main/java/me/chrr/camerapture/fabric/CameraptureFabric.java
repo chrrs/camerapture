@@ -56,10 +56,6 @@ public class CameraptureFabric implements ModInitializer {
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME);
         Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER);
-
-        // Data components
-        Registry.register(Registries.DATA_COMPONENT_TYPE, Camerapture.id("picture_data"), Camerapture.PICTURE_DATA);
-        Registry.register(Registries.DATA_COMPONENT_TYPE, Camerapture.id("camera_active"), Camerapture.CAMERA_ACTIVE);
     }
 
     public void registerPackets() {

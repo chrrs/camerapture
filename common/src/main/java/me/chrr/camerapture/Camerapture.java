@@ -1,6 +1,5 @@
 package me.chrr.camerapture;
 
-import com.mojang.serialization.Codec;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.gui.AlbumLecternScreenHandler;
@@ -18,14 +17,12 @@ import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.picture.StoredPicture;
-import net.minecraft.component.ComponentType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandlerType;
@@ -79,14 +76,6 @@ public class Camerapture {
                     .build("picture_frame");
     public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
             new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());
-
-    // Data Components
-    public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
-            .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
-            .build();
-    public static final ComponentType<Boolean> CAMERA_ACTIVE = ComponentType.<Boolean>builder()
-            .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL)
-            .build();
 
     public static void registerPacketHandlers() {
         // Client requests to take / upload a picture

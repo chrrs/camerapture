@@ -2,7 +2,7 @@ fun Project.hasProp(namespace: String, key: String) = hasProperty("$namespace.$k
 fun Project.prop(namespace: String, key: String) = property("$namespace.$key") as String
 
 architectury {
-    common("fabric", "neoforge")
+    common("fabric", "forge")
 }
 
 loom {

@@ -1,13 +1,14 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
+import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.recipe.input.CraftingRecipeInput;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
@@ -16,23 +17,23 @@ import java.util.List;
 import java.util.Optional;
 
 public class PictureCloningRecipe extends SpecialCraftingRecipe {
-    public PictureCloningRecipe(CraftingRecipeCategory category) {
-        super(category);
+    public PictureCloningRecipe(Identifier id, CraftingRecipeCategory category) {
+        super(id, category);
     }
 
     @Override
-    public boolean matches(CraftingRecipeInput input, World world) {
-        return getRecipe(input.getStacks()).isPresent();
+    public boolean matches(RecipeInputInventory inventory, World world) {
+        return getRecipe(inventory.getInputStacks()).isPresent();
     }
 
     @Override
-    public ItemStack craft(CraftingRecipeInput input, RegistryWrapper.WrapperLookup lookup) {
-        return getRecipe(input.getStacks()).map(Pair::getLeft).orElse(null);
+    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
+        return getRecipe(inventory.getInputStacks()).map(Pair::getLeft).orElse(null);
     }
 
     @Override
-    public DefaultedList<ItemStack> getRemainder(CraftingRecipeInput input) {
-        return getRecipe(input.getStacks()).map(Pair::getRight).orElse(null);
+    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
+        return getRecipe(inventory.getInputStacks()).map(Pair::getRight).orElse(null);
     }
 
     @Override
