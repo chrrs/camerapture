@@ -19,11 +19,14 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RotationAxis;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Vector3d;
 
 import java.util.UUID;
 
@@ -37,6 +40,8 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     @Override
     public void render(RenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
+
+        matrices.translate(this.getPositionOffset(state).negate());
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.yaw));
         matrices.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.0);
@@ -144,8 +149,20 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     }
 
     @Override
-    protected void renderLabelIfPresent(RenderState state, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        super.renderLabelIfPresent(state, text, matrices, vertexConsumers, light);
+    public Vec3d getPositionOffset(RenderState state) {
+        Vector3d extra = state.facing.getRotationQuaternion().transform(new Vector3d(((float) state.frameWidth - 1f) / 2f, 0, -state.frameHeight + 2));
+        return new Vec3d(state.facing.getOffsetX() * 0.3f + extra.x, -0.25f + extra.y, state.facing.getOffsetZ() * 0.3f + extra.z);
+    }
+
+    @Nullable
+    @Override
+    protected Text getDisplayName(PictureFrameEntity entity) {
+        return entity.getCustomName();
+    }
+
+    @Override
+    protected boolean hasLabel(PictureFrameEntity entity, double squaredDistanceToCamera) {
+        return MinecraftClient.isHudEnabled() && super.hasLabel(entity, squaredDistanceToCamera);
     }
 
     @Override
@@ -155,6 +172,8 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     @Override
     public void updateRenderState(PictureFrameEntity entity, RenderState state, float tickDelta) {
+        super.updateRenderState(entity, state, tickDelta);
+
         state.pictureId = null;
 
         ItemStack stack = entity.getItemStack();
@@ -177,6 +196,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         state.frameHeight = entity.getFrameHeight();
         state.rotation = entity.getRotation();
         state.yaw = entity.getYaw();
+        state.facing = entity.getFacing();
     }
 
     public static class RenderState extends EntityRenderState {
@@ -189,5 +209,6 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         public int frameHeight;
         public int rotation;
         public float yaw;
+        public Direction facing;
     }
 }
