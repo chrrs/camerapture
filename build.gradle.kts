@@ -162,7 +162,7 @@ publishMods {
         val tag = "v$modVersion"
         tagName.set(tag)
         displayName.set(tag)
-        commitish.set("refs/tags/$tag")
+        commitish.set("1.21.4")
 
         allowEmptyFiles.set(true)
         additionalFiles.from(subprojects.filter { it.path != ":common" }
