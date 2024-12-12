@@ -38,7 +38,7 @@ public class CameraptureFabric implements ModInitializer {
         // Camera
         Registry.register(Registries.ITEM, CameraItem.KEY, Camerapture.CAMERA);
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(Camerapture.CAMERA));
-        Registry.register(Registries.SOUND_EVENT, Camerapture.CAMERA_SHUTTER.id(), Camerapture.CAMERA_SHUTTER);
+        Registry.register(Registries.SOUND_EVENT, Camerapture.CAMERA_SHUTTER.getId(), Camerapture.CAMERA_SHUTTER);
 
         Registry.register(Registries.CUSTOM_STAT, "pictures_taken", Camerapture.PICTURES_TAKEN);
         Stats.CUSTOM.getOrCreateStat(Camerapture.PICTURES_TAKEN, StatFormatter.DEFAULT);

@@ -26,7 +26,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.recipe.SpecialCraftingRecipe;
+import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
@@ -63,8 +63,8 @@ public class Camerapture {
 
     // Picture
     public static Item PICTURE = new PictureItem();
-    public static final SpecialCraftingRecipe.SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
-            new SpecialCraftingRecipe.SpecialRecipeSerializer<>(PictureCloningRecipe::new);
+    public static final SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
+            new SpecialRecipeSerializer<>(PictureCloningRecipe::new);
 
     // Album
     public static final Item ALBUM = new AlbumItem();
@@ -76,7 +76,7 @@ public class Camerapture {
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
                     .maxTrackingRange(10)
-                    .build(PictureFrameEntity.KEY);
+                    .build("picture_frame");
     public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
             new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());
 
@@ -85,7 +85,7 @@ public class Camerapture {
             .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
             .build();
     public static final ComponentType<Boolean> CAMERA_ACTIVE = ComponentType.<Boolean>builder()
-            .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN)
+            .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL)
             .build();
 
     public static void registerPacketHandlers() {
@@ -109,7 +109,7 @@ public class Camerapture {
             }
 
             CameraItem.setActive(camera.stack(), false);
-            player.getItemCooldownManager().set(camera.stack(), 20 * 3);
+            player.getItemCooldownManager().set(Camerapture.CAMERA, 20 * 3);
             player.swingHand(camera.hand(), true);
 
             player.incrementStat(PICTURES_TAKEN);

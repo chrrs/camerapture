@@ -31,8 +31,13 @@ public class PictureCloningRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public DefaultedList<ItemStack> getRecipeRemainders(CraftingRecipeInput input) {
+    public DefaultedList<ItemStack> getRemainder(CraftingRecipeInput input) {
         return getRecipe(input.getStacks()).map(Pair::getRight).orElse(null);
+    }
+
+    @Override
+    public boolean fits(int width, int height) {
+        return width * height >= 2;
     }
 
     private Optional<Pair<ItemStack, DefaultedList<ItemStack>>> getRecipe(List<ItemStack> items) {

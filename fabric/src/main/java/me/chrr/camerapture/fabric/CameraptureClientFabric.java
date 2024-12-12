@@ -10,7 +10,6 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
-import me.chrr.camerapture.render.ShouldRenderPicture;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -18,10 +17,9 @@ import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.render.item.model.special.SpecialModelTypes;
-import net.minecraft.client.render.item.property.bool.BooleanProperties;
+import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 
 import java.util.List;
 
@@ -37,8 +35,8 @@ public class CameraptureClientFabric implements ClientModInitializer {
 
     public void registerClientContent() {
         // Picture
-        BooleanProperties.ID_MAPPER.put(Camerapture.id("should_render_picture"), ShouldRenderPicture.MAP_CODEC);
-        SpecialModelTypes.ID_MAPPER.put(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
+        ModelPredicateProviderRegistry.register(Camerapture.PICTURE, Camerapture.id("should_render_picture"),
+                (stack, world, entity, seed) -> PictureItemRenderer.canRender(stack) ? 1f : 0f);
 
         // Picture Frame
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
@@ -66,40 +64,40 @@ public class CameraptureClientFabric implements ClientModInitializer {
 
         // Right-clicking on certain items should open client-side GUI's.
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (!world.isClient()) {
-                return ActionResult.PASS;
-            }
-
             ItemStack stack = player.getStackInHand(hand);
             MinecraftClient client = MinecraftClient.getInstance();
 
+            if (!world.isClient()) {
+                return TypedActionResult.pass(stack);
+            }
+
             if (client.player != player) {
-                return ActionResult.PASS;
+                return TypedActionResult.pass(stack);
             }
 
             if (stack.isOf(Camerapture.PICTURE)) {
                 // Right-clicking a picture item should open the picture screen.
                 if (PictureItem.getPictureData(stack) != null) {
                     client.executeSync(() -> client.setScreen(new PictureScreen(List.of(stack))));
-                    return ActionResult.SUCCESS;
+                    return TypedActionResult.success(stack);
                 }
             } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
                 // Right-clicking the album should open the gallery screen.
                 List<ItemStack> pictures = AlbumItem.getPictures(stack);
                 if (!pictures.isEmpty()) {
                     client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
-                    return ActionResult.SUCCESS;
+                    return TypedActionResult.success(stack);
                 }
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
-                    && !player.getItemCooldownManager().isCoolingDown(stack)) {
+                    && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
                 // Shift-right clicking the camera should open the upload screen.
                 client.executeSync(() -> client.setScreen(new UploadScreen()));
-                return ActionResult.SUCCESS;
+                return TypedActionResult.success(stack);
             }
 
-            return ActionResult.PASS;
+            return TypedActionResult.pass(stack);
         });
 
         // Clear cache and reset the picture taker configuration when logging out of a world.

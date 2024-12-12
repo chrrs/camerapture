@@ -24,7 +24,6 @@ import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.EntityTrackerEntry;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -90,14 +89,14 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    public void onBreak(ServerWorld world, @Nullable Entity entity) {
+    public void onBreak(@Nullable Entity entity) {
         this.playSound(SoundEvents.ENTITY_ITEM_FRAME_BREAK, 1f, 1f);
         this.emitGameEvent(GameEvent.BLOCK_CHANGE, entity);
 
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
             itemStack.setHolder(null);
-            this.dropStack(world, itemStack);
+            this.dropStack(itemStack);
         }
     }
 
@@ -173,12 +172,12 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    public boolean damage(ServerWorld world, DamageSource source, float amount) {
+    public boolean damage(DamageSource source, float amount) {
         if (this.isFixed() && !source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isSourceCreativePlayer()) {
             return false;
         }
 
-        return super.damage(world, source, amount);
+        return super.damage(source, amount);
     }
 
     @Override
@@ -240,7 +239,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
-            nbt.put("Item", itemStack.toNbt(getRegistryManager()));
+            nbt.put("Item", itemStack.encode(getRegistryManager()));
         }
 
         nbt.putBoolean("PictureGlowing", this.isPictureGlowing());

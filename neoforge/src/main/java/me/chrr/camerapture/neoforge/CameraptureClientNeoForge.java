@@ -11,8 +11,8 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
-import me.chrr.camerapture.render.ShouldRenderPicture;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.entity.LivingEntity;
@@ -54,6 +54,10 @@ public class CameraptureClientNeoForge {
     @SubscribeEvent
     public void registerContent(RegisterEvent event) {
         CameraptureClient.init();
+
+        // Picture
+        ModelPredicateProviderRegistry.register(Camerapture.PICTURE, Camerapture.id("should_render_picture"),
+                (stack, world, entity, seed) -> PictureItemRenderer.canRender(stack) ? 1f : 0f);
     }
 
     @SubscribeEvent
@@ -66,16 +70,6 @@ public class CameraptureClientNeoForge {
     @SubscribeEvent
     public void registerPackets(RegisterPayloadHandlersEvent event) {
         CameraptureClient.registerPacketHandlers();
-    }
-
-    @SubscribeEvent
-    public void registerItemModelConditions(RegisterConditionalItemModelPropertyEvent event) {
-        event.register(Camerapture.id("should_render_picture"), ShouldRenderPicture.MAP_CODEC);
-    }
-
-    @SubscribeEvent
-    public void registerItemRenderers(RegisterSpecialModelRendererEvent event) {
-        event.register(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
     }
 
     @SubscribeEvent
@@ -152,7 +146,7 @@ public class CameraptureClientNeoForge {
             } else if (player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
-                    && !player.getItemCooldownManager().isCoolingDown(stack)) {
+                    && !player.getItemCooldownManager().isCoolingDown(Camerapture.CAMERA)) {
                 // Shift-right clicking the camera should open the upload screen.
                 client.executeSync(() -> client.setScreen(new UploadScreen()));
                 return ActionResult.SUCCESS;

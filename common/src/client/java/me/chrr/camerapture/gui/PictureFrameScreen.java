@@ -9,7 +9,6 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
@@ -119,7 +118,7 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x, y, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+        context.drawTexture(TEXTURE, x, y, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
     }
 
     @Override
@@ -215,10 +214,10 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
             int textX = getX() + (leftText ? -4 - textRenderer.getWidth(getMessage()) : 11 + 4);
             context.drawTextWithShadow(textRenderer, getMessage(), textX, getY() + 2, 0xe0e0e0);
 
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, getX(), getY(), this.isSelected() ? 11 : 0, 52, 11, 11, 256, 256);
+            context.drawTexture(TEXTURE, getX(), getY(), this.isSelected() ? 11 : 0, 52, 11, 11, 256, 256);
 
             if (checked) {
-                context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
+                context.drawTexture(TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
             }
         }
     }

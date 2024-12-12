@@ -4,7 +4,6 @@ import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.LoadingDisplay;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 
 public enum PictureDrawingUtil {
@@ -34,8 +33,7 @@ public enum PictureDrawingUtil {
                 int dx = x + width / 2 - newWidth / 2;
                 int dy = y + height / 2 - newHeight / 2;
 
-                context.drawTexture(RenderLayer::getGuiTextured, picture.getTextureIdentifier(),
-                        dx, dy, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
+                context.drawTexture(picture.getTextureIdentifier(), dx, dy, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
             }
         }
     }

@@ -1,9 +1,15 @@
 {
     "type": "minecraft:crafting_shaped",
     "key": {
-        "I": "minecraft:iron_ingot",
-        "G": "#c:glass_panes",
-        "R": "minecraft:redstone"
+        "I": {
+            "item": "minecraft:iron_ingot"
+        },
+        "G": {
+            "tag": "c:glass_panes"
+        },
+        "R": {
+            "item": "minecraft:redstone"
+        }
     },
     "pattern": [
         " I ",
@@ -11,7 +17,6 @@
         "IRI"
     ],
     "result": {
-        "id": "camerapture:camera",
-        "count": 1
+        "id": "camerapture:camera"
     }
 }

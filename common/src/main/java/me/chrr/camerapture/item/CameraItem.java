@@ -8,9 +8,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +19,11 @@ public class CameraItem extends Item {
     public static final RegistryKey<Item> KEY = RegistryKey.of(RegistryKeys.ITEM, ID);
 
     public CameraItem() {
-        super(new Settings().registryKey(KEY).maxCount(1));
+        super(new Settings().maxCount(1));
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
         boolean active = isActive(stack);
 
@@ -31,10 +31,10 @@ public class CameraItem extends Item {
         // the upload GUI is opened on the client side.
         if (active || !player.isSneaking()) {
             setActive(stack, !active);
-            return ActionResult.CONSUME;
+            return TypedActionResult.consume(stack);
         }
 
-        return ActionResult.SUCCESS;
+        return TypedActionResult.success(stack);
     }
 
     @Override

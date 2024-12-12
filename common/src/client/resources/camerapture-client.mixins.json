@@ -4,6 +4,7 @@
     "package": "me.chrr.camerapture.mixin",
     "compatibilityLevel": "JAVA_17",
     "client": [
+        "BuiltInModelItemRendererMixin",
         "GameRendererMixin",
         "HandledScreenMixin"
     ],

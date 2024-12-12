@@ -11,9 +11,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -27,11 +27,11 @@ public class AlbumItem extends Item {
     public static int SLOTS = PAGES * ITEMS_PER_PAGE;
 
     public AlbumItem() {
-        super(new Item.Settings().registryKey(KEY).maxCount(1));
+        super(new Item.Settings().maxCount(1));
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
 
         if (!world.isClient && player.isSneaking()) {
@@ -39,7 +39,7 @@ public class AlbumItem extends Item {
                     new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)), stack.getName()));
         }
 
-        return ActionResult.SUCCESS;
+        return TypedActionResult.success(stack);
     }
 
     public static List<ItemStack> getPictures(ItemStack album) {

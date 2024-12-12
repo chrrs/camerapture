@@ -38,16 +38,18 @@ public class PictureItem extends Item {
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy 'at' HH:mm");
 
     public PictureItem() {
-        super(new Settings().registryKey(KEY));
+        super(new Settings());
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+        ItemStack stack = user.getStackInHand(hand);
+
         if (!user.isSneaking()) {
             // When not sneaking, we show the picture client-side through an event handler.
-            return ActionResult.SUCCESS;
+            return TypedActionResult.success(stack);
         } else {
-            return ActionResult.PASS;
+            return TypedActionResult.pass(stack);
         }
     }
 

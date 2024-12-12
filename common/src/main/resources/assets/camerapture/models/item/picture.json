@@ -2,5 +2,11 @@
     "parent": "item/generated",
     "textures": {
         "layer0": "camerapture:item/picture"
-    }
+    },
+    "overrides": [
+        {
+            "predicate": { "camerapture:should_render_picture": 1 },
+            "model": "camerapture:item/rendered_picture"
+        }
+    ]
 }

@@ -8,6 +8,7 @@ import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
 import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
+import me.chrr.camerapture.render.PictureItemRenderer;
 
 import javax.imageio.ImageIO;
 import java.util.Map;
@@ -17,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CameraptureClient {
     public static final float MIN_ZOOM = 1.0f;
     public static final float MAX_ZOOM = 6.0f;
+
+    public static final PictureItemRenderer PICTURE_ITEM_RENDERER = new PictureItemRenderer();
 
     public static boolean replayModInstalled = false;
 

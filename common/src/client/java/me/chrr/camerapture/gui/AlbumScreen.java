@@ -10,7 +10,6 @@ import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.PageTurnWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
@@ -65,7 +64,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight, 512, 512);
+        context.drawTexture(TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight, 512, 512);
     }
 
     @Override
@@ -116,7 +115,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
                         slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
             }
         } else {
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);
+            context.drawTexture(TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);
         }
 
         RenderSystem.disableBlend();

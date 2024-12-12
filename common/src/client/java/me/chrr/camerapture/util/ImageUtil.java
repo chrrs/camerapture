@@ -25,7 +25,7 @@ public enum ImageUtil {
 
         for (int x = 0; x < image.getWidth(); x++) {
             for (int y = 0; y < image.getHeight(); y++) {
-                nativeImage.setColorArgb(x, y, image.getRGB(x, y));
+                nativeImage.setColor(x, y, swapRedAndBlue(image.getRGB(x, y)));
             }
         }
 
@@ -34,10 +34,20 @@ public enum ImageUtil {
 
     /// Convert a {@link NativeImage} to a {@link BufferedImage}.
     public static BufferedImage fromNativeImage(NativeImage image, boolean hasAlpha) {
-        int[] pixels = image.copyPixelsArgb();
         BufferedImage bufferedImage = new BufferedImage(image.getWidth(), image.getHeight(), hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+        int[] pixels = image.copyPixelsRgba();
+
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = swapRedAndBlue(pixels[i]);
+        }
+
         bufferedImage.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
         return bufferedImage;
+    }
+
+    /// NativeImage's and BufferedImages use different pixel layouts, so we have to swap red and blue.
+    private static int swapRedAndBlue(int pixel) {
+        return pixel & 0xff00ff00 | ((pixel << 16) & 0xff0000) | ((pixel >> 16) & 0x0000ff);
     }
 
     /// Shrink a {@link BufferedImage} to be of a maximum dimension in either

@@ -60,12 +60,12 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void tick() {
-        if (this.getWorld() instanceof ServerWorld world && Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
+        if (this.getWorld() instanceof ServerWorld && Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
             if (this.obstructionCheckCounter++ == 100) {
                 this.obstructionCheckCounter = 0;
                 if (!this.canStayAttached() && !this.isRemoved()) {
                     this.discard();
-                    this.onBreak(world, null);
+                    this.onBreak(null);
                 }
             }
         }
@@ -87,7 +87,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public void setFacing(Direction facing) {
         this.facing = facing;
 
-        this.setYaw((float) (this.facing.getHorizontalQuarterTurns() * 90));
+        this.setYaw((float) (this.facing.getHorizontal() * 90));
         this.prevYaw = this.getYaw();
 
         updateBoundingBox();
@@ -179,23 +179,22 @@ public abstract class ResizableDecorationEntity extends Entity {
     @Override
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
-            //noinspection deprecation: let's just copy what Vanilla does for now.
             return !this.getWorld().canPlayerModifyAt(playerEntity, this.getBlockPos())
-                    || this.sidedDamage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
+                    || this.damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
             return false;
         }
     }
 
     @Override
-    public boolean damage(ServerWorld world, DamageSource source, float amount) {
-        if (this.isAlwaysInvulnerableTo(source)) {
+    public boolean damage(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             if (!this.isRemoved() && !this.getWorld().isClient) {
-                this.kill(world);
+                this.kill();
                 this.scheduleVelocityUpdate();
-                this.onBreak(world, source.getAttacker());
+                this.onBreak(source.getAttacker());
             }
 
             return true;
@@ -204,17 +203,17 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void move(MovementType movementType, Vec3d movement) {
-        if (this.getWorld() instanceof ServerWorld world && !this.isRemoved() && movement.lengthSquared() > 0.0) {
-            this.kill(world);
-            this.onBreak(world, null);
+        if (this.getWorld() instanceof ServerWorld && !this.isRemoved() && movement.lengthSquared() > 0.0) {
+            this.kill();
+            this.onBreak(null);
         }
     }
 
     @Override
     public void addVelocity(double deltaX, double deltaY, double deltaZ) {
-        if (this.getWorld() instanceof ServerWorld world && !this.isRemoved() && deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 0.0) {
-            this.kill(world);
-            this.onBreak(world, null);
+        if (this.getWorld() instanceof ServerWorld && !this.isRemoved() && deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 0.0) {
+            this.kill();
+            this.onBreak(null);
         }
     }
 
@@ -242,10 +241,10 @@ public abstract class ResizableDecorationEntity extends Entity {
     }
 
     @Override
-    public ItemEntity dropStack(ServerWorld world, ItemStack stack, float yOffset) {
+    public ItemEntity dropStack(ItemStack stack, float yOffset) {
         Vec3d center = getBoundingBox().getCenter();
 
-        ItemEntity itemEntity = new ItemEntity(world,
+        ItemEntity itemEntity = new ItemEntity(this.getWorld(),
                 center.x + this.getFacing().getOffsetX() * 0.15F,
                 center.y + yOffset,
                 center.z + this.getFacing().getOffsetZ() * 0.15F,
@@ -303,5 +302,5 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     public abstract void onPlace();
 
-    public abstract void onBreak(ServerWorld world, @Nullable Entity entity);
+    public abstract void onBreak(@Nullable Entity entity);
 }

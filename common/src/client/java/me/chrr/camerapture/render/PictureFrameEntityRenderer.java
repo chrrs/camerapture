@@ -12,25 +12,22 @@ import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 
 import java.util.UUID;
 
-public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity, PictureFrameEntityRenderer.RenderState> {
+public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntity> {
     public static final double DISTANCE_FROM_WALL = 0.01;
 
     public PictureFrameEntityRenderer(EntityRendererFactory.Context context) {
@@ -38,24 +35,40 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     }
 
     @Override
-    public void render(RenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void render(PictureFrameEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
 
-        matrices.translate(this.getPositionOffset(state).negate());
+        Vec3d offset = this.getPositionOffset(entity, tickDelta).negate();
+        matrices.translate(offset.x, offset.y, offset.z);
 
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.yaw));
-        matrices.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.0);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
+        matrices.translate(0.5 - entity.getFrameWidth() / 2.0, -0.5 + entity.getFrameHeight() / 2.0, 0.0);
 
-        if (state.shouldRenderOutline) {
-            renderOutline(matrices, vertexConsumers, state.frameWidth, state.frameHeight);
+        MinecraftClient client = MinecraftClient.getInstance();
+        boolean shouldRenderOutline = !this.dispatcher.gameOptions.hudHidden
+                && CameraItem.find(client.player, true) == null
+                && client.crosshairTarget instanceof EntityHitResult hitResult
+                && hitResult.getEntity() == entity;
+
+        if (shouldRenderOutline) {
+            renderOutline(matrices, vertexConsumers, entity.getFrameWidth(), entity.getFrameHeight());
         }
 
         matrices.translate(0.0, 0.0, (ResizableDecorationEntity.THICKNESS - DISTANCE_FROM_WALL) / 2.0);
 
-        if (state.pictureId == null) {
+        UUID pictureId = null;
+        ItemStack stack = entity.getItemStack();
+        if (stack != null) {
+            PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
+            if (pictureData != null) {
+                pictureId = pictureData.id();
+            }
+        }
+
+        if (pictureId == null) {
             renderErrorText(matrices, vertexConsumers, light);
         } else {
-            RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(state.pictureId);
+            RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(pictureId);
             if (picture == null || picture.getStatus() == RemotePicture.Status.ERROR) {
                 // Picture failed to load.
                 renderErrorText(matrices, vertexConsumers, light);
@@ -64,19 +77,19 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
                 renderFetching(matrices, vertexConsumers, light);
             } else {
                 // Picture should be rendered.
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * state.rotation));
-                renderPicture(matrices, vertexConsumers, picture, state, light);
+                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * entity.getRotation()));
+                renderPicture(matrices, vertexConsumers, picture, entity, light);
             }
         }
 
         matrices.pop();
 
-        super.render(state, matrices, vertexConsumers, light);
+        super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, RemotePicture picture, RenderState state, int light) {
+    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, RemotePicture picture, PictureFrameEntity entity, int light) {
         // Find the rendered width and height of the picture.
-        float scale = getPictureScale(picture, state);
+        float scale = getPictureScale(picture, entity);
         float width = picture.getWidth() * scale;
         float height = picture.getHeight() * scale;
 
@@ -88,7 +101,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
         // If the picture is glowing, we render as if it were text. This avoids
         // the shading based on the normals, as text is always drawn as-is.
-        RenderLayer renderLayer = state.isPictureGlowing
+        RenderLayer renderLayer = entity.isPictureGlowing()
                 ? RenderLayer.getText(picture.getTextureIdentifier())
                 : RenderLayer.getEntityCutout(picture.getTextureIdentifier());
         VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
@@ -96,7 +109,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         MatrixStack.Entry matrix = matrices.peek();
         Matrix4f matrix4f = matrix.getPositionMatrix();
 
-        int effectiveLight = state.isPictureGlowing ? 0xff : light;
+        int effectiveLight = entity.isPictureGlowing() ? 0xff : light;
         buffer.vertex(matrix4f, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
         buffer.vertex(matrix4f, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
         buffer.vertex(matrix4f, x2, y2, 0f).color(0xffffffff).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
@@ -104,28 +117,26 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     }
 
     /// Calculate the picture scale so it fits inside the frame.
-    private static float getPictureScale(RemotePicture picture, RenderState state) {
+    private static float getPictureScale(RemotePicture picture, PictureFrameEntity entity) {
         float pictureWidth = picture.getWidth();
         float pictureHeight = picture.getHeight();
 
         // If the picture is on its side, we flip width and height.
-        if (state.rotation % 2 == 1) {
+        if (entity.getRotation() % 2 == 1) {
             pictureWidth = picture.getHeight();
             pictureHeight = picture.getWidth();
         }
 
         // Calculate the width and height to fit inside the frame.
-        float scaledWidth = state.frameWidth / pictureWidth;
-        float scaleHeight = state.frameHeight / pictureHeight;
+        float scaledWidth = entity.getFrameWidth() / pictureWidth;
+        float scaleHeight = entity.getFrameHeight() / pictureHeight;
 
         return Math.min(scaledWidth, scaleHeight);
     }
 
     public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
         VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, ResizableDecorationEntity.THICKNESS);
-
-        int color = ColorHelper.withAlpha(102, 0xff000000);
-        VertexRendering.drawOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -ResizableDecorationEntity.THICKNESS / 2f, color);
+        WorldRenderer.drawShapeOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -ResizableDecorationEntity.THICKNESS / 2f, 0f, 0f, 0f, 102f / 255f, true);
     }
 
     public void renderFetching(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
@@ -144,70 +155,22 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     private void drawCenteredText(TextRenderer textRenderer, Text text, float x, float y, int color, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         float width = textRenderer.getWidth(text);
-        textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0x7f000000, light, false);
+        textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0x7f000000, light);
     }
 
     @Override
-    public Vec3d getPositionOffset(RenderState state) {
-        Vector3d extra = state.facing.getRotationQuaternion().transform(new Vector3d(((float) state.frameWidth - 1f) / 2f, 0, -state.frameHeight + 2));
-        return new Vec3d(state.facing.getOffsetX() * 0.3f + extra.x, -0.25f + extra.y, state.facing.getOffsetZ() * 0.3f + extra.z);
-    }
-
-    @Nullable
-    @Override
-    protected Text getDisplayName(PictureFrameEntity entity) {
-        return entity.getCustomName();
+    public Identifier getTexture(PictureFrameEntity entity) {
+        return null;
     }
 
     @Override
-    protected boolean hasLabel(PictureFrameEntity entity, double squaredDistanceToCamera) {
-        return MinecraftClient.isHudEnabled() && super.hasLabel(entity, squaredDistanceToCamera);
+    public Vec3d getPositionOffset(PictureFrameEntity entity, float tickDelta) {
+        Vector3d extra = entity.getFacing().getRotationQuaternion().transform(new Vector3d(((float) entity.getFrameWidth() - 1f) / 2f, 0, -entity.getFrameHeight() + 2));
+        return new Vec3d(entity.getFacing().getOffsetX() * 0.3f + extra.x, -0.25f + extra.y, entity.getFacing().getOffsetZ() * 0.3f + extra.z);
     }
 
     @Override
-    public RenderState createRenderState() {
-        return new RenderState();
-    }
-
-    @Override
-    public void updateRenderState(PictureFrameEntity entity, RenderState state, float tickDelta) {
-        super.updateRenderState(entity, state, tickDelta);
-
-        state.pictureId = null;
-
-        ItemStack stack = entity.getItemStack();
-        if (stack != null) {
-            PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
-            if (pictureData != null) {
-                state.pictureId = pictureData.id();
-            }
-        }
-
-        // When hovering, render a "block" outline to make the frame appear as a block.
-        MinecraftClient client = MinecraftClient.getInstance();
-        state.shouldRenderOutline = !this.dispatcher.gameOptions.hudHidden
-                && CameraItem.find(client.player, true) == null
-                && client.crosshairTarget instanceof EntityHitResult hitResult
-                && hitResult.getEntity() == entity;
-
-        state.isPictureGlowing = entity.isPictureGlowing();
-        state.frameWidth = entity.getFrameWidth();
-        state.frameHeight = entity.getFrameHeight();
-        state.rotation = entity.getRotation();
-        state.yaw = entity.getYaw();
-        state.facing = entity.getFacing();
-    }
-
-    public static class RenderState extends EntityRenderState {
-        @Nullable
-        public UUID pictureId;
-        public boolean isPictureGlowing;
-        public boolean shouldRenderOutline;
-
-        public int frameWidth;
-        public int frameHeight;
-        public int rotation;
-        public float yaw;
-        public Direction facing;
+    protected boolean hasLabel(PictureFrameEntity entity) {
+        return MinecraftClient.isHudEnabled() && super.hasLabel(entity);
     }
 }

@@ -1,23 +1,19 @@
 package me.chrr.camerapture.render;
 
-import com.mojang.serialization.MapCodec;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.model.LoadedEntityModels;
-import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ModelTransformationMode;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
 
-public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
+public class PictureItemRenderer {
     public static boolean canRender(ItemStack stack) {
         PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
         if (pictureData == null) {
@@ -28,8 +24,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         return picture.getStatus() == RemotePicture.Status.SUCCESS;
     }
 
-    @Override
-    public void render(@Nullable UUID data, ModelTransformationMode modelTransformationMode, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, boolean glint) {
+    public void render(@Nullable UUID data, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         if (data == null) {
             return;
         }
@@ -68,23 +63,8 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         matrices.pop();
     }
 
-    @Override
     public @Nullable UUID getData(ItemStack stack) {
         PictureItem.PictureData pictureData = PictureItem.getPictureData(stack);
         return pictureData != null ? pictureData.id() : null;
-    }
-
-    public static class Unbaked implements SpecialModelRenderer.Unbaked {
-        public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(Unbaked::new);
-
-        @Override
-        public SpecialModelRenderer<UUID> bake(LoadedEntityModels entityModels) {
-            return new PictureItemRenderer();
-        }
-
-        @Override
-        public MapCodec<Unbaked> getCodec() {
-            return MAP_CODEC;
-        }
     }
 }

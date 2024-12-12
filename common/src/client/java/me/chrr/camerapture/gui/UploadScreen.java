@@ -6,7 +6,6 @@ import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.PressableTextWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -46,7 +45,7 @@ public class UploadScreen extends InGameScreen {
     public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
         Text description = Text.translatable("text.camerapture.upload_picture.description");
 
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+        context.drawTexture(TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - textRenderer.fontHeight - 16, 0xffffff);
 
         boolean canTakePicture = this.client != null && this.client.player != null && CameraItem.canTakePicture(this.client.player);
@@ -63,7 +62,7 @@ public class UploadScreen extends InGameScreen {
     }
 
     @Override
-    public void onFilesDropped(List<Path> paths) {
+    public void filesDragged(List<Path> paths) {
         for (Path path : paths) {
             if (tryUpload(path)) {
                 this.close();
