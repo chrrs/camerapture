@@ -8,18 +8,29 @@ body:
       required: true
     attributes:
       label: What's the issue?
-      description: What's the problem? Please be specific and describe what happened, what you expected to happen and what you were doing when it happened.
-  - type: textarea
-    id: screenshots
+      description: What's the problem? Describe what happened, add screenshots and log files!
+  - type: dropdown
+    id: loader
     attributes:
-      label: Screenshots
-      description: Pictures say more than words! This is optional, but if applicable, please add some screenshots to make the issue more understandable.
-      placeholder: You can upload them using the image button in this text editor.
+      label: What loader are you using?
+      multiple: true
+      options:
+        - Forge
+        - NeoForge
+        - Fabric
+        - Quilt
   - type: input
     id: version
     validations:
       required: true
     attributes:
-      label: Mod and Minecraft version
+      label: What is your Minecraft version?
+      placeholder: ex. 1.20.1
+  - type: input
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: What is Camerapture's version?
       description: Don't know them? Please check either the filename of the mod, or look in your in-game mod menu.
-      placeholder: ex. Camerapture 1.1.4 on Minecraft 1.20.1
+      placeholder: ex. Camerapture 1.6.4

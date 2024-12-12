@@ -8,4 +8,4 @@ body:
       required: true
     attributes:
       label: What do you want added or changed?
-      description: Describe what you want changed in the project. Please be specific, and motivate your answer, it helps make the request more understandable to us!
+      description: Describe what you want changed in the project. Please be specific, and motivate your answer, it helps make the request more understandable!
