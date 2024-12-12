@@ -20,14 +20,14 @@ body:
         - Fabric
         - Quilt
   - type: input
-    id: version
+    id: minecraftVersion
     validations:
       required: true
     attributes:
       label: What is your Minecraft version?
       placeholder: ex. 1.20.1
   - type: input
-    id: version
+    id: modVersion
     validations:
       required: true
     attributes:
