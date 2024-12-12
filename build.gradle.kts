@@ -159,9 +159,10 @@ publishMods {
         repository.set(prop("github", "repository"))
         accessToken = providers.environmentVariable("GITHUB_TOKEN")
 
-        tagName.set("v$modVersion")
-        displayName.set(tagName)
-        commitish.set(tagName)
+        val tag = "v$modVersion"
+        tagName.set(tag)
+        displayName.set(tag)
+        commitish.set("refs/tags/$tag")
 
         allowEmptyFiles.set(true)
         additionalFiles.from(subprojects.filter { it.path != ":common" }
