@@ -163,6 +163,4 @@ publishMods {
             .map { it.tasks.getByName<RemapJarTask>("remapJar") }
             .map { it.archiveFile })
     }
-
-    dryRun.set(true)
 }

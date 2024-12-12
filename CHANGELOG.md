@@ -1,3 +1,12 @@
+## 1.7.0-alpha
+
+- Add the ability to zoom the camera by scrolling.
+- Rewrite the mod to support Forge and NeoForge.
+- Update to 1.21.4.
+- Lots of smaller bug fixes.
+
+**Note that this version is an alpha version!** Please make backups before updating.
+
 ## 1.6.4
 
 - Render picture items in your inventory, on the ground, and everywhere else.
