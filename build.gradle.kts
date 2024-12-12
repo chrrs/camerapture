@@ -99,7 +99,12 @@ fun fetchChangelog(modVersion: String): String {
 publishMods {
     val modVersion = prop("mod", "version")
     changelog.set(fetchChangelog(modVersion))
-    type.set(if (modVersion.contains("beta")) ReleaseType.BETA else ReleaseType.STABLE)
+
+    type.set(when {
+        modVersion.contains("alpha") -> ReleaseType.ALPHA
+        modVersion.contains("beta") -> ReleaseType.BETA
+        else -> ReleaseType.STABLE
+    })
 
     /// Generate some common options between Modrinth and CurseForge publishing.
     fun platformOptions(platform: String) = publishOptions {
