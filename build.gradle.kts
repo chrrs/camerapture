@@ -145,19 +145,4 @@ publishMods {
         minecraftVersions.addAll(versions)
         optional("cloth-config")
     }
-
-    github {
-        repository.set(prop("github", "repository"))
-        accessToken = providers.environmentVariable("GITHUB_TOKEN")
-
-        val tag = "v$modVersion"
-        tagName.set(tag)
-        displayName.set(tag)
-        commitish.set("1.21.4")
-
-        allowEmptyFiles.set(true)
-        additionalFiles.from(subprojects.filter { it.path != ":common" }
-            .map { it.tasks.getByName<RemapJarTask>("remapJar") }
-            .map { it.archiveFile })
-    }
 }
