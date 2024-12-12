@@ -86,17 +86,16 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         float y1 = -height / 2f;
         float y2 = height / 2f;
 
-        // If the picture is glowing, we render as if it were a particle. This avoids
-        // the shading based on the normals, as particles are always drawn as-is.
+        // If the picture is glowing, we render as if it were text. This avoids
+        // the shading based on the normals, as text is always drawn as-is.
         RenderLayer renderLayer = state.isPictureGlowing
-                ? RenderLayer.getTranslucentParticle(picture.getTextureIdentifier())
+                ? RenderLayer.getText(picture.getTextureIdentifier())
                 : RenderLayer.getEntityCutout(picture.getTextureIdentifier());
         VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
         MatrixStack.Entry matrix = matrices.peek();
         Matrix4f matrix4f = matrix.getPositionMatrix();
 
-        // FIXME: When using shaders, this glows way too bright.
         int effectiveLight = state.isPictureGlowing ? 0xff : light;
         buffer.vertex(matrix4f, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
         buffer.vertex(matrix4f, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
