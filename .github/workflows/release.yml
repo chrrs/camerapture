@@ -19,9 +19,24 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - run: ./gradlew buildAll
+      - name: Fetch mod version
+        run: |
+          TAG_NAME="v$(grep '^mod.version' gradle.properties | cut -d'=' -f2 | xargs)"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
 
-      - run: ./gradlew publishMods
+      - name: Build mod
+        run: ./gradlew buildAll
+
+      - name: Release to Modrinth and CurseForge
+        run: ./gradlew publishMods
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+
+      - name: Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          prerelease: ${{ contains(env.TAG_NAME, 'alpha') || contains(env.TAG_NAME, 'beta') }}
+          body: 'Read more on [Modrinth](https://modrinth.com/mod/camerapture).'
+          files: 'build/libs/*.jar'
