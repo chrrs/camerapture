@@ -1,3 +1,8 @@
+## 1.7.1
+
+- Fix crafting recipes.
+- Stabilize Forge and NeoForge releases.
+
 ## 1.7.0-alpha
 
 - Add the ability to zoom the camera by scrolling.
