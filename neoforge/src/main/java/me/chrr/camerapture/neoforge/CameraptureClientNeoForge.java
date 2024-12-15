@@ -30,6 +30,7 @@ import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -189,7 +190,7 @@ public class CameraptureClientNeoForge {
                 return;
             }
 
-            if (!MinecraftClient.getInstance().options.hudHidden) {
+            if (event.getName() == VanillaGuiLayers.CROSSHAIR && !MinecraftClient.getInstance().options.hudHidden) {
                 CameraViewFinder.drawCameraViewFinder(event.getGuiGraphics(), MinecraftClient.getInstance().textRenderer);
             }
         }
