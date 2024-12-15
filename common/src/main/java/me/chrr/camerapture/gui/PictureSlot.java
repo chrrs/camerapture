@@ -5,7 +5,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 
 public class PictureSlot extends SizedSlot {
-    private boolean visible = false;
+    private boolean enabled = false;
 
     public PictureSlot(Inventory inventory, int index, int x, int y) {
         super(inventory, index, x, y, 48, 27);
@@ -16,11 +16,12 @@ public class PictureSlot extends SizedSlot {
         return stack.isOf(Camerapture.PICTURE);
     }
 
-    public boolean isVisible() {
-        return visible;
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setVisible(boolean visible) {
-        this.visible = visible;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }
