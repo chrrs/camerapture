@@ -3,7 +3,6 @@ package me.chrr.camerapture.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import me.chrr.camerapture.gui.PictureSlot;
 import me.chrr.camerapture.gui.SizedSlot;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -49,10 +48,7 @@ public abstract class HandledScreenMixin {
     /// Make sure to return the correct value for sized slots and invisible picture slots.
     @Inject(method = "isPointOverSlot", at = @At(value = "HEAD"), cancellable = true)
     private void isPointOverSlot(Slot slot, double pointX, double pointY, CallbackInfoReturnable<Boolean> cir) {
-        if (slot instanceof PictureSlot pictureSlot && !pictureSlot.isVisible()) {
-            cir.setReturnValue(false);
-            cir.cancel();
-        } else if (slot instanceof SizedSlot sizedSlot) {
+        if (slot instanceof SizedSlot sizedSlot) {
             cir.setReturnValue(isPointWithinBounds(slot.x, slot.y, sizedSlot.getWidth(), sizedSlot.getHeight(), pointX, pointY));
             cir.cancel();
         }

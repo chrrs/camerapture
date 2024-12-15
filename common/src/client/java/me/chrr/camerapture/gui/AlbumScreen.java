@@ -54,7 +54,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     private void updatePage() {
         for (int i = 0; i < AlbumItem.SLOTS; i++) {
             int page = i / AlbumItem.ITEMS_PER_PAGE;
-            ((PictureSlot) this.handler.slots.get(i)).setVisible(page == this.activePage);
+            ((PictureSlot) this.handler.slots.get(i)).setEnabled(page == this.activePage);
         }
 
         this.pageText = Text.translatable("book.pageIndicator", this.activePage + 1, AlbumItem.PAGES);
@@ -100,10 +100,6 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     protected void drawSlot(DrawContext context, Slot slot) {
         if (!(slot instanceof PictureSlot pictureSlot)) {
             super.drawSlot(context, slot);
-            return;
-        }
-
-        if (!pictureSlot.isVisible()) {
             return;
         }
 
