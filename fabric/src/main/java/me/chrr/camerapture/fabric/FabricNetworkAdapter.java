@@ -11,6 +11,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
@@ -50,14 +51,16 @@ public class FabricNetworkAdapter implements NetworkAdapter {
         ServerPacketType<P> type = new ServerPacketType<>(netCodec, new ArrayList<>());
         this.serverPackets.put(clazz, type);
 
-        ClientPlayNetworking.registerGlobalReceiver(type.netCodec().id(),
-                (client, networkHandler, buf, sender) -> {
-                    P packet = decodePacket(buf, type.netCodec());
-                    if (packet != null) {
-                        type.handlers().forEach(handler -> handler.accept(packet));
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            ClientPlayNetworking.registerGlobalReceiver(type.netCodec().id(),
+                    (client, networkHandler, buf, sender) -> {
+                        P packet = decodePacket(buf, type.netCodec());
+                        if (packet != null) {
+                            type.handlers().forEach(handler -> handler.accept(packet));
+                        }
                     }
-                }
-        );
+            );
+        }
     }
 
     @Override
