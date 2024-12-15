@@ -1,3 +1,7 @@
+## 1.7.2
+
+- Fix dedicated servers crashing on startup on Fabric 1.20.1.
+
 ## 1.7.1
 
 - Fix crafting recipes.
