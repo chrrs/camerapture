@@ -2,6 +2,7 @@ package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.compat.FirstPersonModelCompat;
+import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
 import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
 import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
@@ -28,6 +29,7 @@ public class CameraptureClient {
 
         ClientPictureStore.getInstance().clear();
         PictureTaker.getInstance().configureFromConfig();
+        CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
 
         if (Camerapture.PLATFORM.isModLoaded("firstperson")) {
             FirstPersonModelCompat.register();
@@ -65,7 +67,9 @@ public class CameraptureClient {
         });
 
         // Server sends over the server-side config
-        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) ->
-                PictureTaker.getInstance().configure(packet.maxImageBytes(), packet.maxImageResolution()));
+        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) -> {
+            PictureTaker.getInstance().configure(packet.maxImageBytes(), packet.maxImageResolution());
+            CameraItem.allowUploading = packet.allowUploading();
+        });
     }
 }

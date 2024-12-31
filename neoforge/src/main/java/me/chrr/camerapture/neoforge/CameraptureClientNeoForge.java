@@ -150,7 +150,8 @@ public class CameraptureClientNeoForge {
                     client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                     return ActionResult.SUCCESS;
                 }
-            } else if (player.isSneaking()
+            } else if (CameraItem.allowUploading
+                    && player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(stack)) {
@@ -173,6 +174,7 @@ public class CameraptureClientNeoForge {
         public void onDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientPictureStore.getInstance().clear();
             PictureTaker.getInstance().configureFromConfig();
+            CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
         }
 
         /// Hide the hand when the player is holding an active camera.

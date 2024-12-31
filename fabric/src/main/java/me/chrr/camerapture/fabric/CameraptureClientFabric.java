@@ -90,7 +90,8 @@ public class CameraptureClientFabric implements ClientModInitializer {
                     client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                     return ActionResult.SUCCESS;
                 }
-            } else if (player.isSneaking()
+            } else if (CameraItem.allowUploading
+                    && player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
                     && !player.getItemCooldownManager().isCoolingDown(stack)) {
@@ -106,6 +107,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientPictureStore.getInstance().clear();
             PictureTaker.getInstance().configureFromConfig();
+            CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
         });
     }
 }
