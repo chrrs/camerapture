@@ -21,7 +21,7 @@ public class Config {
     }
 
     public static class Server {
-        public static int VERSION = 3;
+        public static int VERSION = 4;
 
         @SerializedName("version")
         public int version = VERSION;
@@ -40,6 +40,9 @@ public class Config {
 
         @SerializedName("check_frame_position")
         public boolean checkFramePosition = false;
+
+        @SerializedName("allow_uploading")
+        public boolean allowUploading = true;
 
         public void upgrade() {
             this.version = VERSION;

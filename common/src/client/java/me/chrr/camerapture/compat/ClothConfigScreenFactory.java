@@ -71,6 +71,15 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.server.maxImageResolution = value)
                 .build());
 
+        server.add(builder.startBooleanToggle(
+                        Text.translatable("config.camerapture.option.allow_uploading"),
+                        config.server.allowUploading
+                )
+                .setDefaultValue(true)
+                .setTooltip(Text.translatable("config.camerapture.set_by_server"))
+                .setSaveConsumer((value) -> config.server.allowUploading = value)
+                .build());
+
         server.add(builder.startIntField(
                         Text.translatable("config.camerapture.option.ms_per_picture"),
                         config.server.msPerPicture
