@@ -1,4 +1,4 @@
-package me.chrr.camerapture.net.serverbound;
+package me.chrr.camerapture.net.clientbound;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
