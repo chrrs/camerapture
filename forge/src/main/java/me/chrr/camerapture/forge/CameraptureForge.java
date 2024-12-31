@@ -108,7 +108,7 @@ public class CameraptureForge {
         @SubscribeEvent
         public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
             Config config = Camerapture.CONFIG_MANAGER.getConfig();
-            Camerapture.NETWORK.sendToClient((ServerPlayerEntity) event.getEntity(), new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
+            Camerapture.NETWORK.sendToClient((ServerPlayerEntity) event.getEntity(), new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution, config.server.allowUploading));
         }
 
         /// When the server is running, we start the timer that sends the pictures.

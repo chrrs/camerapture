@@ -8,6 +8,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
@@ -17,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 public class CameraItem extends Item {
     public static final Identifier ID = Camerapture.id("camera");
     public static final RegistryKey<Item> KEY = RegistryKey.of(RegistryKeys.ITEM, ID);
+
+    public static boolean allowUploading = false;
 
     public CameraItem() {
         super(new Settings().maxCount(1));
@@ -32,6 +36,12 @@ public class CameraItem extends Item {
         if (active || !player.isSneaking()) {
             setActive(stack, !active);
             return TypedActionResult.consume(stack);
+        }
+
+        // If we try to upload when it's disabled, we send a message to the player.
+        if (!allowUploading && player.isSneaking()) {
+            player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
+            return TypedActionResult.fail(stack);
         }
 
         return TypedActionResult.success(stack);

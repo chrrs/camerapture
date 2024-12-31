@@ -76,7 +76,7 @@ public class CameraptureFabric implements ModInitializer {
         // When a player joins, we send them our config.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             Config config = Camerapture.CONFIG_MANAGER.getConfig();
-            Camerapture.NETWORK.sendToClient(handler.player, new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution));
+            Camerapture.NETWORK.sendToClient(handler.player, new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution, config.server.allowUploading));
         });
 
         // Run the download queue while the server is started.
