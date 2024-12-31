@@ -1,3 +1,8 @@
+## 1.8.0
+
+- Fix compatability with Raised.
+- Allow disabling the uploading of custom pictures on the server.
+
 ## 1.7.2
 
 - Fix dedicated servers crashing on startup on Fabric 1.20.1.
