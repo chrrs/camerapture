@@ -5,7 +5,7 @@ import me.chrr.camerapture.compat.FirstPersonModelCompat;
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
 import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
 import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
-import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
+import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureItemRenderer;

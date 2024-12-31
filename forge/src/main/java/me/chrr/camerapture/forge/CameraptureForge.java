@@ -12,7 +12,7 @@ import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
 import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
-import me.chrr.camerapture.net.serverbound.SyncConfigPacket;
+import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.RegistryKeys;
