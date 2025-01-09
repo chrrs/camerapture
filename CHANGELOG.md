@@ -1,3 +1,7 @@
+## 1.8.1
+
+- Fix compatability with Jade.
+
 ## 1.8.0
 
 - Fix compatability with Raised.
