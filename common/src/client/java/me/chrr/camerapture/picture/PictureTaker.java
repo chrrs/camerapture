@@ -90,6 +90,11 @@ public class PictureTaker {
             this.picture = ImageUtil.fromNativeImage(nativeImage, false);
         }
 
+        // Also save the picture as a screenshot if enabled.
+        if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
+            ScreenshotRecorder.saveScreenshot(client.runDirectory, client.getFramebuffer(), (text) -> {});
+        }
+
         // We de-activate the camera client-side immediately, to make it feel more responsive.
         CameraItem.HeldCamera activeCamera = CameraItem.find(client.player, true);
         if (activeCamera != null) {
