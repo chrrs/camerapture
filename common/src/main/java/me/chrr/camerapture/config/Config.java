@@ -7,13 +7,16 @@ public class Config {
     public Server server = new Server();
 
     public static class Client {
-        public static int VERSION = 1;
+        public static int VERSION = 2;
 
         @SerializedName("version")
         public int version = VERSION;
 
         @SerializedName("cache_pictures")
         public boolean cachePictures = false;
+
+        @SerializedName("save_screenshot")
+        public boolean saveScreenshot = false;
 
         public void upgrade() {
             this.version = VERSION;

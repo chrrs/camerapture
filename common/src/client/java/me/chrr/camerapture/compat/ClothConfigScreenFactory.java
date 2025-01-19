@@ -43,6 +43,14 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.client.cachePictures = value)
                 .build());
 
+        client.add(builder.startBooleanToggle(
+                        Text.translatable("config.camerapture.option.save_screenshot"),
+                        config.client.saveScreenshot
+                )
+                .setDefaultValue(false)
+                .setSaveConsumer((value) -> config.client.saveScreenshot = value)
+                .build());
+
         return client.build();
     }
 
