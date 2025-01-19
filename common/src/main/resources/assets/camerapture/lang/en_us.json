@@ -30,6 +30,7 @@
     "config.camerapture.category.client": "Client",
     "config.camerapture.category.server": "Server",
     "config.camerapture.option.cache_pictures": "Cache pictures locally on disk",
+    "config.camerapture.option.save_screenshot": "Save taken pictures as screenshots",
     "config.camerapture.option.max_image_bytes": "Maximum image size (bytes)",
     "config.camerapture.option.max_image_resolution": "Maximum square image resolution",
     "config.camerapture.option.allow_uploading": "Allow uploading of pictures from disk",
