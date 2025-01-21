@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 /// as provided by Forge. We need to keep track of handlers per packet, as
 /// you can't have multiple listeners for a single packet usually.
 public class ForgeNetworkAdapter implements NetworkAdapter {
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "2";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             Camerapture.id("main"),
             () -> PROTOCOL_VERSION,

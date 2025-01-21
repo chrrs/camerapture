@@ -29,6 +29,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.RegisterEvent;
 
@@ -44,8 +45,14 @@ public class CameraptureForge {
     }
 
     @SubscribeEvent
-    public void registerContent(RegisterEvent event) {
+    public void setup(FMLCommonSetupEvent event) {
         Camerapture.CONFIG_MANAGER.load();
+        this.registerPackets();
+    }
+
+    @SubscribeEvent
+    public void registerContent(RegisterEvent event) {
+        Camerapture.LOGGER.info(event.getRegistryKey());
 
         // Camera
         event.register(RegistryKeys.ITEM, registry ->
@@ -77,8 +84,6 @@ public class CameraptureForge {
                 registry.register(PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME));
         event.register(RegistryKeys.SCREEN_HANDLER, registry ->
                 registry.register(Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER));
-
-        this.registerPackets();
     }
 
     public void registerPackets() {
