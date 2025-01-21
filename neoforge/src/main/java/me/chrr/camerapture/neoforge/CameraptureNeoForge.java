@@ -22,6 +22,7 @@ import net.minecraft.stat.Stats;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -39,9 +40,12 @@ public class CameraptureNeoForge {
     }
 
     @SubscribeEvent
-    public void registerContent(RegisterEvent event) {
+    public void setup(FMLCommonSetupEvent event) {
         Camerapture.CONFIG_MANAGER.load();
+    }
 
+    @SubscribeEvent
+    public void registerContent(RegisterEvent event) {
         // Camera
         event.register(RegistryKeys.ITEM, registry ->
                 registry.register(CameraItem.KEY, Camerapture.CAMERA));
