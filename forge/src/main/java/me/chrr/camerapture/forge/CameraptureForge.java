@@ -52,8 +52,6 @@ public class CameraptureForge {
 
     @SubscribeEvent
     public void registerContent(RegisterEvent event) {
-        Camerapture.LOGGER.info(event.getRegistryKey());
-
         // Camera
         event.register(RegistryKeys.ITEM, registry ->
                 registry.register(CameraItem.KEY, Camerapture.CAMERA));
