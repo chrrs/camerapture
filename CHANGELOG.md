@@ -1,3 +1,9 @@
+## 1.9.0
+
+- Fix compatability with Visuality: Reforged.
+- Initialize networking and configs correctly.
+- Add option to save pictures as screenshots when taken.
+
 ## 1.8.1
 
 - Fix compatability with Jade.
