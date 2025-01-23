@@ -15,14 +15,12 @@ or [CurseForge](https://curseforge.com/minecraft/mc-mods/camerapture).
 Camerapture supports multiple Minecraft versions using branches. See the list of branches for versions Camerapture
 supports. Any version prefixed with `old/` is not supported anymore.
 
-Currently, the main branch is `1.21.4`, which all other versions are rebased on.
-
 ### Update checklist
 
-- Create a new branch based on the main branch.
+- Create a new branch based on the latest branch.
 - Update minecraft version.
     - Change in `gradle.properties` and update all dependencies.
-    - **Optional:** Deprecate older version by adding `old/` to the branch name.
+    - **Optional:** Deprecate older version(s) by adding `old/` to the branch name.
 - Fix all conflicts and test on all loaders.
 - Release new version as described below.
 
@@ -33,7 +31,7 @@ Currently, the main branch is `1.21.4`, which all other versions are rebased on.
     - Add an entry in `CHANGELOG.md`.
 - Commit and push a new tag. (example: `v1.2.3`)
     - Tag name is the version number prefixed by `v`.
-- Rebase other versions onto the main branch and fix all conflicts.
+- Cherry pick the changes onto the other branches and fix all conflicts.
 - Manually trigger the Publish workflow on GitHub for every version.
 
 ## Credits
