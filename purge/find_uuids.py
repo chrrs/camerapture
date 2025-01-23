@@ -113,7 +113,7 @@ def check_tag(tag: nbt.TAG_Compound):
         else:
             error(f"found picture with an invalid UUID tag: {uuid_tag}")
     elif "components" in tag:
-        if not "components" in tag or not "camerapture:picture_data" in tag["components"]:
+        if not "camerapture:picture_data" in tag["components"]:
             error(f"found picture, but it doesn't have a picture data: {tag}")
             return
         
