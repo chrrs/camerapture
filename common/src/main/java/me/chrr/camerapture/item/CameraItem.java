@@ -78,6 +78,10 @@ public class CameraItem extends Item {
     public static HeldCamera find(PlayerEntity player, boolean shouldBeActive) {
         for (Hand hand : Hand.values()) {
             ItemStack stack = player.getStackInHand(hand);
+            if (stack == null || !stack.isOf(Camerapture.CAMERA)) {
+                continue;
+            }
+
             if (!shouldBeActive || isActive(stack)) {
                 return new HeldCamera(stack, hand);
             }
