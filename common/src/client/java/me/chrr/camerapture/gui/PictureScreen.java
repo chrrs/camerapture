@@ -6,6 +6,7 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
@@ -24,7 +25,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public class PictureScreen extends InGameScreen {
+public class PictureScreen extends Screen {
     public static final int MAX_BAR_WIDTH = 360;
     public static final int BORDER_THICKNESS = 24;
 
@@ -65,7 +66,9 @@ public class PictureScreen extends InGameScreen {
     }
 
     @Override
-    public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+
         // Drawing the item name and page number
         if (!isSinglePicture()) {
             int barY = height - BORDER_THICKNESS - 20 / 2;

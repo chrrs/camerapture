@@ -5,6 +5,7 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.PressableTextWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
@@ -18,7 +19,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 
-public class UploadScreen extends InGameScreen {
+public class UploadScreen extends Screen {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/upload_picture.png");
 
     private static final int backgroundWidth = 256;
@@ -43,7 +44,9 @@ public class UploadScreen extends InGameScreen {
     }
 
     @Override
-    public void renderScreen(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+
         Text description = Text.translatable("text.camerapture.upload_picture.description");
 
         context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
