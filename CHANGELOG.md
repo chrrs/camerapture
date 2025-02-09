@@ -1,3 +1,11 @@
+## 1.9.1
+
+- Fix crash if item stack is null because of another mod.
+- Properly render picture and upload screen backgrounds.
+- Properly hide held items when a camera is active.
+- Show the album inventory when right-clicking an empty album.
+- Lower the default delay between sending pictures.
+
 ## 1.9.0
 
 - Fix compatability with Visuality: Reforged.
