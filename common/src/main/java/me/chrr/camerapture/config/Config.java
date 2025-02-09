@@ -36,7 +36,7 @@ public class Config {
         public int maxImageResolution = 1280;
 
         @SerializedName("ms_per_picture")
-        public int msPerPicture = 50;
+        public int msPerPicture = 20;
 
         @SerializedName("can_rotate_pictures")
         public boolean canRotatePictures = true;
