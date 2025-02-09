@@ -4,9 +4,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
 import me.chrr.camerapture.gui.*;
-import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
-import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
@@ -37,7 +35,6 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Objects;
 
 @Mod(value = Camerapture.MOD_ID, dist = Dist.CLIENT)
@@ -131,36 +128,7 @@ public class CameraptureClientNeoForge {
 
             ItemStack stack = event.getItemStack();
             PlayerEntity player = event.getEntity();
-            MinecraftClient client = MinecraftClient.getInstance();
-
-            if (client.player != player) {
-                return ActionResult.PASS;
-            }
-
-            if (stack.isOf(Camerapture.PICTURE)) {
-                // Right-clicking a picture item should open the picture screen.
-                if (PictureItem.getPictureData(stack) != null) {
-                    client.executeSync(() -> client.setScreen(new PictureScreen(List.of(stack))));
-                    return ActionResult.SUCCESS;
-                }
-            } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
-                // Right-clicking the album should open the gallery screen.
-                List<ItemStack> pictures = AlbumItem.getPictures(stack);
-                if (!pictures.isEmpty()) {
-                    client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
-                    return ActionResult.SUCCESS;
-                }
-            } else if (CameraItem.allowUploading
-                    && player.isSneaking()
-                    && stack.isOf(Camerapture.CAMERA)
-                    && !CameraItem.isActive(stack)
-                    && !player.getItemCooldownManager().isCoolingDown(stack)) {
-                // Shift-right clicking the camera should open the upload screen.
-                client.executeSync(() -> client.setScreen(new UploadScreen()));
-                return ActionResult.SUCCESS;
-            }
-
-            return ActionResult.PASS;
+            return CameraptureClient.onUseItem(player, stack);
         }
 
         /// We need to notify the picture taker when the render tick ends.

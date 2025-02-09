@@ -3,9 +3,7 @@ package me.chrr.camerapture.fabric;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.gui.*;
-import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
-import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
@@ -16,14 +14,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.item.model.special.SpecialModelTypes;
 import net.minecraft.client.render.item.property.bool.BooleanProperties;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
-
-import java.util.List;
 
 public class CameraptureClientFabric implements ClientModInitializer {
     @Override
@@ -71,36 +66,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
             }
 
             ItemStack stack = player.getStackInHand(hand);
-            MinecraftClient client = MinecraftClient.getInstance();
-
-            if (client.player != player) {
-                return ActionResult.PASS;
-            }
-
-            if (stack.isOf(Camerapture.PICTURE)) {
-                // Right-clicking a picture item should open the picture screen.
-                if (PictureItem.getPictureData(stack) != null) {
-                    client.executeSync(() -> client.setScreen(new PictureScreen(List.of(stack))));
-                    return ActionResult.SUCCESS;
-                }
-            } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
-                // Right-clicking the album should open the gallery screen.
-                List<ItemStack> pictures = AlbumItem.getPictures(stack);
-                if (!pictures.isEmpty()) {
-                    client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
-                    return ActionResult.SUCCESS;
-                }
-            } else if (CameraItem.allowUploading
-                    && player.isSneaking()
-                    && stack.isOf(Camerapture.CAMERA)
-                    && !CameraItem.isActive(stack)
-                    && !player.getItemCooldownManager().isCoolingDown(stack)) {
-                // Shift-right clicking the camera should open the upload screen.
-                client.executeSync(() -> client.setScreen(new UploadScreen()));
-                return ActionResult.SUCCESS;
-            }
-
-            return ActionResult.PASS;
+            return CameraptureClient.onUseItem(player, stack);
         });
 
         // Clear cache and reset the picture taker configuration when logging out of a world.
