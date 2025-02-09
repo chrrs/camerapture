@@ -59,9 +59,13 @@ public class AlbumItem extends Item {
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
 
-        if (!world.isClient && player.isSneaking()) {
-            player.openHandledScreen(new SimpleNamedScreenHandlerFactory((syncId, playerInventory, playerEntity) ->
-                    new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)), stack.getName()));
+        // On the server side, we open the album inventory UI.
+        // Viewing the pictures is handled on the client side, see CameraptureClient#onUseItem.
+        if (!world.isClient) {
+            if (player.isSneaking() || AlbumItem.getPictures(stack).isEmpty()) {
+                player.openHandledScreen(new SimpleNamedScreenHandlerFactory((syncId, playerInventory, playerEntity) ->
+                        new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)), stack.getName()));
+            }
         }
 
         return TypedActionResult.success(stack);
