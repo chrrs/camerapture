@@ -1,2 +1,2 @@
-anvil-parser @ git+https://github.com/Nyveon/anvil-parser
-nbt @ git+https://github.com/OpenBagTwo/NBT
+anvil-parser @ git+https://github.com/Nyveon/anvil-parser@d03e661
+nbt @ git+https://github.com/OpenBagTwo/NBT@b08b109

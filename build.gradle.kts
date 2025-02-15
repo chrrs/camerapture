@@ -1,75 +1,157 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import me.modmuss50.mpp.ReleaseType
+import net.fabricmc.loom.api.LoomGradleExtensionAPI
+import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.internal.extensions.stdlib.capitalized
+
 plugins {
-    id("fabric-loom") version "1.5-SNAPSHOT"
+    id("architectury-plugin") version "3.4-SNAPSHOT"
+    id("dev.architectury.loom") version "1.7-SNAPSHOT" apply false
+    id("com.gradleup.shadow") version "9.0.0-beta2" apply false
+    id("me.modmuss50.mod-publish-plugin") version "0.8.1"
 }
 
-val minecraftVersion: String by project
-val yarnMappings: String by project
-val loaderVersion: String by project
+fun Project.hasProp(namespace: String, key: String) = hasProperty("$namespace.$key")
+fun Project.prop(namespace: String, key: String) = property("$namespace.$key") as String
 
-val modVersion: String by project
-val mavenGroup: String by project
-val archivesBase: String by project
+val versions = prop("platform", "versions").split(",")
+architectury.minecraft = versions.last()
 
-val fabricVersion: String by project
-val jadeVersionId: String by project
-
-group = mavenGroup
-version = "$modVersion+mc$minecraftVersion"
-
-base {
-    archivesName.set(archivesBase)
-}
-
-repositories {
-    maven("https://www.cursemaven.com") {
-        content {
-            includeGroup("curse.maven")
-        }
-    }
-}
-
-loom {
-    splitEnvironmentSourceSets()
-
-    mods {
-        create("camerapture") {
-            sourceSet(sourceSets["main"])
-            sourceSet(sourceSets["client"])
-        }
-    }
-}
-
-dependencies {
-    // To change the versions, see the gradle.properties file
-
-    minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings("net.fabricmc:yarn:$yarnMappings:v2")
-    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
-
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
-    modCompileOnly("curse.maven:jade-324717:$jadeVersionId")
-
-    include(implementation("io.github.darkxanter:webp-imageio:0.3.2")!!)
-}
+group = prop("mod", "group")
+version = "${prop("mod", "version")}+mc${versions.last()}"
 
 tasks {
-    processResources {
-        inputs.property("version", project.version)
-        filesMatching("fabric.mod.json") {
-            expand(mutableMapOf(
-                "version" to project.version,
-                "loader_version" to loaderVersion,
-                "minecraft_version" to minecraftVersion,
-            ))
+    // Create a new task `buildAll` that builds and copies all jars to a common output directory.
+    val buildAll by registering(Copy::class) {
+        group = "build"
+
+        val tasks = subprojects.filter { it.path != ":common" }.map { it.tasks.named("remapJar") }
+        dependsOn(tasks)
+
+        from(tasks)
+        into(layout.buildDirectory.dir("libs"))
+    }
+
+    // We call buildAll to make sure everything is built before publishing.
+    publishMods.get().dependsOn(buildAll)
+}
+
+subprojects {
+    apply(plugin = "architectury-plugin")
+    apply(plugin = "dev.architectury.loom")
+
+    group = rootProject.group
+    version = "${rootProject.version}-$name"
+
+    val base = extensions.getByType<BasePluginExtension>()
+    base.archivesName.set(rootProject.prop("mod", "name"))
+
+    configure<LoomGradleExtensionAPI> {
+        dependencies {
+            "minecraft"("com.mojang:minecraft:${versions.last()}")
+
+            // Patch Yarn to work properly with NeoForge.
+            @Suppress("UnstableApiUsage")
+            "mappings"(layered {
+                mappings("net.fabricmc:yarn:${prop("fabric", "yarnVersion")}:v2")
+                mappings("dev.architectury:yarn-mappings-patch-neoforge:${prop("neoforge", "yarnPatch")}")
+            })
         }
     }
 
-    jar {
-        from("LICENSE")
+    tasks.withType<JavaCompile> {
+        options.encoding = "UTF-8"
+        options.release.set(21)
+    }
+
+    // Shadow `common` into all loader projects.
+    if (path != ":common") {
+        apply(plugin = "com.gradleup.shadow")
+
+        val shadowCommon by configurations.creating {
+            configurations.getByName("implementation").extendsFrom(this)
+        }
+
+        tasks.named<ShadowJar>("shadowJar") {
+            archiveClassifier.set("dev-shadow")
+            configurations = listOf(shadowCommon)
+        }
+
+        tasks.named<RemapJarTask>("remapJar") {
+            inputFile.set(tasks.named<ShadowJar>("shadowJar").flatMap { it.archiveFile })
+            dependsOn("shadowJar")
+            injectAccessWidener.set(true)
+        }
+
+        tasks.named<Jar>("jar") {
+            archiveClassifier.set("dev")
+        }
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+/// Find the changelog entry for the given version in `CHANGELOG.md`.
+fun fetchChangelog(modVersion: String): String {
+    val regex = Regex("## ${Regex.escape(modVersion)}\\n+([\\S\\s]*?)(?:\$|\\n+##)")
+    val content = file("CHANGELOG.md").readText().replace("\r\n", "\n")
+    return regex.find(content)?.groupValues?.get(1) ?: "*No changelog.*"
+}
+
+publishMods {
+    val modVersion = prop("mod", "version")
+    changelog.set(fetchChangelog(modVersion))
+
+    type.set(when {
+        modVersion.contains("alpha") -> ReleaseType.ALPHA
+        modVersion.contains("beta") -> ReleaseType.BETA
+        else -> ReleaseType.STABLE
+    })
+
+    /// Generate some common options between Modrinth and CurseForge publishing.
+    fun platformOptions(platform: String) = publishOptions {
+        val project = project(":$platform")
+        val name = if (platform == "neoforge") "NeoForge" else platform.capitalized()
+
+        displayName.set("$modVersion - $name ${versions.last()}")
+        version.set(project.version.toString())
+        modLoaders.addAll(project.prop("platform", "loaders").split(","))
+        file.set(project.tasks.getByName<RemapJarTask>("remapJar").archiveFile)
+    }.get()
+
+    modrinth("modrinthFabric") {
+        projectId.set(prop("modrinth", "id"))
+        accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
+
+        from(platformOptions("fabric"))
+        minecraftVersions.addAll(versions)
+        requires("fabric-api")
+        optional("cloth-config")
+    }
+
+    modrinth("modrinthNeoForge") {
+        projectId.set(prop("modrinth", "id"))
+        accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
+
+        from(platformOptions("neoforge"))
+        minecraftVersions.addAll(versions)
+        optional("cloth-config")
+    }
+
+    curseforge("curseforgeFabric") {
+        projectId.set(prop("curseforge", "id"))
+        accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
+
+        from(platformOptions("fabric"))
+        minecraftVersions.addAll(versions)
+        requires("fabric-api")
+        optional("cloth-config")
+    }
+
+    curseforge("curseforgeNeoForge") {
+        projectId.set(prop("curseforge", "id"))
+        accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
+
+        from(platformOptions("neoforge"))
+        minecraftVersions.addAll(versions)
+        optional("cloth-config")
+    }
 }

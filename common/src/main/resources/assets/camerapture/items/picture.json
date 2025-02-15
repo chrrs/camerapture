@@ -1,0 +1,17 @@
+{
+    "model": {
+        "type": "minecraft:condition",
+        "property": "camerapture:should_render_picture",
+        "on_true": {
+            "type": "minecraft:special",
+            "base": "minecraft:item/generated",
+            "model": {
+                "type": "camerapture:picture"
+            }
+        },
+        "on_false": {
+            "type": "minecraft:model",
+            "model": "camerapture:item/picture"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+name: Feature Request
+description: Do you have an idea of something to add or change? Make a feature request!
+labels: ["feature"]
+body:
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: What do you want added or changed?
+      description: Describe what you want changed in the project. Please be specific, and motivate your answer, it helps make the request more understandable!

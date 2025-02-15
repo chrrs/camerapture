@@ -26,18 +26,20 @@ def analyze_world(dir: str):
     world = os.path.basename(dir)
 
     entities_dir = os.path.join(dir, "entities")
-    entities_mca = os.listdir(entities_dir)
+    if os.path.exists(entities_dir):
+        entities_mca = os.listdir(entities_dir)
 
-    for i, mca in enumerate(entities_mca):
-        print(f":: analyzing {world}/entities: {mca} [{i}/{len(entities_mca)}]")
-        analyze_mca(os.path.join(entities_dir, mca))
+        for i, mca in enumerate(entities_mca):
+            print(f":: analyzing {world}/entities: {mca} [{i}/{len(entities_mca)}]")
+            analyze_mca(os.path.join(entities_dir, mca))
     
     region_dir = os.path.join(dir, "region")
-    region_mca = os.listdir(region_dir)
+    if os.path.exists(region_dir):
+        region_mca = os.listdir(region_dir)
 
-    for i, mca in enumerate(region_mca):
-        print(f":: analyzing {world}/regions: {mca} [{i}/{len(region_mca)}]")
-        analyze_mca(os.path.join(region_dir, mca))
+        for i, mca in enumerate(region_mca):
+            print(f":: analyzing {world}/regions: {mca} [{i}/{len(region_mca)}]")
+            analyze_mca(os.path.join(region_dir, mca))
 
 # Analyze a single region file, looking through every chunk.
 def analyze_mca(path: str):
@@ -93,26 +95,42 @@ def check_tag(tag: nbt.TAG_Compound):
     if not id.value == "camerapture:picture":
         return
     
-    if not "tag" in tag:
-        error(f"found picture, but it doesn't have nbt", tag)
-        return
-    
-    picture_tag = tag["tag"]
-    if not "uuid" in picture_tag:
-        error(f"found picture, but it doesn't have a UUID", picture_tag)
-        return
-    
-    uuid_tag = picture_tag["uuid"]
-    if isinstance(uuid_tag, nbt.TAG_Int_Array):
-        bytes = b''
-        for i in uuid_tag.value:
-            bytes += i.to_bytes(4, byteorder='big', signed=True)
-        id = str(uuid.UUID(bytes=bytes))
+    if "tag" in tag:
+        picture_tag = tag["tag"]
+        if not "uuid" in picture_tag:
+            error(f"found picture, but it doesn't have a UUID: {picture_tag}")
+            return
+        
+        uuid_tag = picture_tag["uuid"]
+        if isinstance(uuid_tag, nbt.TAG_Int_Array):
+            bytes = b''
+            for i in uuid_tag.value:
+                bytes += i.to_bytes(4, byteorder='big', signed=True)
+            id = str(uuid.UUID(bytes=bytes))
 
-        info(f"found picture with UUID {id}")
-        uuids.add(id)
+            info(f"found picture with UUID {id} (NBT)")
+            uuids.add(id)
+        else:
+            error(f"found picture with an invalid UUID tag: {uuid_tag}")
+    elif "components" in tag:
+        if not "camerapture:picture_data" in tag["components"]:
+            error(f"found picture, but it doesn't have a picture data: {tag}")
+            return
+        
+        picture_data = tag["components"]["camerapture:picture_data"]
+        uuid_tag = picture_data["id"]
+        if isinstance(uuid_tag, nbt.TAG_String):
+            id = str(uuid.UUID(hex=uuid_tag.value))
+
+            info(f"found picture with UUID {id} (Data Component)")
+            uuids.add(id)
+        else:
+            error(f"found picture with an invalid UUID tag: {uuid_tag}")
     else:
-        error(f"found picture with an invalid UUID tag", uuid_tag)
+        error(f"found picture, but it doesn't have nbt: {tag}")
+        return
+    
+    
 
 # Analyze all playerdata files by analyzing all their NBT tags.
 playerdata_dir = os.path.join(base_dir, "playerdata")
@@ -130,3 +148,4 @@ analyze_world(os.path.join(base_dir, "DIM1"))
 
 with open("uuids.txt", "w") as f:
     f.write("\n".join(uuids))
+info("done! result written to uuids.txt")
