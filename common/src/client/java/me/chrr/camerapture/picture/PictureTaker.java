@@ -129,7 +129,7 @@ public class PictureTaker {
             }
 
             Camerapture.LOGGER.debug("sending picture ({} bytes, {}%)", bytes.length, (int) (factor * 100f));
-            ByteCollector.split(bytes, Camerapture.SECTION_SIZE, (section, bytesLeft) ->
+            ByteCollector.split(bytes, Camerapture.CLIENT_SECTION_SIZE, (section, bytesLeft) ->
                     Camerapture.NETWORK.sendToServer(new UploadPartialPicturePacket(pictureId, section, bytesLeft)));
 
             // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
