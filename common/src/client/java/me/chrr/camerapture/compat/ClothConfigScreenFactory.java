@@ -65,7 +65,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.max_image_bytes"),
                         config.server.maxImageBytes
                 )
-                .setDefaultValue(200_000)
+                .setDefaultValue(500_000)
                 .setMin(100_000)
                 .setTooltip(Text.translatable("config.camerapture.set_by_server"))
                 .setSaveConsumer((value) -> config.server.maxImageBytes = value)
@@ -75,7 +75,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.max_image_resolution"),
                         config.server.maxImageResolution
                 )
-                .setDefaultValue(1280)
+                .setDefaultValue(1920)
                 .setMin(1)
                 .setTooltip(Text.translatable("config.camerapture.set_by_server"))
                 .setSaveConsumer((value) -> config.server.maxImageResolution = value)
