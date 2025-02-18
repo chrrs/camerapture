@@ -30,10 +30,10 @@ public class Config {
         public int version = VERSION;
 
         @SerializedName("max_image_bytes")
-        public int maxImageBytes = 200_000;
+        public int maxImageBytes = 500_000;
 
         @SerializedName("max_image_resolution")
-        public int maxImageResolution = 1280;
+        public int maxImageResolution = 1920;
 
         @SerializedName("ms_per_picture")
         public int msPerPicture = 20;
