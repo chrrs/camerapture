@@ -52,7 +52,7 @@ public class DownloadQueue {
             return;
         }
 
-        ByteCollector.split(item.picture.bytes(), Camerapture.SECTION_SIZE, (section, bytesLeft) ->
+        ByteCollector.split(item.picture.bytes(), Camerapture.SERVER_SECTION_SIZE, (section, bytesLeft) ->
                 Camerapture.NETWORK.sendToClient(item.recipient, new DownloadPartialPicturePacket(item.id, section, bytesLeft)));
     }
 
