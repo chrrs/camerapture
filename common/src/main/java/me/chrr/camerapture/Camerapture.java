@@ -51,7 +51,9 @@ public class Camerapture {
     public static final PlatformAdapter PLATFORM = ServiceLoader.load(PlatformAdapter.class).iterator().next();
     public static final NetworkAdapter NETWORK = PLATFORM.createNetworkAdapter();
 
-    public static final int SECTION_SIZE = 30_000;
+    // Server-bound packets have a way lower limit on size.
+    public static final int CLIENT_SECTION_SIZE = 30_000;
+    public static final int SERVER_SECTION_SIZE = 1_000_000;
 
     // Camera
     public static Item CAMERA = new CameraItem();
