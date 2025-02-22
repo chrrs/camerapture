@@ -5,6 +5,7 @@ import com.luciad.imageio.webp.WebPImageWriterSpi;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
+import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
@@ -127,7 +128,7 @@ public class CameraptureClientForge {
                     client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                     return ActionResult.SUCCESS;
                 }
-            } else if (CameraItem.allowUploading
+            } else if (CameraptureClient.syncedConfig.allowUploading()
                     && player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)
@@ -152,8 +153,7 @@ public class CameraptureClientForge {
         @SubscribeEvent
         public void onDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
             ClientPictureStore.getInstance().clear();
-            PictureTaker.getInstance().configureFromConfig();
-            CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
+            CameraptureClient.syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
         }
 
         /// Hide the hand when the player is holding an active camera.

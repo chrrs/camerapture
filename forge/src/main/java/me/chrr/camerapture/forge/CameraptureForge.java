@@ -3,6 +3,7 @@ package me.chrr.camerapture.forge;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.DownloadQueue;
 import me.chrr.camerapture.config.Config;
+import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
@@ -111,7 +112,7 @@ public class CameraptureForge {
         @SubscribeEvent
         public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
             Config config = Camerapture.CONFIG_MANAGER.getConfig();
-            Camerapture.NETWORK.sendToClient((ServerPlayerEntity) event.getEntity(), new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution, config.server.allowUploading));
+            Camerapture.NETWORK.sendToClient((ServerPlayerEntity) event.getEntity(), new SyncConfigPacket(SyncedConfig.fromServerConfig(config.server)));
         }
 
         /// When the server is running, we start the timer that sends the pictures.
