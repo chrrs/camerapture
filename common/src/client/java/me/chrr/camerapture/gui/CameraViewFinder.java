@@ -1,5 +1,6 @@
 package me.chrr.camerapture.gui;
 
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.MinecraftClient;
@@ -38,7 +39,9 @@ public enum CameraViewFinder {
         int textX = 25;
         int textY = height - 25;
 
-        context.drawText(textRenderer, Text.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh, 0xffffffff, false);
+        if (!Camerapture.CONFIG_MANAGER.getConfig().client.simpleCameraHud) {
+            context.drawText(textRenderer, Text.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh, 0xffffffff, false);
+        }
 
         if (!CameraItem.canTakePicture(player)) {
             if (System.currentTimeMillis() % 1000 < 500) {
@@ -47,7 +50,7 @@ public enum CameraViewFinder {
                 int y = height / 2 + 32;
                 context.drawText(textRenderer, Text.translatable("text.camerapture.no_paper"), x, y, 0xffff0000, false);
             }
-        } else {
+        } else if (!Camerapture.CONFIG_MANAGER.getConfig().client.simpleCameraHud) {
             int paper = CameraItem.getPaperInInventory(player);
 
             Text text = Text.translatable("text.camerapture.paper_available", paper);
