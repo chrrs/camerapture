@@ -2,7 +2,7 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.ByteCollector;
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.config.Config;
+import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
@@ -36,9 +36,6 @@ public class PictureTaker {
     private boolean takingPicture = false;
 
     private BufferedImage picture;
-
-    private int maxImageBytes;
-    private int maxImageResolution;
 
     private PictureTaker() {
     }
@@ -92,7 +89,8 @@ public class PictureTaker {
 
         // Also save the picture as a screenshot if enabled.
         if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
-            ScreenshotRecorder.saveScreenshot(client.runDirectory, client.getFramebuffer(), (text) -> {});
+            ScreenshotRecorder.saveScreenshot(client.runDirectory, client.getFramebuffer(), (text) -> {
+            });
         }
 
         // We de-activate the camera client-side immediately, to make it feel more responsive.
@@ -112,14 +110,15 @@ public class PictureTaker {
         }
 
         try {
-            BufferedImage picture = ImageUtil.clampSize(this.picture, maxImageResolution);
+            BufferedImage picture = ImageUtil.clampSize(this.picture,
+                    CameraptureClient.syncedConfig.maxImageResolution());
 
             // Starting at 100% quality, we step up the compression by 5% each time
             // until we fit it into our size limit.
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
-            while (bytes.length > maxImageBytes) {
+            while (bytes.length > CameraptureClient.syncedConfig.maxImageResolution()) {
                 if (factor < 0.1f) {
                     throw new IOException("image too big, even at 10% compression (" + bytes.length + " bytes)");
                 }
@@ -145,18 +144,6 @@ public class PictureTaker {
                 player.sendMessage(Text.translatable("text.camerapture.upload_failed").formatted(Formatting.RED), false);
             }
         }
-    }
-
-    public void configureFromConfig() {
-        Config config = Camerapture.CONFIG_MANAGER.getConfig();
-        this.maxImageBytes = config.server.maxImageBytes;
-        this.maxImageResolution = config.server.maxImageResolution;
-    }
-
-    public void configure(int maxImageBytes, int maxImageResolution) {
-        Camerapture.LOGGER.info("setting max image size to {} bytes, max resolution to {}", maxImageBytes, maxImageResolution);
-        this.maxImageBytes = maxImageBytes;
-        this.maxImageResolution = maxImageResolution;
     }
 
     public void zoom(float delta) {

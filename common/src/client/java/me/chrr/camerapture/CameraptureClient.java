@@ -2,6 +2,7 @@ package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
 import me.chrr.camerapture.compat.FirstPersonModelCompat;
+import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.PictureScreen;
 import me.chrr.camerapture.gui.UploadScreen;
 import me.chrr.camerapture.item.AlbumItem;
@@ -30,6 +31,8 @@ public class CameraptureClient {
 
     public static boolean replayModInstalled = false;
 
+    public static SyncedConfig syncedConfig;
+
     public static void init() {
         ImageIO.scanForPlugins();
         if (!WebP.loadNativeLibrary()) {
@@ -37,8 +40,7 @@ public class CameraptureClient {
         }
 
         ClientPictureStore.getInstance().clear();
-        PictureTaker.getInstance().configureFromConfig();
-        CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
+        syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
 
         if (Camerapture.PLATFORM.isModLoaded("firstperson")) {
             FirstPersonModelCompat.register();
@@ -76,10 +78,8 @@ public class CameraptureClient {
         });
 
         // Server sends over the server-side config
-        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) -> {
-            PictureTaker.getInstance().configure(packet.maxImageBytes(), packet.maxImageResolution());
-            CameraItem.allowUploading = packet.allowUploading();
-        });
+        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) ->
+                syncedConfig = packet.syncedConfig());
     }
 
     /// Right-clicking on certain items should open client-side GUI's.
@@ -103,7 +103,7 @@ public class CameraptureClient {
                 client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                 return ActionResult.SUCCESS;
             }
-        } else if (CameraItem.allowUploading
+        } else if (syncedConfig.allowUploading()
                 && player.isSneaking()
                 && stack.isOf(Camerapture.CAMERA)
                 && !CameraItem.isActive(stack)

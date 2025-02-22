@@ -2,6 +2,7 @@ package me.chrr.camerapture.fabric;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
+import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
@@ -72,8 +73,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
         // Clear cache and reset the picture taker configuration when logging out of a world.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientPictureStore.getInstance().clear();
-            PictureTaker.getInstance().configureFromConfig();
-            CameraItem.allowUploading = Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading;
+            CameraptureClient.syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
         });
     }
 }
