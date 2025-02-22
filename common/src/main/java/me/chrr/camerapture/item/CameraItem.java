@@ -20,8 +20,6 @@ public class CameraItem extends Item {
     public static final Identifier ID = Camerapture.id("camera");
     public static final RegistryKey<Item> KEY = RegistryKey.of(RegistryKeys.ITEM, ID);
 
-    public static boolean allowUploading = false;
-
     public CameraItem() {
         super(new Settings().maxCount(1));
     }
@@ -39,7 +37,7 @@ public class CameraItem extends Item {
         }
 
         // If we try to upload when it's disabled, we send a message to the player.
-        if (!allowUploading && player.isSneaking()) {
+        if (!Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading && player.isSneaking()) {
             player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
             return TypedActionResult.fail(stack);
         }

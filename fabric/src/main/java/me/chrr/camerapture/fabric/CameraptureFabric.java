@@ -3,6 +3,7 @@ package me.chrr.camerapture.fabric;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.DownloadQueue;
 import me.chrr.camerapture.config.Config;
+import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
@@ -80,7 +81,7 @@ public class CameraptureFabric implements ModInitializer {
         // When a player joins, we send them our config.
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             Config config = Camerapture.CONFIG_MANAGER.getConfig();
-            Camerapture.NETWORK.sendToClient(handler.player, new SyncConfigPacket(config.server.maxImageBytes, config.server.maxImageResolution, config.server.allowUploading));
+            Camerapture.NETWORK.sendToClient(handler.player, new SyncConfigPacket(SyncedConfig.fromServerConfig(config.server)));
         });
 
         // Run the download queue while the server is started.
