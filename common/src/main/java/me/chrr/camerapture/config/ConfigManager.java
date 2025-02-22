@@ -1,5 +1,6 @@
 package me.chrr.camerapture.config;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.chrr.camerapture.Camerapture;
@@ -10,7 +11,9 @@ import java.nio.file.Path;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting().create();
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .setPrettyPrinting()
+            .create();
 
     private final Config config = new Config();
 
