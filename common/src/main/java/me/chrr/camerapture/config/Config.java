@@ -12,6 +12,7 @@ public class Config {
 
         public boolean cachePictures = false;
         public boolean saveScreenshot = false;
+        public boolean simpleCameraHud = false;
 
         public void upgrade() {
             this.version = DEFAULT.client.version;

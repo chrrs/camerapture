@@ -51,6 +51,14 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.client.saveScreenshot = value)
                 .build());
 
+        client.add(builder.startBooleanToggle(
+                        Text.translatable("config.camerapture.option.simple_camera_hud"),
+                        config.client.simpleCameraHud
+                )
+                .setDefaultValue(false)
+                .setSaveConsumer((value) -> config.client.simpleCameraHud = value)
+                .build());
+
         return client.build();
     }
 
