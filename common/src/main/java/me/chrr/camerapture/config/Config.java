@@ -8,11 +8,12 @@ public class Config {
     public Server server = new Server();
 
     public static class Client {
-        public int version = 2;
+        public int version = 3;
 
         public boolean cachePictures = false;
         public boolean saveScreenshot = false;
         public boolean simpleCameraHud = false;
+        public float zoomMouseSensitivity = 0.5f;
 
         public void upgrade() {
             this.version = DEFAULT.client.version;
