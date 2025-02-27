@@ -59,6 +59,16 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.client.simpleCameraHud = value)
                 .build());
 
+        client.add(builder.startIntSlider(
+                        Text.translatable("config.camerapture.option.zoom_mouse_sensitivity"),
+                        (int) (config.client.zoomMouseSensitivity * 100f),
+                        10, 100
+                )
+                .setDefaultValue(50)
+                .setTextGetter((value) -> Text.of(value + "%"))
+                .setSaveConsumer((value) -> config.client.zoomMouseSensitivity = (float) value / 100f)
+                .build());
+
         return client.build();
     }
 
