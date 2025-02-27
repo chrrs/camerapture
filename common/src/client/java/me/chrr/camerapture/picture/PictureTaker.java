@@ -152,8 +152,14 @@ public class PictureTaker {
     }
 
     public float getFovModifier() {
-        float zoomProgress = 1f - (zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-        return 0.1f + 0.9f * (float) Math.pow(zoomProgress, 2.0);
+        float zoomProgress = (zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+        return 0.1f + 0.9f * (float) Math.pow(1f - zoomProgress, 2.0);
+    }
+
+    public float getSensitivityModifier() {
+        float zoomProgress = (zoomLevel - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+        float multiplier = 1f - Camerapture.CONFIG_MANAGER.getConfig().client.zoomMouseSensitivity;
+        return 1f - zoomProgress * multiplier;
     }
 
     public static PictureTaker getInstance() {

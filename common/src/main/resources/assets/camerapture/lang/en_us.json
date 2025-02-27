@@ -32,6 +32,7 @@
     "config.camerapture.option.cache_pictures": "Cache pictures locally on disk",
     "config.camerapture.option.save_screenshot": "Save taken pictures as screenshots",
     "config.camerapture.option.simple_camera_hud": "Simple camera HUD",
+    "config.camerapture.option.zoom_mouse_sensitivity": "Zoomed mouse sensitivity",
     "config.camerapture.option.max_image_bytes": "Maximum image size (bytes)",
     "config.camerapture.option.max_image_resolution": "Maximum square image resolution",
     "config.camerapture.option.allow_uploading": "Allow uploading of pictures from disk",
