@@ -40,7 +40,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.cache_pictures"),
                         config.client.cachePictures
                 )
-                .setDefaultValue(false)
+                .setDefaultValue(Config.DEFAULT.client.cachePictures)
                 .setSaveConsumer((value) -> config.client.cachePictures = value)
                 .build());
 
@@ -48,7 +48,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.save_screenshot"),
                         config.client.saveScreenshot
                 )
-                .setDefaultValue(false)
+                .setDefaultValue(Config.DEFAULT.client.saveScreenshot)
                 .setSaveConsumer((value) -> config.client.saveScreenshot = value)
                 .build());
 
@@ -56,7 +56,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.simple_camera_hud"),
                         config.client.simpleCameraHud
                 )
-                .setDefaultValue(false)
+                .setDefaultValue(Config.DEFAULT.client.simpleCameraHud)
                 .setSaveConsumer((value) -> config.client.simpleCameraHud = value)
                 .build());
 
@@ -65,7 +65,7 @@ public enum ClothConfigScreenFactory {
                         (int) (config.client.zoomMouseSensitivity * 100f),
                         10, 100
                 )
-                .setDefaultValue(50)
+                .setDefaultValue((int) (Config.DEFAULT.client.zoomMouseSensitivity * 100f))
                 .setTextGetter((value) -> Text.of(value + "%"))
                 .setSaveConsumer((value) -> config.client.zoomMouseSensitivity = (float) value / 100f)
                 .build());
@@ -84,7 +84,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.max_image_bytes"),
                         config.server.maxImageBytes
                 )
-                .setDefaultValue(500_000)
+                .setDefaultValue(Config.DEFAULT.server.maxImageBytes)
                 .setMin(100_000)
                 .setTooltip(Text.translatable("config.camerapture.set_by_server"))
                 .setSaveConsumer((value) -> config.server.maxImageBytes = value)
@@ -94,7 +94,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.max_image_resolution"),
                         config.server.maxImageResolution
                 )
-                .setDefaultValue(1920)
+                .setDefaultValue(Config.DEFAULT.server.maxImageResolution)
                 .setMin(1)
                 .setTooltip(Text.translatable("config.camerapture.set_by_server"))
                 .setSaveConsumer((value) -> config.server.maxImageResolution = value)
@@ -104,7 +104,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.ms_per_picture"),
                         config.server.msPerPicture
                 )
-                .setDefaultValue(20)
+                .setDefaultValue(Config.DEFAULT.server.msPerPicture)
                 .setMin(1)
                 .setSaveConsumer((value) -> config.server.msPerPicture = value)
                 .build());
@@ -113,7 +113,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.can_rotate_pictures"),
                         config.server.canRotatePictures
                 )
-                .setDefaultValue(true)
+                .setDefaultValue(Config.DEFAULT.server.canRotatePictures)
                 .setSaveConsumer((value) -> config.server.canRotatePictures = value)
                 .build());
 
@@ -121,7 +121,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.check_frame_position"),
                         config.server.checkFramePosition
                 )
-                .setDefaultValue(false)
+                .setDefaultValue(Config.DEFAULT.server.checkFramePosition)
                 .setSaveConsumer((value) -> config.server.checkFramePosition = value)
                 .build());
 
@@ -139,7 +139,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.permission_level.take_picture"),
                         config.server.permissionLevels.takePicture
                 )
-                .setDefaultValue(0)
+                .setDefaultValue(Config.DEFAULT.server.permissionLevels.takePicture)
                 .setMin(0).setMax(4)
                 .setSaveConsumer((value) -> config.server.permissionLevels.takePicture = value)
                 .build());
@@ -148,7 +148,7 @@ public enum ClothConfigScreenFactory {
                         Text.translatable("config.camerapture.option.permission_level.upload"),
                         config.server.permissionLevels.upload
                 )
-                .setDefaultValue(0)
+                .setDefaultValue(Config.DEFAULT.server.permissionLevels.upload)
                 .setMin(0).setMax(4)
                 .setSaveConsumer((value) -> config.server.permissionLevels.upload = value)
                 .build());
