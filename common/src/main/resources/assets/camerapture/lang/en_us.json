@@ -29,15 +29,17 @@
     "config.camerapture.title": "Camerapture Options",
     "config.camerapture.category.client": "Client",
     "config.camerapture.category.server": "Server",
+    "config.camerapture.category.permission_levels": "Permission Levels",
     "config.camerapture.option.cache_pictures": "Cache pictures locally on disk",
     "config.camerapture.option.save_screenshot": "Save taken pictures as screenshots",
     "config.camerapture.option.simple_camera_hud": "Simple camera HUD",
     "config.camerapture.option.zoom_mouse_sensitivity": "Zoomed mouse sensitivity",
     "config.camerapture.option.max_image_bytes": "Maximum image size (bytes)",
     "config.camerapture.option.max_image_resolution": "Maximum square image resolution",
-    "config.camerapture.option.allow_uploading": "Allow uploading of pictures from disk",
     "config.camerapture.option.ms_per_picture": "Delay between pictures sent (ms)",
     "config.camerapture.option.can_rotate_pictures": "Rotate pictures when right-clicked",
     "config.camerapture.option.check_frame_position": "Check if picture frame position is valid",
+    "config.camerapture.option.permission_level.take_picture": "Take pictures",
+    "config.camerapture.option.permission_level.upload": "Upload pictures",
     "config.camerapture.set_by_server": "NOTE: This option is determined by the server,\nand synced to the client upon joining."
 }

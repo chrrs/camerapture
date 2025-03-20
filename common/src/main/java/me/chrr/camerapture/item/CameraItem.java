@@ -1,6 +1,7 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.config.Config;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -29,20 +30,29 @@ public class CameraItem extends Item {
         ItemStack stack = player.getStackInHand(hand);
         boolean active = isActive(stack);
 
+        // Retrieve permissions from the config.
+        Config.Server config = Camerapture.CONFIG_MANAGER.getConfig().server;
+        boolean canTakePicture = player.hasPermissionLevel(config.permissionLevels.takePicture);
+        boolean canUpload = player.hasPermissionLevel(config.permissionLevels.upload);
+
         // Note that when we sneak-right-click when the camera is not active,
         // the upload GUI is opened on the client side.
-        if (active || !player.isSneaking()) {
+        if (active || (!player.isSneaking() && canTakePicture)) {
             setActive(stack, !active);
             return TypedActionResult.consume(stack);
         }
 
         // If we try to upload when it's disabled, we send a message to the player.
-        if (!Camerapture.CONFIG_MANAGER.getConfig().server.allowUploading && player.isSneaking()) {
-            player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
-            return TypedActionResult.fail(stack);
+        if (player.isSneaking()) {
+            if (!canUpload) {
+                player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
+                return TypedActionResult.fail(stack);
+            }
+
+            return TypedActionResult.success(stack);
         }
 
-        return TypedActionResult.success(stack);
+        return TypedActionResult.pass(stack);
     }
 
     @Override

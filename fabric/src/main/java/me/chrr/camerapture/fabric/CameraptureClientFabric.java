@@ -89,7 +89,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
                     client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                     return TypedActionResult.success(stack);
                 }
-            } else if (CameraptureClient.syncedConfig.allowUploading()
+            } else if (player.hasPermissionLevel(CameraptureClient.syncedConfig.permissionLevels().upload)
                     && player.isSneaking()
                     && stack.isOf(Camerapture.CAMERA)
                     && !CameraItem.isActive(stack)

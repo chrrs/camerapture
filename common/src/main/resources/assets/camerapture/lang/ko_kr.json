@@ -33,7 +33,6 @@
     "config.camerapture.option.save_screenshot": "촬영한 사진을 스크린샷으로써 저장",
     "config.camerapture.option.max_image_bytes": "최대 사진 크기 (바이트)",
     "config.camerapture.option.max_image_resolution": "최대 사진 해상도",
-    "config.camerapture.option.allow_uploading": "디스크로부터 사진 업로딩 허용",
     "config.camerapture.option.ms_per_picture": "사진을 보내는데 걸리는 지연시간 (ms)",
     "config.camerapture.option.can_rotate_pictures": "우클릭시 사진 회전",
     "config.camerapture.option.check_frame_position": "사진 액자의 위치가 유효한지 확인",
