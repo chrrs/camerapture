@@ -71,7 +71,9 @@ public class CameraptureClient {
         });
 
         // Server sends over the server-side config
-        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) ->
-                syncedConfig = packet.syncedConfig());
+        Camerapture.NETWORK.onReceiveFromServer(SyncConfigPacket.class, (packet) -> {
+            Camerapture.LOGGER.info("received synced config: {}", packet.syncedConfig());
+            syncedConfig = packet.syncedConfig();
+        });
     }
 }

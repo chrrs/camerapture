@@ -118,7 +118,7 @@ public class PictureTaker {
             float factor = 1.0f;
             byte[] bytes = ImageUtil.compressIntoWebP(picture, factor);
 
-            while (bytes.length > CameraptureClient.syncedConfig.maxImageResolution()) {
+            while (bytes.length > CameraptureClient.syncedConfig.maxImageBytes()) {
                 if (factor < 0.1f) {
                     throw new IOException("image too big, even at 10% compression (" + bytes.length + " bytes)");
                 }
