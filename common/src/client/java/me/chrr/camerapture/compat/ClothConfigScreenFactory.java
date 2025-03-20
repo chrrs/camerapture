@@ -23,7 +23,8 @@ public enum ClothConfigScreenFactory {
 
         builder.getOrCreateCategory(Text.empty())
                 .addEntry(buildClientCategory(entryBuilder))
-                .addEntry(buildServerCategory(entryBuilder));
+                .addEntry(buildServerCategory(entryBuilder))
+                .addEntry(buildPermissionsCategory(entryBuilder));
 
         return builder.build();
     }
@@ -99,15 +100,6 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.server.maxImageResolution = value)
                 .build());
 
-        server.add(builder.startBooleanToggle(
-                        Text.translatable("config.camerapture.option.allow_uploading"),
-                        config.server.allowUploading
-                )
-                .setDefaultValue(true)
-                .setTooltip(Text.translatable("config.camerapture.set_by_server"))
-                .setSaveConsumer((value) -> config.server.allowUploading = value)
-                .build());
-
         server.add(builder.startIntField(
                         Text.translatable("config.camerapture.option.ms_per_picture"),
                         config.server.msPerPicture
@@ -134,5 +126,33 @@ public enum ClothConfigScreenFactory {
                 .build());
 
         return server.build();
+    }
+
+    private static SubCategoryListEntry buildPermissionsCategory(ConfigEntryBuilder builder) {
+        Config config = Camerapture.CONFIG_MANAGER.getConfig();
+
+        SubCategoryBuilder permissions = builder
+                .startSubCategory(Text.translatable("config.camerapture.category.permission_levels"))
+                .setExpanded(true);
+
+        permissions.add(builder.startIntField(
+                        Text.translatable("config.camerapture.option.permission_level.take_picture"),
+                        config.server.permissionLevels.takePicture
+                )
+                .setDefaultValue(0)
+                .setMin(0).setMax(4)
+                .setSaveConsumer((value) -> config.server.permissionLevels.takePicture = value)
+                .build());
+
+        permissions.add(builder.startIntField(
+                        Text.translatable("config.camerapture.option.permission_level.upload"),
+                        config.server.permissionLevels.upload
+                )
+                .setDefaultValue(0)
+                .setMin(0).setMax(4)
+                .setSaveConsumer((value) -> config.server.permissionLevels.upload = value)
+                .build());
+
+        return permissions.build();
     }
 }

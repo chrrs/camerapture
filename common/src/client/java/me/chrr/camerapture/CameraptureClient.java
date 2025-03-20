@@ -105,7 +105,7 @@ public class CameraptureClient {
                 client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                 return ActionResult.SUCCESS;
             }
-        } else if (syncedConfig.allowUploading()
+        } else if (player.hasPermissionLevel(syncedConfig.permissionLevels().upload)
                 && player.isSneaking()
                 && stack.isOf(Camerapture.CAMERA)
                 && !CameraItem.isActive(stack)

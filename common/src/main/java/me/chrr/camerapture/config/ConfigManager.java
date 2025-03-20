@@ -1,8 +1,6 @@
 package me.chrr.camerapture.config;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import me.chrr.camerapture.Camerapture;
 
 import java.io.IOException;
@@ -12,6 +10,7 @@ import java.nio.file.Path;
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .addSerializationExclusionStrategy(new SkipDeprecatedStrategy())
             .setPrettyPrinting()
             .create();
 
@@ -56,5 +55,18 @@ public class ConfigManager {
 
     private Path getPath(String environment) {
         return Camerapture.PLATFORM.getConfigFolder().resolve("camerapture." + environment + ".json");
+    }
+
+    /// Exclusion strategy to skip all fields that are annotated with {@link DeprecatedConfigOption}.
+    private static class SkipDeprecatedStrategy implements ExclusionStrategy {
+        @Override
+        public boolean shouldSkipField(FieldAttributes f) {
+            return f.getAnnotation(DeprecatedConfigOption.class) != null;
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;
+        }
     }
 }
