@@ -1,6 +1,5 @@
 package me.chrr.camerapture.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.PictureItem;
