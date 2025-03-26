@@ -100,10 +100,10 @@ public class ClientPictureStore {
 
         picture.setSize(image.getWidth(), image.getHeight());
 
-        NativeImage nativeImage = ImageUtil.toNativeImage(image);
-        NativeImageBackedTexture texture = new NativeImageBackedTexture(nativeImage);
-
         MinecraftClient.getInstance().executeSync(() -> {
+            NativeImage nativeImage = ImageUtil.toNativeImage(image);
+            NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "camerapture/" + id, nativeImage);
+
             MinecraftClient.getInstance()
                     .getTextureManager()
                     .registerTexture(picture.getTextureIdentifier(), texture);

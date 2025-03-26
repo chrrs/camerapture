@@ -6,7 +6,7 @@ import org.gradle.internal.extensions.stdlib.capitalized
 
 plugins {
     id("architectury-plugin") version "3.4-SNAPSHOT"
-    id("dev.architectury.loom") version "1.7-SNAPSHOT" apply false
+    id("dev.architectury.loom") version "1.10-SNAPSHOT" apply false
     id("com.gradleup.shadow") version "9.0.0-beta2" apply false
     id("me.modmuss50.mod-publish-plugin") version "0.8.1"
 }

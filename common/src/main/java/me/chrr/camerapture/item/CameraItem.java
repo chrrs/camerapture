@@ -3,12 +3,14 @@ package me.chrr.camerapture.item;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.config.Config;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -55,9 +57,15 @@ public class CameraItem extends Item {
         return ActionResult.PASS;
     }
 
+    // Deactivate the camera when it's not selected anymore.
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if (!selected) {
+    public void inventoryTick(ItemStack stack, ServerWorld world, Entity entity, @Nullable EquipmentSlot slot) {
+        if (slot == null || !(entity instanceof PlayerEntity player)) {
+            setActive(stack, false);
+            return;
+        }
+
+        if (player.getEquippedStack(slot) != stack) {
             setActive(stack, false);
         }
     }

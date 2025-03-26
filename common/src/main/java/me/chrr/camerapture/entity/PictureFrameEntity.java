@@ -14,11 +14,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.PropertyDelegate;
@@ -225,13 +228,13 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
 
     @Override
     public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
-        return new EntitySpawnS2CPacket(this, this.getFacing().getId(), this.getBlockPos());
+        return new EntitySpawnS2CPacket(this, this.getFacing().getIndex(), this.getBlockPos());
     }
 
     @Override
     public void onSpawnPacket(EntitySpawnS2CPacket packet) {
         super.onSpawnPacket(packet);
-        this.setFacing(Direction.byId(packet.getEntityData()));
+        this.setFacing(Direction.byIndex(packet.getEntityData()));
     }
 
     @Override
@@ -252,19 +255,18 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
 
-        NbtCompound nbtCompound = nbt.getCompound("Item");
-        if (nbtCompound != null && !nbtCompound.isEmpty()) {
-            Optional<ItemStack> itemStack = ItemStack.fromNbt(getRegistryManager(), nbtCompound);
-            if (itemStack.isEmpty()) {
-                Camerapture.LOGGER.warn("unable to load item from: {}", nbtCompound);
-            } else {
-                this.setItemStack(itemStack.get());
-            }
+        RegistryOps<NbtElement> registryOps = this.getRegistryManager().getOps(NbtOps.INSTANCE);
+
+        Optional<ItemStack> itemStack = nbt.get("Item", ItemStack.CODEC, registryOps);
+        if (itemStack.isEmpty()) {
+            Camerapture.LOGGER.warn("unable to load item for picture frame");
+        } else {
+            this.setItemStack(itemStack.get());
         }
 
-        this.setPictureGlowing(nbt.getBoolean("PictureGlowing"));
-        this.setFixed(nbt.getBoolean("Fixed"));
-        this.setRotation(nbt.getInt("PictureRotation"));
+        this.setPictureGlowing(nbt.getBoolean("PictureGlowing").orElse(false));
+        this.setFixed(nbt.getBoolean("Fixed").orElse(false));
+        this.setRotation(nbt.getInt("PictureRotation").orElse(0));
     }
 
     @Override

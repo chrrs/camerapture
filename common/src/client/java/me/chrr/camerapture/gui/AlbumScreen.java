@@ -102,8 +102,6 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
             return;
         }
 
-        RenderSystem.enableBlend();
-
         if (pictureSlot.hasStack()) {
             PictureItem.PictureData pictureData = PictureItem.getPictureData(slot.getStack());
             if (pictureData != null) {
@@ -114,7 +112,5 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
         } else {
             context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);
         }
-
-        RenderSystem.disableBlend();
     }
 }

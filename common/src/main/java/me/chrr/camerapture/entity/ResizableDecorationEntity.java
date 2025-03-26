@@ -88,7 +88,7 @@ public abstract class ResizableDecorationEntity extends Entity {
         this.facing = facing;
 
         this.setYaw((float) (this.facing.getHorizontalQuarterTurns() * 90));
-        this.prevYaw = this.getYaw();
+        this.lastYaw = this.getYaw();
 
         updateBoundingBox();
     }
@@ -180,7 +180,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
             //noinspection deprecation: let's just copy what Vanilla does for now.
-            return !this.getWorld().canPlayerModifyAt(playerEntity, this.getBlockPos())
+            return !this.getWorld().canEntityModifyAt(playerEntity, this.getBlockPos())
                     || this.sidedDamage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
             return false;
@@ -267,23 +267,27 @@ public abstract class ResizableDecorationEntity extends Entity {
         nbt.putInt("TileY", attachmentPos.getY());
         nbt.putInt("TileZ", attachmentPos.getZ());
 
-        nbt.putByte("Facing", (byte) this.getFacing().getId());
+        nbt.putByte("Facing", (byte) this.getFacing().getIndex());
         nbt.putInt("Width", this.getFrameWidth());
         nbt.putInt("Height", this.getFrameHeight());
     }
 
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
-        BlockPos blockPos = new BlockPos(nbt.getInt("TileX"), nbt.getInt("TileY"), nbt.getInt("TileZ"));
+        // FIXME: probably want to use codecs here at some point, but it has to be at a version boundary.
+        BlockPos blockPos = new BlockPos(
+                nbt.getInt("TileX").orElse(0),
+                nbt.getInt("TileY").orElse(0),
+                nbt.getInt("TileZ").orElse(0));
         if (!blockPos.isWithinDistance(this.getBlockPos(), 16.0)) {
             Camerapture.LOGGER.error("hanging entity at invalid position: {}", blockPos);
         } else {
             this.attachmentPos = blockPos;
         }
 
-        this.setFacing(Direction.byId(nbt.getByte("Facing")));
-        this.setFrameWidth(nbt.getInt("Width"));
-        this.setFrameHeight(nbt.getInt("Height"));
+        this.setFacing(Direction.byIndex(nbt.getByte("Facing").orElse((byte) 0)));
+        this.setFrameWidth(nbt.getInt("Width").orElse(1));
+        this.setFrameHeight(nbt.getInt("Height").orElse(1));
 
         updateBoundingBox();
     }

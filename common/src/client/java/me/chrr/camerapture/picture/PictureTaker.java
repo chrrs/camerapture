@@ -9,7 +9,6 @@ import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -82,12 +81,7 @@ public class PictureTaker {
         this.takingPicture = false;
         client.options.hudHidden = this.hudWasHidden;
 
-        // Take a screenshot while the HUD was hidden.
-        try (NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
-            this.picture = ImageUtil.fromNativeImage(nativeImage, false);
-        }
-
-        // Also save the picture as a screenshot if enabled.
+        // Save the picture as a screenshot if enabled.
         if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
             ScreenshotRecorder.saveScreenshot(client.runDirectory, client.getFramebuffer(), (text) -> {
             });
@@ -99,8 +93,14 @@ public class PictureTaker {
             CameraItem.setActive(activeCamera.stack(), false);
         }
 
-        // Request a new picture ID from the server.
-        Camerapture.NETWORK.sendToServer(new NewPicturePacket());
+        // Take a screenshot while the HUD was hidden.
+        ScreenshotRecorder.takeScreenshot(client.getFramebuffer(), (nativeImage) -> {
+            this.picture = ImageUtil.fromNativeImage(nativeImage, false);
+            nativeImage.close();
+
+            // Request a new picture ID from the server.
+            Camerapture.NETWORK.sendToServer(new NewPicturePacket());
+        });
     }
 
     /// Upload the stored picture to the server when requested, using the specified picture ID.
