@@ -1,3 +1,15 @@
+## 1.10.0
+
+- Update Mexican Spanish translation. (Thanks to @TheLegendofSaram for contributing!)
+- Add Korean translation. (Thanks to @GamerK-2 for contributing!)
+- Limit some of the options in the config screen.
+- Send larger packets for client-bound pictures.
+- Update config defaults to be more lenient.
+- Add config option to simplify camera HUD.
+- Add config option to decrease sensitivity while zooming.
+- Add config options for permission levels for various actions.
+- Update to 1.21.5.
+
 ## 1.9.1
 
 - Fix crash if item stack is null because of another mod.
