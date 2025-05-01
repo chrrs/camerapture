@@ -1,3 +1,9 @@
+## 1.10.1
+
+- Only process a single image per tick client-side to reduce lag.
+- Hide the list of items in the tooltip for albums.
+- Add an album cloning recipe. (Craft an album with a book 'n quill)
+
 ## 1.10.0
 
 - Update Mexican Spanish translation. (Thanks to @TheLegendofSaram for contributing!)
