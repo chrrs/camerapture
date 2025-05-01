@@ -5,10 +5,7 @@ import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.gui.AlbumLecternScreenHandler;
 import me.chrr.camerapture.gui.AlbumScreenHandler;
 import me.chrr.camerapture.gui.PictureFrameScreenHandler;
-import me.chrr.camerapture.item.AlbumItem;
-import me.chrr.camerapture.item.CameraItem;
-import me.chrr.camerapture.item.PictureCloningRecipe;
-import me.chrr.camerapture.item.PictureItem;
+import me.chrr.camerapture.item.*;
 import me.chrr.camerapture.net.NetworkAdapter;
 import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
 import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
@@ -71,6 +68,8 @@ public class Camerapture {
     public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ScreenHandlerType<>(AlbumScreenHandler::new, FeatureSet.empty());
     public static final ScreenHandlerType<AlbumLecternScreenHandler> ALBUM_LECTERN_SCREEN_HANDLER =
             new ScreenHandlerType<>((syncId, playerInventory) -> new AlbumLecternScreenHandler(syncId), FeatureSet.empty());
+    public static final SpecialRecipeSerializer<AlbumCloningRecipe> ALBUM_CLONING =
+            new SpecialRecipeSerializer<>(AlbumCloningRecipe::new);
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =

@@ -53,6 +53,7 @@ public class CameraptureFabric implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(Camerapture.ALBUM));
         Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER);
         Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER);
+        Registry.register(Registries.RECIPE_SERIALIZER, Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING);
 
         // Picture Frame
         Registry.register(Registries.ENTITY_TYPE, PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME);

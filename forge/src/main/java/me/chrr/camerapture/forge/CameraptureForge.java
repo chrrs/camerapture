@@ -69,6 +69,8 @@ public class CameraptureForge {
                 registry.register(PictureItem.KEY, Camerapture.PICTURE));
         event.register(RegistryKeys.RECIPE_SERIALIZER, registry ->
                 registry.register(Camerapture.id("picture_cloning"), Camerapture.PICTURE_CLONING));
+        event.register(RegistryKeys.RECIPE_SERIALIZER, registry ->
+                registry.register(Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING));
 
         // Album
         event.register(RegistryKeys.ITEM, registry ->
