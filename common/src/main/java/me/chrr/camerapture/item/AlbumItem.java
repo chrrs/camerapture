@@ -4,6 +4,7 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.gui.AlbumScreenHandler;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
+import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
@@ -77,7 +78,10 @@ public class AlbumItem extends Item {
 
         @Override
         public void onClose(PlayerEntity player) {
-            this.getAlbumStack(player).set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+            ItemStack stack = this.getAlbumStack(player);
+            stack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+            stack.set(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplayComponent.DEFAULT.with(DataComponentTypes.CONTAINER, true));
+
             super.onClose(player);
         }
 
