@@ -198,5 +198,13 @@ public class CameraptureClientForge {
                 event.setNewFovModifier(PictureTaker.getInstance().getFovModifier());
             }
         }
+
+        /// Process any received pictures once per tick.
+        @SubscribeEvent
+        public void onClientTick(TickEvent.ClientTickEvent event) {
+            if (event.phase == TickEvent.Phase.START) {
+                ClientPictureStore.getInstance().processQueue();
+            }
+        }
     }
 }

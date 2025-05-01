@@ -16,10 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /// The client-side picture store. This class manages picture son the client side.
 /// Its cache is cleared when you leave a world. It also manages caching pictures
@@ -28,6 +25,7 @@ import java.util.UUID;
 public class ClientPictureStore {
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
+    private final Queue<QueuedBytes> byteQueue = new LinkedList<>();
     private final Map<UUID, RemotePicture> pictures = new HashMap<>();
 
     private ClientPictureStore() {
@@ -97,7 +95,6 @@ public class ClientPictureStore {
     /// image, upload it as a texture and change the status of the remote picture.
     public void processReceivedImage(UUID id, BufferedImage image) {
         RemotePicture picture = pictures.computeIfAbsent(id, RemotePicture::new);
-
         picture.setSize(image.getWidth(), image.getHeight());
 
         NativeImage nativeImage = ImageUtil.toNativeImage(image);
@@ -113,14 +110,7 @@ public class ClientPictureStore {
 
     /// Process the bytes received from the server, and update the stored picture.
     public void processReceivedBytes(UUID id, byte[] bytes) {
-        try {
-            processReceivedImage(id, ImageIO.read(new ByteArrayInputStream(bytes)));
-            cacheBytesToDisk(id, bytes);
-        } catch (Exception e) {
-            Camerapture.LOGGER.error("failed to decode received image bytes for image {}", id, e);
-            RemotePicture picture = pictures.computeIfAbsent(id, RemotePicture::new);
-            picture.setStatus(RemotePicture.Status.ERROR);
-        }
+        byteQueue.add(new QueuedBytes(id, bytes));
     }
 
     /// Get a picture by UUID, fetching it from the server if we don't have it yet.
@@ -146,6 +136,23 @@ public class ClientPictureStore {
                 .orElseGet(() -> ensureRemotePicture(id));
     }
 
+    /// Processes a single image from the queue.
+    public void processQueue() {
+        QueuedBytes item = byteQueue.poll();
+        if (item != null) {
+            Camerapture.EXECUTOR.execute(() -> {
+                try {
+                    processReceivedImage(item.id, ImageIO.read(new ByteArrayInputStream(item.bytes)));
+                    cacheBytesToDisk(item.id, item.bytes);
+                } catch (Exception e) {
+                    Camerapture.LOGGER.error("failed to decode received image bytes for image {}", item.id, e);
+                    RemotePicture picture = pictures.computeIfAbsent(item.id, RemotePicture::new);
+                    picture.setStatus(RemotePicture.Status.ERROR);
+                }
+            });
+        }
+    }
+
     private static boolean shouldCacheToDisk() {
         // We enable single-player picture caching when Replay Mod is installed.
         return CameraptureClient.replayModInstalled
@@ -163,5 +170,8 @@ public class ClientPictureStore {
 
     public static ClientPictureStore getInstance() {
         return INSTANCE;
+    }
+
+    private record QueuedBytes(UUID id, byte[] bytes) {
     }
 }

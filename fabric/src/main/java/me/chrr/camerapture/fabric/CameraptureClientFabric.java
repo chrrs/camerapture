@@ -12,6 +12,7 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
@@ -107,5 +108,9 @@ public class CameraptureClientFabric implements ClientModInitializer {
             ClientPictureStore.getInstance().clear();
             CameraptureClient.syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
         });
+
+        // Process any received pictures once per tick.
+        ClientTickEvents.START_CLIENT_TICK.register((world) ->
+                ClientPictureStore.getInstance().processQueue());
     }
 }
