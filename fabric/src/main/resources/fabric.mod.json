@@ -37,6 +37,6 @@
     },
     "depends": {
         "fabric": "*",
-        "minecraft": "${minecraftDependency}"
+        "minecraft": "*"
     }
 }

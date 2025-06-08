@@ -21,7 +21,7 @@ public abstract class HandledScreenMixin {
     @Shadow
     protected abstract boolean isPointWithinBounds(int x, int y, int width, int height, double pointX, double pointY);
 
-    @ModifyArgs(method = {"drawSlotHighlightBack", "drawSlotHighlightFront"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Ljava/util/function/Function;Lnet/minecraft/util/Identifier;IIII)V"))
+    @ModifyArgs(method = {"drawSlotHighlightBack", "drawSlotHighlightFront"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIII)V"))
     public void drawSlotHighlight(Args args) {
         if (this.focusedSlot instanceof SizedSlot sizedSlot) {
             args.set(4, sizedSlot.getWidth() + 8);

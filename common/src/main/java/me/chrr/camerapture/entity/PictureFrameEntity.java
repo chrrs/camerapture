@@ -13,15 +13,11 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.PropertyDelegate;
@@ -29,6 +25,8 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.storage.ReadView;
+import net.minecraft.storage.WriteView;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -238,35 +236,29 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    protected void writeCustomData(WriteView view) {
+        super.writeCustomData(view);
 
-        ItemStack itemStack = this.getItemStack();
-        if (!itemStack.isEmpty()) {
-            nbt.put("Item", itemStack.toNbt(getRegistryManager()));
-        }
-
-        nbt.putBoolean("PictureGlowing", this.isPictureGlowing());
-        nbt.putBoolean("Fixed", this.isFixed());
-        nbt.putInt("PictureRotation", this.getRotation());
+        view.put("item", ItemStack.CODEC, this.getItemStack());
+        view.putBoolean("picture_glowing", this.isPictureGlowing());
+        view.putBoolean("fixed", this.isFixed());
+        view.putInt("rotation", this.getRotation());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    protected void readCustomData(ReadView view) {
+        super.readCustomData(view);
 
-        RegistryOps<NbtElement> registryOps = this.getRegistryManager().getOps(NbtOps.INSTANCE);
-
-        Optional<ItemStack> itemStack = nbt.get("Item", ItemStack.CODEC, registryOps);
+        Optional<ItemStack> itemStack = view.read("item", ItemStack.CODEC);
         if (itemStack.isEmpty()) {
             Camerapture.LOGGER.warn("unable to load item for picture frame");
         } else {
             this.setItemStack(itemStack.get());
         }
 
-        this.setPictureGlowing(nbt.getBoolean("PictureGlowing").orElse(false));
-        this.setFixed(nbt.getBoolean("Fixed").orElse(false));
-        this.setRotation(nbt.getInt("PictureRotation").orElse(0));
+        this.setPictureGlowing(view.getBoolean("picture_glowing", false));
+        this.setFixed(view.getBoolean("fixed", false));
+        this.setRotation(view.getInt("rotation", 0));
     }
 
     @Override

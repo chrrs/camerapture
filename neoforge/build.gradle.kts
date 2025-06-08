@@ -21,6 +21,9 @@ val common: Configuration by configurations.creating {
 
 repositories {
     maven("https://maven.neoforged.net/releases/")
+
+    // FIXME: remove this when 1.21.6 gets merged.
+    maven("https://prmaven.neoforged.net/NeoForge/pr2297")
 }
 
 dependencies {

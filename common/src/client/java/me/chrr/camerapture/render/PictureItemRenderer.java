@@ -14,7 +14,9 @@ import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
@@ -66,6 +68,14 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         buffer.vertex(matrix4f, 0f, 0f, 0f).color(0xffffffff).texture(0f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
 
         matrices.pop();
+    }
+
+    @Override
+    public void collectVertices(Set<Vector3f> vertices) {
+        vertices.add(new Vector3f(1f, 0f, 0f));
+        vertices.add(new Vector3f(1f, 1f, 0f));
+        vertices.add(new Vector3f(0f, 1f, 0f));
+        vertices.add(new Vector3f(0f, 0f, 0f));
     }
 
     @Override

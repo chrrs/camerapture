@@ -143,8 +143,9 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     }
 
     private void drawCenteredText(TextRenderer textRenderer, Text text, float x, float y, int color, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        // FIXME: rendering a text background here causes z-fighting.
         float width = textRenderer.getWidth(text);
-        textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0x7f000000, light, false);
+        textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, light);
     }
 
     @Override

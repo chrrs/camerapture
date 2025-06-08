@@ -4,11 +4,12 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.PressableTextWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.lwjgl.PointerBuffer;
@@ -49,8 +50,8 @@ public class UploadScreen extends Screen {
 
         Text description = Text.translatable("text.camerapture.upload_picture.description");
 
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - textRenderer.fontHeight - 16, 0xffffff);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - textRenderer.fontHeight - 16, Colors.WHITE);
 
         boolean canTakePicture = this.client != null && this.client.player != null && CameraItem.canTakePicture(this.client.player);
         browseButton.visible = canTakePicture;
@@ -58,10 +59,10 @@ public class UploadScreen extends Screen {
         if (!canTakePicture) {
             if (System.currentTimeMillis() % 1000 < 500) {
                 int y = this.height / 2 + textRenderer.fontHeight + 4;
-                context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.no_paper"), this.width / 2, y, 0xffff0000);
+                context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.no_paper"), this.width / 2, y, Colors.RED);
             }
         } else {
-            context.drawCenteredTextWithShadow(this.textRenderer, description, this.width / 2, this.height / 2, 0xffffff);
+            context.drawCenteredTextWithShadow(this.textRenderer, description, this.width / 2, this.height / 2, Colors.WHITE);
         }
     }
 

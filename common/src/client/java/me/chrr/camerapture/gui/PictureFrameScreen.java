@@ -3,18 +3,19 @@ package me.chrr.camerapture.gui;
 import me.chrr.camerapture.Camerapture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
@@ -119,13 +120,13 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, x, y, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
     }
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), backgroundWidth / 2, 7, 0xffffff);
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), backgroundWidth / 2, 7 + textRenderer.fontHeight + 2, 0xa0a0a0);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), backgroundWidth / 2, 7, Colors.WHITE);
+        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), backgroundWidth / 2, 7 + textRenderer.fontHeight + 2, Colors.GRAY);
     }
 
     private void updateButtons() {
@@ -213,12 +214,12 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
             TextRenderer textRenderer = minecraftClient.textRenderer;
 
             int textX = getX() + (leftText ? -4 - textRenderer.getWidth(getMessage()) : 11 + 4);
-            context.drawTextWithShadow(textRenderer, getMessage(), textX, getY() + 2, 0xe0e0e0);
+            context.drawTextWithShadow(textRenderer, getMessage(), textX, getY() + 2, 0xffe0e0e0);
 
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, getX(), getY(), this.isSelected() ? 11 : 0, 52, 11, 11, 256, 256);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), this.isSelected() ? 11 : 0, 52, 11, 11, 256, 256);
 
             if (checked) {
-                context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
+                context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
             }
         }
     }

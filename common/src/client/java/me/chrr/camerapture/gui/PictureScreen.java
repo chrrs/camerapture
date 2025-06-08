@@ -14,6 +14,7 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
@@ -76,10 +77,10 @@ public class PictureScreen extends Screen {
             int pageNumberX = width / 2 - this.textRenderer.getWidth(this.pageNumber) / 2;
             if (this.customName != null) {
                 int nameX = width / 2 - this.textRenderer.getWidth(this.customName) / 2;
-                context.drawText(this.textRenderer, this.customName, nameX, barY - 1 - textRenderer.fontHeight, 0xffffff, false);
-                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY + 1, 0xffffff, false);
+                context.drawText(this.textRenderer, this.customName, nameX, barY - 1 - textRenderer.fontHeight, Colors.WHITE, false);
+                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY + 1, Colors.WHITE, false);
             } else {
-                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY - textRenderer.fontHeight / 2, 0xffffff, false);
+                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY - textRenderer.fontHeight / 2, Colors.WHITE, false);
             }
         }
 
@@ -90,7 +91,7 @@ public class PictureScreen extends Screen {
         if (this.ctrlHeld) {
             Text text = Text.translatable("text.camerapture.save_as").formatted(Formatting.GRAY);
             int tw = this.textRenderer.getWidth(text);
-            context.drawText(this.textRenderer, text, width / 2 - tw / 2, BORDER_THICKNESS - textRenderer.fontHeight - 2, 0xffffff, false);
+            context.drawText(this.textRenderer, text, width / 2 - tw / 2, BORDER_THICKNESS - textRenderer.fontHeight - 2, Colors.WHITE, false);
         }
 
         // Drawing the picture

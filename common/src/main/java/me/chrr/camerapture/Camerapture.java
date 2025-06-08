@@ -107,7 +107,7 @@ public class Camerapture {
 
             // We don't want to play the sound when the player is uploading a picture, only when it's being taken.
             if (CameraItem.isActive(camera.stack())) {
-                player.getServerWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
+                player.getWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
             }
 
             CameraItem.setActive(camera.stack(), false);

@@ -11,8 +11,9 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.storage.ReadView;
+import net.minecraft.storage.WriteView;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.math.BlockPos;
@@ -262,32 +263,26 @@ public abstract class ResizableDecorationEntity extends Entity {
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        nbt.putInt("TileX", attachmentPos.getX());
-        nbt.putInt("TileY", attachmentPos.getY());
-        nbt.putInt("TileZ", attachmentPos.getZ());
+    protected void writeCustomData(WriteView view) {
+        view.put("block_pos", BlockPos.CODEC, attachmentPos);
 
-        nbt.putByte("Facing", (byte) this.getFacing().getIndex());
-        nbt.putInt("Width", this.getFrameWidth());
-        nbt.putInt("Height", this.getFrameHeight());
+        view.put("facing", Direction.CODEC, this.getFacing());
+        view.putInt("width", this.getFrameWidth());
+        view.putInt("height", this.getFrameHeight());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        // FIXME: probably want to use codecs here at some point, but it has to be at a version boundary.
-        BlockPos blockPos = new BlockPos(
-                nbt.getInt("TileX").orElse(0),
-                nbt.getInt("TileY").orElse(0),
-                nbt.getInt("TileZ").orElse(0));
-        if (!blockPos.isWithinDistance(this.getBlockPos(), 16.0)) {
+    protected void readCustomData(ReadView view) {
+        BlockPos blockPos = view.read("block_pos", BlockPos.CODEC).orElse(null);
+        if (blockPos == null || !blockPos.isWithinDistance(this.getBlockPos(), 16.0)) {
             Camerapture.LOGGER.error("hanging entity at invalid position: {}", blockPos);
         } else {
             this.attachmentPos = blockPos;
         }
 
-        this.setFacing(Direction.byIndex(nbt.getByte("Facing").orElse((byte) 0)));
-        this.setFrameWidth(nbt.getInt("Width").orElse(1));
-        this.setFrameHeight(nbt.getInt("Height").orElse(1));
+        this.setFacing(view.read("facing", Direction.CODEC).orElse(Direction.NORTH));
+        this.setFrameWidth(view.getInt("width", 1));
+        this.setFrameHeight(view.getInt("height", 1));
 
         updateBoundingBox();
     }

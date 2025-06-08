@@ -30,7 +30,7 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${rootProject.prop("fabric", "loaderVersion")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${rootProject.prop("fabric", "apiVersion")}")
 
-    modApi("com.terraformersmc:modmenu:${rootProject.prop("modmenu", "version")}")
+    modCompileOnly("com.terraformersmc:modmenu:${rootProject.prop("modmenu", "version")}")
 
     include("io.github.darkxanter:webp-imageio:0.3.2")
     implementation("io.github.darkxanter:webp-imageio:0.3.2")
