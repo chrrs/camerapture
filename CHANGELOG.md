@@ -1,3 +1,7 @@
+## 1.10.3
+
+- Fix mixin-related crash on startup.
+
 ## 1.10.2
 
 - Add recipe unlocks for the album and camera items.
