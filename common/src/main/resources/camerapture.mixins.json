@@ -6,8 +6,8 @@
     "mixins": [
         "ItemStackComponentizationFixMixin",
         "LecternBlockEntityMixin",
-        "RemoveFeatureTogglesFixMixin",
-        "Schema1460Mixin"
+        "Schema1460Mixin",
+        "SchemasMixin"
     ],
     "injectors": {
         "defaultRequire": 1
