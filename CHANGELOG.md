@@ -1,3 +1,8 @@
+## 1.10.2
+
+- Add recipe unlocks for the album and camera items.
+- Update to 1.21.6.
+
 ## 1.10.1
 
 - Only process a single image per tick client-side to reduce lag.
