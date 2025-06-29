@@ -1,6 +1,8 @@
 package me.chrr.camerapture;
 
 import com.luciad.imageio.webp.WebP;
+import com.luciad.imageio.webp.WebPImageReaderSpi;
+import com.luciad.imageio.webp.WebPImageWriterSpi;
 import me.chrr.camerapture.compat.FirstPersonModelCompat;
 import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
@@ -12,6 +14,9 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureItemRenderer;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageWriter;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,10 +32,7 @@ public class CameraptureClient {
     public static SyncedConfig syncedConfig;
 
     public static void init() {
-        ImageIO.scanForPlugins();
-        if (!WebP.loadNativeLibrary()) {
-            Camerapture.LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
-        }
+        loadImageIOWebP();
 
         ClientPictureStore.getInstance().clear();
         syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
@@ -42,6 +44,31 @@ public class CameraptureClient {
         if (Camerapture.PLATFORM.isModLoaded("replay-mod")) {
             Camerapture.LOGGER.info("Replay Mod is detected, Camerapture will cache pictures, regardless of config.");
             CameraptureClient.replayModInstalled = true;
+        }
+    }
+
+    private static void loadImageIOWebP() {
+        ImageIO.scanForPlugins();
+        if (!WebP.loadNativeLibrary()) {
+            Camerapture.LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
+        }
+
+        boolean foundWebP = false;
+        Iterator<ImageReader> readers = ImageIO.getImageReadersBySuffix("webp");
+        while (readers.hasNext())
+            foundWebP |= readers.next().getOriginatingProvider() instanceof WebPImageReaderSpi;
+
+        if (!foundWebP) {
+            Camerapture.LOGGER.error("WebP image reader not found, loading pictures might not work!");
+        }
+
+        foundWebP = false;
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByMIMEType("image/webp");
+        while (writers.hasNext())
+            foundWebP |= writers.next().getOriginatingProvider() instanceof WebPImageWriterSpi;
+
+        if (!foundWebP) {
+            Camerapture.LOGGER.error("WebP image writer not found, taking pictures might not work!");
         }
     }
 

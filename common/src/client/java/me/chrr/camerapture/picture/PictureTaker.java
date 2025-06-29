@@ -57,7 +57,7 @@ public class PictureTaker {
         try {
             this.picture = ImageIO.read(filePath.toFile());
             Camerapture.NETWORK.sendToServer(new NewPicturePacket());
-        } catch (IOException e) {
+        } catch (Exception e) {
             Camerapture.LOGGER.error("failed to read picture from file", e);
 
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
@@ -106,6 +106,7 @@ public class PictureTaker {
     /// Upload the stored picture to the server when requested, using the specified picture ID.
     public void uploadStoredPicture(UUID pictureId) {
         if (this.picture == null) {
+            Camerapture.LOGGER.error("server requested a picture, but we don't have any stored");
             return;
         }
 
@@ -135,7 +136,7 @@ public class PictureTaker {
             ClientPictureStore.getInstance().processReceivedImage(pictureId, picture);
             ClientPictureStore.getInstance().cacheBytesToDisk(pictureId, bytes);
             this.picture = null;
-        } catch (IOException e) {
+        } catch (Exception e) {
             Camerapture.LOGGER.error("failed to send picture to server", e);
             this.picture = null;
 
