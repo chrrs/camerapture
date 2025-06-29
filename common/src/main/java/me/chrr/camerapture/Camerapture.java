@@ -44,7 +44,7 @@ import java.util.concurrent.Executors;
 
 public class Camerapture {
     public static final String MOD_ID = "camerapture";
-    public static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger("Camerapture");
 
     public static final Executor EXECUTOR = Executors.newCachedThreadPool();
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
