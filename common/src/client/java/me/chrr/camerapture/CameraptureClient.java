@@ -84,14 +84,20 @@ public class CameraptureClient {
         // Server sends back a picture following a picture request by UUID
         Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
         Camerapture.NETWORK.onReceiveFromServer(DownloadPartialPicturePacket.class, (packet) -> {
-            ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
-                collectors.remove(uuid);
-                Camerapture.EXECUTOR.execute(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
-            }));
+            ByteCollector collector;
 
-            if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                Camerapture.LOGGER.error("received malformed byte section from server");
-                ClientPictureStore.getInstance().processReceivedError(packet.uuid());
+            synchronized (collectors) {
+                collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
+                    collectors.remove(uuid);
+                    Camerapture.EXECUTOR.execute(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
+                }));
+            }
+
+            synchronized (collector) {
+                if (!collector.push(packet.bytes(), packet.bytesLeft())) {
+                    Camerapture.LOGGER.error("received malformed byte section from server");
+                    ClientPictureStore.getInstance().processReceivedError(packet.uuid());
+                }
             }
         });
 
