@@ -151,7 +151,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     @Override
     public Vec3d getPositionOffset(RenderState state) {
         Vector3d extra = state.facing.getRotationQuaternion().transform(new Vector3d(((float) state.frameWidth - 1f) / 2f, 0, -state.frameHeight + 2));
-        return new Vec3d(state.facing.getOffsetX() * 0.3f + extra.x, -0.25f + extra.y, state.facing.getOffsetZ() * 0.3f + extra.z);
+        return new Vec3d(state.facing.getOffsetX() * 0.3f + extra.x, -0.25f + 1.0f + extra.y, state.facing.getOffsetZ() * 0.3f + extra.z);
     }
 
     @Nullable
