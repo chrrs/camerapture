@@ -1,3 +1,9 @@
+## 1.10.4
+
+- Log more things in case pictures fail to be taken.
+- Add a client-side Fabric event when pictures are taken.
+- Properly set the eye height of picture frames.
+
 ## 1.10.3
 
 - Fix mixin-related crash on startup.
