@@ -45,6 +45,10 @@ public class PictureTaker {
             return;
         }
 
+        if (!Camerapture.PLATFORM.canTakePicture()) {
+            return;
+        }
+
         this.takingPicture = true;
         this.hudWasHidden = MinecraftClient.getInstance().options.hudHidden;
         MinecraftClient.getInstance().options.hudHidden = true;
