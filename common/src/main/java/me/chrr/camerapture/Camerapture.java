@@ -134,37 +134,42 @@ public class Camerapture {
                 ServerPictureStore.getInstance().unreserveId(packet.uuid());
             }
 
-            ByteCollector collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
-                collectors.remove(uuid);
-                EXECUTOR.execute(() -> {
-                    try {
-                        MinecraftServer server = player.getServer();
-                        if (server == null) {
-                            return;
+            ByteCollector collector;
+            synchronized (collectors) {
+                collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
+                    collectors.remove(uuid);
+                    EXECUTOR.execute(() -> {
+                        try {
+                            MinecraftServer server = player.getServer();
+                            if (server == null) {
+                                return;
+                            }
+
+                            ServerPictureStore.getInstance().put(server, uuid, new StoredPicture(bytes));
+                            ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
+
+                            // We have to do this on a separate thread, because it might spawn an item entity.
+                            server.execute(() -> player.getInventory().offerOrDrop(picture));
+                        } catch (Exception e) {
+                            LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
+                            player.sendMessage(Text.translatable("text.camerapture.picture_failed").formatted(Formatting.RED), false);
                         }
-
-                        ServerPictureStore.getInstance().put(server, uuid, new StoredPicture(bytes));
-                        ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
-
-                        // We have to do this on a separate thread, because it might spawn an item entity.
-                        server.execute(() -> player.getInventory().offerOrDrop(picture));
-                    } catch (Exception e) {
-                        LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
-                        player.sendMessage(Text.translatable("text.camerapture.picture_failed").formatted(Formatting.RED), false);
-                    }
-                });
-            }));
-
-            if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                LOGGER.error("{} sent a malformed byte section", player.getName().getString());
-                collectors.remove(packet.uuid());
-                ServerPictureStore.getInstance().unreserveId(packet.uuid());
+                    });
+                }));
             }
 
-            if (collector.getCurrentLength() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
-                LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
-                collectors.remove(packet.uuid());
-                ServerPictureStore.getInstance().unreserveId(packet.uuid());
+            synchronized (collector) {
+                if (!collector.push(packet.bytes(), packet.bytesLeft())) {
+                    LOGGER.error("{} sent a malformed byte section", player.getName().getString());
+                    collectors.remove(packet.uuid());
+                    ServerPictureStore.getInstance().unreserveId(packet.uuid());
+                }
+
+                if (collector.getCurrentLength() > CONFIG_MANAGER.getConfig().server.maxImageBytes) {
+                    LOGGER.error("{} sent a picture exceeding the size limit", player.getName().getString());
+                    collectors.remove(packet.uuid());
+                    ServerPictureStore.getInstance().unreserveId(packet.uuid());
+                }
             }
         });
 
