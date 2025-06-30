@@ -53,22 +53,26 @@ public class CameraptureClient {
             Camerapture.LOGGER.error("failed to load ImageIO-WebP, pictures might not work!");
         }
 
-        boolean foundWebP = false;
+        boolean readerFound = false;
         Iterator<ImageReader> readers = ImageIO.getImageReadersBySuffix("webp");
         while (readers.hasNext())
-            foundWebP |= readers.next().getOriginatingProvider() instanceof WebPImageReaderSpi;
+            readerFound |= readers.next().getOriginatingProvider() instanceof WebPImageReaderSpi;
 
-        if (!foundWebP) {
+        if (!readerFound) {
             Camerapture.LOGGER.error("WebP image reader not found, loading pictures might not work!");
         }
 
-        foundWebP = false;
+        boolean writerFound = false;
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByMIMEType("image/webp");
         while (writers.hasNext())
-            foundWebP |= writers.next().getOriginatingProvider() instanceof WebPImageWriterSpi;
+            writerFound |= writers.next().getOriginatingProvider() instanceof WebPImageWriterSpi;
 
-        if (!foundWebP) {
+        if (!writerFound) {
             Camerapture.LOGGER.error("WebP image writer not found, taking pictures might not work!");
+        }
+
+        if (readerFound && writerFound) {
+            Camerapture.LOGGER.info("successfully loaded WebP image reader and writer!");
         }
     }
 
