@@ -1,3 +1,7 @@
+## 1.10.5
+
+- Update to 1.21.7.
+
 ## 1.10.4
 
 - Log more things in case pictures fail to be taken.
