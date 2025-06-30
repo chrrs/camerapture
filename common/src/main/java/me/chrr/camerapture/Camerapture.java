@@ -78,6 +78,8 @@ public class Camerapture {
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
                     .maxTrackingRange(10)
+                    .dimensions(0.5F, 0.5F)
+                    .eyeHeight(0.0F)
                     .build(PictureFrameEntity.KEY);
     public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
             new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());

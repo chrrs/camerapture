@@ -301,10 +301,6 @@ public abstract class ResizableDecorationEntity extends Entity {
     public void onStruckByLightning(ServerWorld world, LightningEntity lightning) {
     }
 
-    @Override
-    public void calculateDimensions() {
-    }
-
     public abstract void onPlace();
 
     public abstract void onBreak(ServerWorld world, @Nullable Entity entity);
