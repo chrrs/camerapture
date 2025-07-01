@@ -1,3 +1,7 @@
+## 1.10.6
+
+- Properly position picture frame name tags on 1.21.1.
+
 ## 1.10.5
 
 - Update to 1.21.7.
