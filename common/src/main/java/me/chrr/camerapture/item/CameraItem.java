@@ -84,6 +84,10 @@ public class CameraItem extends Item {
     /// Find the camera item that the player is holding, if any.
     @Nullable
     public static HeldCamera find(PlayerEntity player, boolean shouldBeActive) {
+        if (player == null) {
+            return null;
+        }
+
         for (Hand hand : Hand.values()) {
             ItemStack stack = player.getStackInHand(hand);
             if (stack == null || !stack.isOf(Camerapture.CAMERA)) {
