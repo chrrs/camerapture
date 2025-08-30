@@ -88,7 +88,7 @@ public class PictureTaker {
 
         // Take a screenshot while the HUD was hidden.
         try (NativeImage nativeImage = ScreenshotRecorder.takeScreenshot(client.getFramebuffer())) {
-            this.picture = ImageUtil.fromNativeImage(nativeImage, false);
+            this.picture = ImageUtil.fromNativeImage(nativeImage);
         }
 
         // Also save the picture as a screenshot if enabled.
@@ -117,6 +117,7 @@ public class PictureTaker {
         try {
             BufferedImage picture = ImageUtil.clampSize(this.picture,
                     CameraptureClient.syncedConfig.maxImageResolution());
+            picture = ImageUtil.normalize(picture);
 
             // Starting at 100% quality, we step up the compression by 5% each time
             // until we fit it into our size limit.

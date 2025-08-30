@@ -10,6 +10,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DirectColorModel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -33,8 +34,8 @@ public enum ImageUtil {
     }
 
     /// Convert a {@link NativeImage} to a {@link BufferedImage}.
-    public static BufferedImage fromNativeImage(NativeImage image, boolean hasAlpha) {
-        BufferedImage bufferedImage = new BufferedImage(image.getWidth(), image.getHeight(), hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+    public static BufferedImage fromNativeImage(NativeImage image) {
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
         int[] pixels = image.copyPixelsRgba();
 
         for (int i = 0; i < pixels.length; i++) {
@@ -74,6 +75,20 @@ public enum ImageUtil {
         g.drawImage(image.getScaledInstance(width, height, Image.SCALE_SMOOTH), 0, 0, width, height, null);
         g.dispose();
         return scaledImage;
+    }
+
+    /// Make sure the returned image has a {@link DirectColorModel}, because ImageIO-WebP seems to have bugs
+    /// with component color models.
+    public static BufferedImage normalize(BufferedImage image) {
+        if (image.getColorModel() instanceof DirectColorModel) {
+            return image;
+        } else {
+            BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = newImage.createGraphics();
+            g.drawImage(image, 0, 0, null);
+            g.dispose();
+            return newImage;
+        }
     }
 
     /// Write an image into a byte array using WebP, with lossy compression and alpha support.
