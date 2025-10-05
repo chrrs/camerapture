@@ -8,8 +8,6 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -64,14 +62,12 @@ public class NeoForgeNetworkAdapter implements NetworkAdapter {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public <P> void sendToServer(P packet) {
         @SuppressWarnings("unchecked") ClientPacketType<P> type = (ClientPacketType<P>) getClientPacketType(packet.getClass());
         ClientPacketDistributor.sendToServer(new PacketPayload<>(type.netCodec().id(), packet));
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public <P> void onReceiveFromServer(Class<P> clazz, Consumer<P> handler) {
         this.getServerPacketType(clazz).handlers().add(handler);
     }

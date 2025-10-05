@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.net.NetCodec;
 import me.chrr.camerapture.net.NetworkAdapter;
 import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -75,14 +74,12 @@ public class FabricNetworkAdapter implements NetworkAdapter {
     }
 
     @Override
-    @Environment(EnvType.CLIENT)
     public <P> void sendToServer(P packet) {
         @SuppressWarnings("unchecked") ClientPacketType<P> type = (ClientPacketType<P>) getClientPacketType(packet.getClass());
         ClientPlayNetworking.send(new PacketPayload<>(type.netCodec().id(), packet));
     }
 
     @Override
-    @Environment(EnvType.CLIENT)
     public <P> void onReceiveFromServer(Class<P> clazz, Consumer<P> handler) {
         this.getServerPacketType(clazz).handlers().add(handler);
     }

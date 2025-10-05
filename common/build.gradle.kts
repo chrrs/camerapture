@@ -19,9 +19,6 @@ repositories {
 }
 
 dependencies {
-    // Include Fabric loader to have access to the @Environment annotation.
-    modCompileOnlyApi("net.fabricmc:fabric-loader:${rootProject.prop("fabric", "loaderVersion")}")
-
     // Compat dependencies
     modCompileOnlyApi("me.shedaniel.cloth:cloth-config-fabric:${rootProject.prop("clothconfig", "version")}")
     modCompileOnlyApi("maven.modrinth:jade:${rootProject.prop("jade", "version")}+fabric")

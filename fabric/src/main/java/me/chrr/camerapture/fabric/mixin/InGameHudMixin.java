@@ -4,8 +4,6 @@ import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.gui.CameraViewFinder;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -18,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
-@Environment(EnvType.CLIENT)
 public abstract class InGameHudMixin {
     @Shadow
     public abstract TextRenderer getTextRenderer();

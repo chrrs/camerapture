@@ -1,7 +1,5 @@
 package me.chrr.camerapture.net;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.function.BiConsumer;
@@ -15,9 +13,7 @@ public interface NetworkAdapter {
 
     <P> void onReceiveFromClient(Class<P> clazz, BiConsumer<P, ServerPlayerEntity> handler);
 
-    @Environment(EnvType.CLIENT)
     <P> void sendToServer(P packet);
 
-    @Environment(EnvType.CLIENT)
     <P> void onReceiveFromServer(Class<P> clazz, Consumer<P> handler);
 }
