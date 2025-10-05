@@ -8,6 +8,7 @@ import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
@@ -116,42 +117,39 @@ public class PictureScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL) {
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
             this.ctrlHeld = true;
-        } else if (keyCode == GLFW.GLFW_KEY_S && (modifiers & GLFW.GLFW_MOD_CONTROL) != 0) {
+        } else if (input.key() == GLFW.GLFW_KEY_S && input.hasCtrl()) {
             // On Ctrl-S, we prompt the user to save the image.
             NativeImage image = this.getNativeImage();
             if (image != null) {
                 saveAs(image);
                 return true;
             }
-        } else if (keyCode == GLFW.GLFW_KEY_LEFT) {
+        } else if (input.key() == GLFW.GLFW_KEY_LEFT) {
             this.changeIndexBy(-1);
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+        } else if (input.key() == GLFW.GLFW_KEY_RIGHT) {
             this.changeIndexBy(1);
             return true;
         }
 
         // We leave the usual handling to last, so we override the arrow keys controlling focus.
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL) {
+    public boolean keyReleased(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
             this.ctrlHeld = false;
         }
 
-        return super.keyReleased(keyCode, scanCode, modifiers);
+        return super.keyReleased(input);
     }
 
     @Override
-    //? if >=1.20.4 {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        //?} else
-        /*public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {*/
         this.changeIndexBy((int) -verticalAmount);
         return true;
     }

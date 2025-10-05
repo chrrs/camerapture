@@ -77,7 +77,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
             player.openHandledScreen(this);
             return ActionResult.SUCCESS;
         } else if (canRotate && !isFixed()) {
-            if (!player.getWorld().isClient) {
+            if (!player.getEntityWorld().isClient()) {
                 setRotation(getRotation() + 1);
 
                 this.playSound(SoundEvents.ENTITY_ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);

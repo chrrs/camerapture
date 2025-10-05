@@ -9,10 +9,13 @@ import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.LoadingDisplay;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.state.EntityRenderState;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -27,6 +30,7 @@ import net.minecraft.util.shape.VoxelShapes;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 import java.util.UUID;
 
@@ -38,7 +42,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
     }
 
     @Override
-    public void render(RenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void render(RenderState state, MatrixStack matrices, OrderedRenderCommandQueue queue, CameraRenderState cameraState) {
         matrices.push();
 
         matrices.translate(this.getPositionOffset(state).negate());
@@ -47,34 +51,34 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         matrices.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.0);
 
         if (state.shouldRenderOutline) {
-            renderOutline(matrices, vertexConsumers, state.frameWidth, state.frameHeight);
+            renderOutline(matrices, queue, state.frameWidth, state.frameHeight);
         }
 
         matrices.translate(0.0, 0.0, (ResizableDecorationEntity.THICKNESS - DISTANCE_FROM_WALL) / 2.0);
 
         if (state.pictureId == null) {
-            renderErrorText(matrices, vertexConsumers, light);
+            renderErrorText(matrices, queue, state.light);
         } else {
             RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(state.pictureId);
             if (picture == null || picture.getStatus() == RemotePicture.Status.ERROR) {
                 // Picture failed to load.
-                renderErrorText(matrices, vertexConsumers, light);
+                renderErrorText(matrices, queue, state.light);
             } else if (picture.getStatus() == RemotePicture.Status.FETCHING) {
                 // Picture is still fetching.
-                renderFetching(matrices, vertexConsumers, light);
+                renderFetching(matrices, queue, state.light);
             } else {
                 // Picture should be rendered.
                 matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f * state.rotation));
-                renderPicture(matrices, vertexConsumers, picture, state, light);
+                renderPicture(matrices, queue, picture, state);
             }
         }
 
         matrices.pop();
 
-        super.render(state, matrices, vertexConsumers, light);
+        super.render(state, matrices, queue, cameraState);
     }
 
-    public void renderPicture(MatrixStack matrices, VertexConsumerProvider vertexConsumers, RemotePicture picture, RenderState state, int light) {
+    public void renderPicture(MatrixStack matrices, OrderedRenderCommandQueue queue, RemotePicture picture, RenderState state) {
         // Find the rendered width and height of the picture.
         float scale = getPictureScale(picture, state);
         float width = picture.getWidth() * scale;
@@ -91,16 +95,16 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         RenderLayer renderLayer = state.isPictureGlowing
                 ? RenderLayer.getText(picture.getTextureIdentifier())
                 : RenderLayer.getEntityCutout(picture.getTextureIdentifier());
-        VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
-        MatrixStack.Entry matrix = matrices.peek();
-        Matrix4f matrix4f = matrix.getPositionMatrix();
+        queue.submitCustom(matrices, renderLayer, (matrix, buffer) -> {
+            Matrix4f position = matrix.getPositionMatrix();
+            int effectiveLight = state.isPictureGlowing ? 0xff : state.light;
 
-        int effectiveLight = state.isPictureGlowing ? 0xff : light;
-        buffer.vertex(matrix4f, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x2, y2, 0f).color(0xffffffff).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, x2, y1, 0f).color(0xffffffff).texture(0f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(position, x1, y1, 0f).color(0xffffffff).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(position, x1, y2, 0f).color(0xffffffff).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(position, x2, y2, 0f).color(0xffffffff).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(position, x2, y1, 0f).color(0xffffffff).texture(0f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(effectiveLight).normal(matrix, 0f, 0f, 1f);
+        });
     }
 
     /// Calculate the picture scale so it fits inside the frame.
@@ -121,31 +125,36 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         return Math.min(scaledWidth, scaleHeight);
     }
 
-    public void renderOutline(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float frameWidth, float frameHeight) {
+    public void renderOutline(MatrixStack matrices, OrderedRenderCommandQueue queue, float frameWidth, float frameHeight) {
         VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, ResizableDecorationEntity.THICKNESS);
 
         int color = ColorHelper.withAlpha(102, 0xff000000);
-        VertexRendering.drawOutline(matrices, vertexConsumers.getBuffer(RenderLayer.getLines()), shape, -frameWidth / 2, -frameHeight / 2, -ResizableDecorationEntity.THICKNESS / 2f, color);
+        queue.submitCustom(matrices, RenderLayer.getLines(), (matrix, buffer) ->
+                shape.forEachEdge((x1, y1, z1, x2, y2, z2) -> {
+                    Vector3f vector3f = (new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1))).normalize();
+                    buffer.vertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f);
+                    buffer.vertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f);
+                }));
     }
 
-    public void renderFetching(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void renderFetching(MatrixStack matrices, OrderedRenderCommandQueue queue, int light) {
         matrices.scale(-1f / 4f / 16f, -1f / 4f / 16f, 1f / 4f / 16f);
         String loading = LoadingDisplay.get(System.currentTimeMillis());
         Text fetching = Text.translatable("text.camerapture.fetching_picture");
-        drawCenteredText(getTextRenderer(), fetching, 0f, -getTextRenderer().fontHeight - 0.5f, 0xffffffff, matrices, vertexConsumers, light);
-        drawCenteredText(getTextRenderer(), Text.literal(loading), 0f, 0.5f, 0xff808080, matrices, vertexConsumers, light);
+        drawCenteredText(getTextRenderer(), fetching, 0f, -getTextRenderer().fontHeight - 0.5f, 0xffffffff, matrices, queue, light);
+        drawCenteredText(getTextRenderer(), Text.literal(loading), 0f, 0.5f, 0xff808080, matrices, queue, light);
     }
 
-    public void renderErrorText(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void renderErrorText(MatrixStack matrices, OrderedRenderCommandQueue queue, int light) {
         matrices.scale(-1f / 4f / 16f, -1f / 4f / 16f, 1f / 4f / 16f);
         Text text = Text.translatable("text.camerapture.fetching_failed").formatted(Formatting.RED);
-        drawCenteredText(getTextRenderer(), text, 0f, -getTextRenderer().fontHeight / 2f, 0xffffffff, matrices, vertexConsumers, light);
+        drawCenteredText(getTextRenderer(), text, 0f, -getTextRenderer().fontHeight / 2f, 0xffffffff, matrices, queue, light);
     }
 
-    private void drawCenteredText(TextRenderer textRenderer, Text text, float x, float y, int color, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    private void drawCenteredText(TextRenderer textRenderer, Text text, float x, float y, int color, MatrixStack matrices, OrderedRenderCommandQueue queue, int light) {
         // FIXME: rendering a text background here causes z-fighting.
         float width = textRenderer.getWidth(text);
-        textRenderer.draw(text, x - width / 2f, y, color, false, matrices.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, light);
+        queue.submitText(matrices, x - width / 2f, y, Text.of(text).asOrderedText(), false, TextRenderer.TextLayerType.NORMAL, light, color, 0, 0);
     }
 
     @Override

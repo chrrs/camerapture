@@ -1,6 +1,7 @@
 package me.chrr.camerapture.gui;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.util.KeyboardUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -10,6 +11,8 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
+import net.minecraft.client.input.AbstractInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
@@ -52,31 +55,31 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
 
         upButton = addDrawableChild(
                 ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(hasShiftDown() ? 0 : 1);
-                            this.frameHeight += hasShiftDown() ? -1 : 1;
+                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 0 : 1);
+                            this.frameHeight += KeyboardUtil.hasShiftDown() ? -1 : 1;
                         })
                         .dimensions(width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2 - 20 - 4, backgroundWidth, 20)
                         .build());
 
         rightButton = addDrawableChild(
                 ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(hasShiftDown() ? 2 : 3);
-                            this.frameWidth += hasShiftDown() ? -1 : 1;
+                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 2 : 3);
+                            this.frameWidth += KeyboardUtil.hasShiftDown() ? -1 : 1;
                         }).dimensions(width / 2 + backgroundWidth / 2 + 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
                         .build());
 
         downButton = addDrawableChild(
                 ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(hasShiftDown() ? 4 : 5);
-                            this.frameHeight += hasShiftDown() ? -1 : 1;
+                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 4 : 5);
+                            this.frameHeight += KeyboardUtil.hasShiftDown() ? -1 : 1;
                         })
                         .dimensions(width / 2 - backgroundWidth / 2, height / 2 + backgroundHeight / 2 + 4, backgroundWidth, 20)
                         .build());
 
         leftButton = addDrawableChild(
                 ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(hasShiftDown() ? 6 : 7);
-                            this.frameWidth += hasShiftDown() ? -1 : 1;
+                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 6 : 7);
+                            this.frameWidth += KeyboardUtil.hasShiftDown() ? -1 : 1;
                         }).dimensions(width / 2 - backgroundWidth / 2 - 20 - 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
                         .build());
 
@@ -130,7 +133,7 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
     }
 
     private void updateButtons() {
-        if (hasShiftDown()) {
+        if (KeyboardUtil.hasShiftDown()) {
             upButton.setMessage(Text.of("↓"));
             leftButton.setMessage(Text.of("→"));
             rightButton.setMessage(Text.of("←"));
@@ -157,15 +160,15 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         updateButtons();
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    public boolean keyReleased(KeyInput input) {
         updateButtons();
-        return super.keyReleased(keyCode, scanCode, modifiers);
+        return super.keyReleased(input);
     }
 
     @Override
@@ -190,7 +193,7 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
         }
 
         @Override
-        public void onPress() {
+        public void onPress(AbstractInput input) {
             this.checked = !this.checked;
             onChange.accept(checked);
         }

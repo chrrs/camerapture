@@ -109,7 +109,7 @@ public class Camerapture {
 
             // We don't want to play the sound when the player is uploading a picture, only when it's being taken.
             if (CameraItem.isActive(camera.stack())) {
-                player.getWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
+                player.getEntityWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
             }
 
             CameraItem.setActive(camera.stack(), false);
@@ -142,7 +142,7 @@ public class Camerapture {
                     collectors.remove(uuid);
                     EXECUTOR.execute(() -> {
                         try {
-                            MinecraftServer server = player.getServer();
+                            MinecraftServer server = player.server;
                             if (server == null) {
                                 return;
                             }
@@ -178,7 +178,7 @@ public class Camerapture {
         // Client requests a picture with a certain UUID
         NETWORK.onReceiveFromClient(RequestDownloadPacket.class, (packet, player) -> {
             try {
-                StoredPicture picture = ServerPictureStore.getInstance().get(player.getServer(), packet.uuid());
+                StoredPicture picture = ServerPictureStore.getInstance().get(player.server, packet.uuid());
 
                 if (picture == null) {
                     LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());

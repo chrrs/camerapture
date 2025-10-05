@@ -27,7 +27,7 @@ public class NeoForgePlatformAdapter implements PlatformAdapter {
 
     @Override
     public boolean isClientSide() {
-        return FMLLoader.getDist() == Dist.CLIENT;
+        return FMLLoader.getCurrent().getDist() == Dist.CLIENT;
     }
 
     @Override

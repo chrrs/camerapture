@@ -5,9 +5,7 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.model.LoadedEntityModels;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemDisplayContext;
@@ -31,7 +29,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
     }
 
     @Override
-    public void render(@Nullable UUID data, ItemDisplayContext displayContext, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, boolean glint) {
+    public void render(@Nullable UUID data, ItemDisplayContext displayContext, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int i) {
         if (data == null) {
             return;
         }
@@ -58,14 +56,13 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
 
         // Render the picture.
         RenderLayer renderLayer = RenderLayer.getEntityCutoutNoCull(picture.getTextureIdentifier());
-        VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
-
-        MatrixStack.Entry matrix = matrices.peek();
-        Matrix4f matrix4f = matrix.getPositionMatrix();
-        buffer.vertex(matrix4f, 1f, 0f, 0f).color(0xffffffff).texture(1f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 1f, 1f, 0f).color(0xffffffff).texture(1f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 0f, 1f, 0f).color(0xffffffff).texture(0f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
-        buffer.vertex(matrix4f, 0f, 0f, 0f).color(0xffffffff).texture(0f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+        queue.submitCustom(matrices, renderLayer, (matrix, buffer) -> {
+            Matrix4f matrix4f = matrix.getPositionMatrix();
+            buffer.vertex(matrix4f, 1f, 0f, 0f).color(0xffffffff).texture(1f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(matrix4f, 1f, 1f, 0f).color(0xffffffff).texture(1f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(matrix4f, 0f, 1f, 0f).color(0xffffffff).texture(0f, 0f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+            buffer.vertex(matrix4f, 0f, 0f, 0f).color(0xffffffff).texture(0f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
+        });
 
         matrices.pop();
     }
@@ -88,7 +85,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(Unbaked::new);
 
         @Override
-        public SpecialModelRenderer<UUID> bake(LoadedEntityModels entityModels) {
+        public SpecialModelRenderer<UUID> bake(BakeContext context) {
             return new PictureItemRenderer();
         }
 

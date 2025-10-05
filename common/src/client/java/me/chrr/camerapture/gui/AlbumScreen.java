@@ -87,7 +87,7 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     }
 
     @Override
-    protected boolean isClickOutsideBounds(double mouseX, double mouseY, int left, int top, int button) {
+    protected boolean isClickOutsideBounds(double mouseX, double mouseY, int left, int top) {
         int xOffset = mouseY - top > 148 ? 52 : 0;
         return mouseX < left + xOffset
                 || mouseY < top

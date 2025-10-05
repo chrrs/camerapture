@@ -6,9 +6,9 @@ import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.component.type.TooltipDisplayComponent;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.TypedEntityData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -75,16 +75,16 @@ public class PictureItem extends Item {
         }
 
         // Correctly handle (+NBT) items
-        NbtComponent nbtComponent = itemStack.getOrDefault(DataComponentTypes.ENTITY_DATA, NbtComponent.DEFAULT);
-        if (!nbtComponent.isEmpty()) {
-            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, nbtComponent);
+        TypedEntityData<EntityType<?>> data = itemStack.get(DataComponentTypes.ENTITY_DATA);
+        if (data != null) {
+            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, data);
         }
 
         pictureFrameEntity.setItemStack(itemStack.copyWithCount(1));
 
-        if (!world.isClient) {
+        if (!world.isClient()) {
             pictureFrameEntity.onPlace();
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureFrameEntity.getPos());
+            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureFrameEntity.getEntityPos());
             world.spawnEntity(pictureFrameEntity);
         }
 

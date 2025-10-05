@@ -61,7 +61,7 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void tick() {
-        if (this.getWorld() instanceof ServerWorld world && Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
+        if (this.getEntityWorld() instanceof ServerWorld world && Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
             if (this.obstructionCheckCounter++ == 100) {
                 this.obstructionCheckCounter = 0;
                 if (!this.canStayAttached() && !this.isRemoved()) {
@@ -151,7 +151,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public boolean canStayAttached() {
         if (!Camerapture.CONFIG_MANAGER.getConfig().server.checkFramePosition) {
             return true;
-        } else if (!this.getWorld().isSpaceEmpty(this)) {
+        } else if (!this.getEntityWorld().isSpaceEmpty(this)) {
             return false;
         } else {
             BlockPos blockPos = this.attachmentPos.offset(this.facing.getOpposite());
@@ -161,7 +161,7 @@ public abstract class ResizableDecorationEntity extends Entity {
             for (int x = 0; x < this.getFrameWidth(); ++x) {
                 for (int y = 0; y < this.getFrameHeight(); ++y) {
                     mutable.set(blockPos).move(direction, x).move(Direction.UP, y);
-                    BlockState blockState = this.getWorld().getBlockState(mutable);
+                    BlockState blockState = this.getEntityWorld().getBlockState(mutable);
 
                     //noinspection deprecation
                     if (!blockState.isSolid() && !AbstractRedstoneGateBlock.isRedstoneGate(blockState)) {
@@ -170,7 +170,7 @@ public abstract class ResizableDecorationEntity extends Entity {
                 }
             }
 
-            return this.getWorld()
+            return this.getEntityWorld()
                     .getOtherEntities(this, this.getBoundingBox(), (entity) ->
                             entity instanceof AbstractDecorationEntity || entity instanceof ResizableDecorationEntity)
                     .isEmpty();
@@ -181,7 +181,7 @@ public abstract class ResizableDecorationEntity extends Entity {
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
             //noinspection deprecation: let's just copy what Vanilla does for now.
-            return !this.getWorld().canEntityModifyAt(playerEntity, this.getBlockPos())
+            return !this.getEntityWorld().canEntityModifyAt(playerEntity, this.getBlockPos())
                     || this.sidedDamage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
             return false;
@@ -193,7 +193,7 @@ public abstract class ResizableDecorationEntity extends Entity {
         if (this.isAlwaysInvulnerableTo(source)) {
             return false;
         } else {
-            if (!this.isRemoved() && !this.getWorld().isClient) {
+            if (!this.isRemoved() && !this.getEntityWorld().isClient()) {
                 this.kill(world);
                 this.scheduleVelocityUpdate();
                 this.onBreak(world, source.getAttacker());
@@ -205,7 +205,7 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void move(MovementType movementType, Vec3d movement) {
-        if (this.getWorld() instanceof ServerWorld world && !this.isRemoved() && movement.lengthSquared() > 0.0) {
+        if (this.getEntityWorld() instanceof ServerWorld world && !this.isRemoved() && movement.lengthSquared() > 0.0) {
             this.kill(world);
             this.onBreak(world, null);
         }
@@ -213,7 +213,7 @@ public abstract class ResizableDecorationEntity extends Entity {
 
     @Override
     public void addVelocity(double deltaX, double deltaY, double deltaZ) {
-        if (this.getWorld() instanceof ServerWorld world && !this.isRemoved() && deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 0.0) {
+        if (this.getEntityWorld() instanceof ServerWorld world && !this.isRemoved() && deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > 0.0) {
             this.kill(world);
             this.onBreak(world, null);
         }
@@ -253,7 +253,7 @@ public abstract class ResizableDecorationEntity extends Entity {
                 stack);
 
         itemEntity.setToDefaultPickupDelay();
-        this.getWorld().spawnEntity(itemEntity);
+        this.getEntityWorld().spawnEntity(itemEntity);
         return itemEntity;
     }
 

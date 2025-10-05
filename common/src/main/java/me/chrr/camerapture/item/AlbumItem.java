@@ -5,6 +5,7 @@ import me.chrr.camerapture.gui.AlbumScreenHandler;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.TooltipDisplayComponent;
+import net.minecraft.entity.ContainerUser;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
@@ -37,7 +38,7 @@ public class AlbumItem extends Item {
 
         // On the server side, we open the album inventory UI.
         // Viewing the pictures is handled on the client side, see CameraptureClient#onUseItem.
-        if (!world.isClient) {
+        if (!world.isClient()) {
             if (player.isSneaking() || AlbumItem.getPictures(stack).isEmpty()) {
                 player.openHandledScreen(new SimpleNamedScreenHandlerFactory((syncId, playerInventory, playerEntity) ->
                         new AlbumScreenHandler(syncId, playerInventory, new AlbumInventory(hand, stack)), stack.getName()));
@@ -77,7 +78,12 @@ public class AlbumItem extends Item {
         }
 
         @Override
-        public void onClose(PlayerEntity player) {
+        public void onClose(ContainerUser user) {
+            if (!(user instanceof PlayerEntity player)) {
+                super.onClose(user);
+                return;
+            }
+
             ItemStack stack = this.getAlbumStack(player);
             stack.set(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
             stack.set(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplayComponent.DEFAULT.with(DataComponentTypes.CONTAINER, true));
