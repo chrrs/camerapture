@@ -1,3 +1,11 @@
+## 1.10.8
+
+- Add Russian translation. (Thanks to @nelifs and @CherryFox for contributing!)
+- Add Simplified Chinese translation. (Thanks to @weihx15 for contributing!)
+- Fix some images not being able to upload.
+- Fix crash when entering server.
+- Update to 1.21.9 and 1.21.10.
+
 ## 1.10.7
 
 - Update to 1.21.8.
