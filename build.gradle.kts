@@ -15,10 +15,10 @@ fun Project.hasProp(namespace: String, key: String) = hasProperty("$namespace.$k
 fun Project.prop(namespace: String, key: String) = property("$namespace.$key") as String
 
 val versions = prop("platform", "versions").split(",")
-architectury.minecraft = versions.last()
+architectury.minecraft = versions.first()
 
 group = prop("mod", "group")
-version = "${prop("mod", "version")}+mc${versions.last()}"
+version = "${prop("mod", "version")}+mc${versions.first()}"
 
 tasks {
     // Create a new task `buildAll` that builds and copies all jars to a common output directory.
@@ -48,7 +48,7 @@ subprojects {
 
     configure<LoomGradleExtensionAPI> {
         dependencies {
-            "minecraft"("com.mojang:minecraft:${versions.last()}")
+            "minecraft"("com.mojang:minecraft:${versions.first()}")
 
             // Patch Yarn to work properly with NeoForge.
             @Suppress("UnstableApiUsage")
@@ -111,7 +111,7 @@ publishMods {
         val project = project(":$platform")
         val name = if (platform == "neoforge") "NeoForge" else platform.capitalized()
 
-        displayName.set("$modVersion - $name ${versions.last()}")
+        displayName.set("$modVersion - $name ${versions.first()}")
         version.set(project.version.toString())
         modLoaders.addAll(project.prop("platform", "loaders").split(","))
         file.set(project.tasks.getByName<RemapJarTask>("remapJar").archiveFile)
