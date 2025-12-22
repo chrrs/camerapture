@@ -96,9 +96,9 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     }
 
     @Override
-    protected void drawSlot(DrawContext context, Slot slot) {
+    protected void drawSlot(DrawContext context, Slot slot, int mouseX, int mouseY) {
         if (!(slot instanceof PictureSlot pictureSlot)) {
-            super.drawSlot(context, slot);
+            super.drawSlot(context, slot, mouseX, mouseY);
             return;
         }
 

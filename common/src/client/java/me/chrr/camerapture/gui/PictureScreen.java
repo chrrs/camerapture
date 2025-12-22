@@ -90,7 +90,7 @@ public class PictureScreen extends Screen {
         }
 
         if (this.ctrlHeld) {
-            Text text = Text.translatable("text.camerapture.save_as").formatted(Formatting.GRAY);
+            Text text = Text.translatable("text.camerapture.save_as").formatted(Formatting.WHITE);
             int tw = this.textRenderer.getWidth(text);
             context.drawText(this.textRenderer, text, width / 2 - tw / 2, BORDER_THICKNESS - textRenderer.fontHeight - 2, Colors.WHITE, false);
         }

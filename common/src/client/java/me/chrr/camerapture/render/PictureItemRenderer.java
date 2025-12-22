@@ -5,6 +5,7 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -13,9 +14,10 @@ import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
     public static boolean canRender(ItemStack stack) {
@@ -55,7 +57,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         }
 
         // Render the picture.
-        RenderLayer renderLayer = RenderLayer.getEntityCutoutNoCull(picture.getTextureIdentifier());
+        RenderLayer renderLayer = RenderLayers.entityCutoutNoCull(picture.getTextureIdentifier());
         queue.submitCustom(matrices, renderLayer, (matrix, buffer) -> {
             Matrix4f matrix4f = matrix.getPositionMatrix();
             buffer.vertex(matrix4f, 1f, 0f, 0f).color(0xffffffff).texture(1f, 1f).overlay(overlay).light(light).normal(matrix, 0f, 0f, 1f);
@@ -68,11 +70,11 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
     }
 
     @Override
-    public void collectVertices(Set<Vector3f> vertices) {
-        vertices.add(new Vector3f(1f, 0f, 0f));
-        vertices.add(new Vector3f(1f, 1f, 0f));
-        vertices.add(new Vector3f(0f, 1f, 0f));
-        vertices.add(new Vector3f(0f, 0f, 0f));
+    public void collectVertices(Consumer<Vector3fc> vertices) {
+        vertices.accept(new Vector3f(1f, 0f, 0f));
+        vertices.accept(new Vector3f(1f, 1f, 0f));
+        vertices.accept(new Vector3f(0f, 1f, 0f));
+        vertices.accept(new Vector3f(0f, 0f, 0f));
     }
 
     @Override

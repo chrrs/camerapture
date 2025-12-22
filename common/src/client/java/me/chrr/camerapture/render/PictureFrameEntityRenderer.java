@@ -11,6 +11,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.LoadingDisplay;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
@@ -93,8 +94,8 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         // If the picture is glowing, we render as if it were text. This avoids
         // the shading based on the normals, as text is always drawn as-is.
         RenderLayer renderLayer = state.isPictureGlowing
-                ? RenderLayer.getText(picture.getTextureIdentifier())
-                : RenderLayer.getEntityCutout(picture.getTextureIdentifier());
+                ? RenderLayers.text(picture.getTextureIdentifier())
+                : RenderLayers.entityCutout(picture.getTextureIdentifier());
 
         queue.submitCustom(matrices, renderLayer, (matrix, buffer) -> {
             Matrix4f position = matrix.getPositionMatrix();
@@ -129,11 +130,11 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         VoxelShape shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, frameWidth, frameHeight, ResizableDecorationEntity.THICKNESS);
 
         int color = ColorHelper.withAlpha(102, 0xff000000);
-        queue.submitCustom(matrices, RenderLayer.getLines(), (matrix, buffer) ->
+        queue.submitCustom(matrices, RenderLayers.lines(), (matrix, buffer) ->
                 shape.forEachEdge((x1, y1, z1, x2, y2, z2) -> {
                     Vector3f vector3f = (new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1))).normalize();
-                    buffer.vertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f);
-                    buffer.vertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f);
+                    buffer.vertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f).lineWidth(2.0f);
+                    buffer.vertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - ResizableDecorationEntity.THICKNESS / 2f)).color(color).normal(matrix, vector3f).lineWidth(2.0f);
                 }));
     }
 
