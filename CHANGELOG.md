@@ -1,3 +1,8 @@
+## 1.10.9
+
+- Add Japanese translation. (Thanks to @maeko802 for contributing!)
+- Update to 1.21.11.
+
 ## 1.10.8
 
 - Add Russian translation. (Thanks to @nelifs and @CherryFox for contributing!)
