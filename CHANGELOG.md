@@ -1,3 +1,7 @@
+## 1.10.10
+
+- Fix not being able to take pictures on NeoForge.
+
 ## 1.10.9
 
 - Add Japanese translation. (Thanks to @maeko802 for contributing!)
