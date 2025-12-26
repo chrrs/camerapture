@@ -33,6 +33,10 @@ dependencies {
     shadowCommon(project(":common", "transformProductionNeoForge")) { isTransitive = false }
 }
 
+tasks.remapJar {
+    atAccessWideners.add("camerapture.accesswidener")
+}
+
 tasks.processResources {
     from(project(":common").sourceSets.map { it.resources })
 

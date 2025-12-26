@@ -12,6 +12,9 @@ authors = "chrrrs"
 logoFile = "assets/camerapture/icon.png"
 displayURL = "https://modrinth.com/mod/camerapture"
 
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+
 [[mixins]]
 config = "camerapture.mixins.json"
 
