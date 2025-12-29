@@ -2,8 +2,6 @@ package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.config.Config;
-import net.minecraft.command.permission.Permission;
-import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
@@ -36,19 +34,17 @@ public class CameraItem extends Item {
 
         // Retrieve permissions from the config.
         Config.Server config = Camerapture.CONFIG_MANAGER.getConfig().server;
-        Permission takePicturePermission = new Permission.Level(PermissionLevel.fromLevel(config.permissionLevels.takePicture));
-        Permission uploadPermission = new Permission.Level(PermissionLevel.fromLevel(config.permissionLevels.upload));
 
         // Note that when we sneak-right-click when the camera is not active,
         // the upload GUI is opened on the client side.
-        if (active || (!player.isSneaking() && player.getPermissions().hasPermission(takePicturePermission))) {
+        if (active || (!player.isSneaking() && config.permissionLevels.canTakePicture(player))) {
             setActive(stack, !active);
             return ActionResult.CONSUME;
         }
 
         // If we try to upload when it's disabled, we send a message to the player.
         if (player.isSneaking()) {
-            if (!player.getPermissions().hasPermission(uploadPermission)) {
+            if (!config.permissionLevels.canUpload(player)) {
                 player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
                 return ActionResult.FAIL;
             }

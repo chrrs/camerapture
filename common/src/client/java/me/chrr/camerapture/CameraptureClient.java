@@ -17,8 +17,6 @@ import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.permission.Permission;
-import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
@@ -131,8 +129,6 @@ public class CameraptureClient {
             return ActionResult.PASS;
         }
 
-        Permission uploadPermission = new Permission.Level(PermissionLevel.fromLevel(syncedConfig.permissionLevels().upload));
-
         if (stack.isOf(Camerapture.PICTURE)) {
             // Right-clicking a picture item should open the picture screen.
             if (PictureItem.getPictureData(stack) != null) {
@@ -146,7 +142,7 @@ public class CameraptureClient {
                 client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
                 return ActionResult.SUCCESS;
             }
-        } else if (player.getPermissions().hasPermission(uploadPermission)
+        } else if (syncedConfig.permissionLevels().canUpload(player)
                 && player.isSneaking()
                 && stack.isOf(Camerapture.CAMERA)
                 && !CameraItem.isActive(stack)
