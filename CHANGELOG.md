@@ -1,3 +1,7 @@
+## 1.10.11
+
+- Fix not being able to upload without being OP.
+
 ## 1.10.10
 
 - Fix not being able to take pictures on NeoForge.
