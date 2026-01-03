@@ -1,7 +1,5 @@
 package me.chrr.camerapture.forge;
 
-import com.luciad.imageio.webp.WebPImageReaderSpi;
-import com.luciad.imageio.webp.WebPImageWriterSpi;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
@@ -51,11 +49,6 @@ public class CameraptureClientForge {
     public void clientSetup(FMLClientSetupEvent event) {
         CameraptureClient.init();
         CameraptureClient.registerPacketHandlers();
-
-        // FIXME: Figure out why this is necessary. This isn't needed in built versions, however
-        //        the development environment doesn't detect the WebP-ImageIO services.
-        IIORegistry.getDefaultInstance().registerServiceProvider(new WebPImageReaderSpi());
-        IIORegistry.getDefaultInstance().registerServiceProvider(new WebPImageWriterSpi());
 
         event.enqueueWork(() -> {
             // Picture

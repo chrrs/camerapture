@@ -1,17 +1,11 @@
 package me.chrr.camerapture.util;
 
-import com.luciad.imageio.webp.WebPWriteParam;
+import dev.matrixlab.webp4j.WebPCodec;
 import net.minecraft.client.texture.NativeImage;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /// General utility class for working with pictures. Editing picture is
@@ -93,25 +87,11 @@ public enum ImageUtil {
 
     /// Write an image into a byte array using WebP, with lossy compression and alpha support.
     public static byte[] compressIntoWebP(BufferedImage image, float quality) throws IOException {
-        ImageWriter imageWriter = ImageIO.getImageWritersByMIMEType("image/webp").next();
+        return WebPCodec.encodeImage(image, quality * 100.0f, false);
+    }
 
-        // We use lossy compression to save space.
-        WebPWriteParam writeParam = new WebPWriteParam(imageWriter.getLocale());
-        writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        writeParam.setCompressionType(writeParam.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
-        writeParam.setAlphaCompression(1);
-        writeParam.setCompressionQuality(quality);
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        MemoryCacheImageOutputStream imageOutputStream = new MemoryCacheImageOutputStream(outputStream);
-
-        imageWriter.setOutput(imageOutputStream);
-        imageWriter.write(null, new IIOImage(image, null, null), writeParam);
-        imageWriter.dispose();
-
-        // We manually flush the ImageOutputStream, because of a bug in the webp-imageio library.
-        imageOutputStream.flush();
-
-        return outputStream.toByteArray();
+    /// Read an image from WebP into a buffered image.
+    public static BufferedImage decodeImageFromWebP(byte[] data) throws IOException {
+        return WebPCodec.decodeImage(data);
     }
 }

@@ -9,9 +9,7 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import org.jetbrains.annotations.NotNull;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,8 +60,8 @@ public class ClientPictureStore {
             File file = getCacheFilePath(id).toFile();
             if (file.exists()) {
                 try {
-                    BufferedImage image = ImageIO.read(file);
-                    processReceivedImage(id, image);
+                    byte[] bytes = Files.readAllBytes(file.toPath());
+                    processReceivedImage(id, ImageUtil.decodeImageFromWebP(bytes));
                     return;
                 } catch (IOException e) {
                     // If this fails, we fall through to requesting the picture from the server.
@@ -142,7 +140,7 @@ public class ClientPictureStore {
         if (item != null) {
             Camerapture.EXECUTOR.execute(() -> {
                 try {
-                    processReceivedImage(item.id, ImageIO.read(new ByteArrayInputStream(item.bytes)));
+                    processReceivedImage(item.id, ImageUtil.decodeImageFromWebP(item.bytes));
                     cacheBytesToDisk(item.id, item.bytes);
                 } catch (Exception e) {
                     Camerapture.LOGGER.error("failed to decode received image bytes for image {}", item.id, e);

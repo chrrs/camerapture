@@ -32,8 +32,8 @@ dependencies {
 
     modApi("com.terraformersmc:modmenu:${rootProject.prop("modmenu", "version")}")
 
-    include("io.github.darkxanter:webp-imageio:0.3.2")
-    implementation("io.github.darkxanter:webp-imageio:0.3.2")
+    include("dev.matrixlab:webp4j:1.3.0")
+    implementation("dev.matrixlab:webp4j:1.3.0")
 
     common(project(":common", "namedElements")) { isTransitive = false }
     shadowCommon(project(":common", "transformProductionFabric")) { isTransitive = false }

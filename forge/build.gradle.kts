@@ -35,8 +35,8 @@ dependencies {
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1")!!)
     implementation(include("io.github.llamalad7:mixinextras-forge:0.4.1")!!)
 
-    implementation(include("io.github.darkxanter:webp-imageio:0.3.2")!!)
-    forgeRuntimeLibrary("io.github.darkxanter:webp-imageio:0.3.2")
+    include("dev.matrixlab:webp4j:1.3.0")
+    forgeRuntimeLibrary("dev.matrixlab:webp4j:1.3.0")
 
     common(project(":common", "namedElements")) { isTransitive = false }
     shadowCommon(project(":common", "transformProductionForge")) { isTransitive = false }

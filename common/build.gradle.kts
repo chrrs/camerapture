@@ -27,6 +27,5 @@ dependencies {
     modCompileOnlyApi("maven.modrinth:jade:${rootProject.prop("jade", "version")}+fabric")
     modCompileOnlyApi("maven.modrinth:first-person-model:${rootProject.prop("firstpersonmodel", "version")}")
 
-    // ImageIO-WebP extension
-    implementation("io.github.darkxanter:webp-imageio:0.3.2")
+    implementation("dev.matrixlab:webp4j:1.3.0")
 }
