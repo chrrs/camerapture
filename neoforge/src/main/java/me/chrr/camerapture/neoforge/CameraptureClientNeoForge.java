@@ -11,14 +11,14 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.render.ShouldRenderPicture;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.LogicalSide;
@@ -88,8 +88,8 @@ public class CameraptureClientNeoForge {
         // charging a bow and arrow, so we hold the camera up.
         event.registerItem(new IClientItemExtensions() {
             @Override
-            public BipedEntityModel.ArmPose getArmPose(@NotNull LivingEntity entity, @NotNull Hand hand, @NotNull ItemStack stack) {
-                return CameraItem.isActive(stack) ? BipedEntityModel.ArmPose.BOW_AND_ARROW : null;
+            public HumanoidModel.ArmPose getArmPose(@NotNull LivingEntity entity, @NotNull InteractionHand hand, @NotNull ItemStack stack) {
+                return CameraItem.isActive(stack) ? HumanoidModel.ArmPose.BOW_AND_ARROW : null;
             }
         }, Camerapture.CAMERA);
     }
@@ -102,7 +102,7 @@ public class CameraptureClientNeoForge {
                 return;
             }
 
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
             if (player == null) {
                 return;
             }
@@ -122,13 +122,13 @@ public class CameraptureClientNeoForge {
 
         /// Right-clicking on certain items should open client-side GUI's.
         @SubscribeEvent
-        public ActionResult onUseItem(PlayerInteractEvent.RightClickItem event) {
+        public InteractionResult onUseItem(PlayerInteractEvent.RightClickItem event) {
             if (event.getSide() != LogicalSide.CLIENT) {
-                return ActionResult.PASS;
+                return InteractionResult.PASS;
             }
 
             ItemStack stack = event.getItemStack();
-            PlayerEntity player = event.getEntity();
+            Player player = event.getEntity();
             return CameraptureClient.onUseItem(player, stack);
         }
 
@@ -148,7 +148,7 @@ public class CameraptureClientNeoForge {
         /// Hide the hand when the player is holding an active camera.
         @SubscribeEvent
         public void onRenderHand(RenderHandEvent event) {
-            CameraItem.HeldCamera camera = CameraItem.find(MinecraftClient.getInstance().player, true);
+            CameraItem.HeldCamera camera = CameraItem.find(Minecraft.getInstance().player, true);
             if (camera != null) {
                 event.setCanceled(true);
             }
@@ -158,7 +158,7 @@ public class CameraptureClientNeoForge {
         /// when the player is holding an active camera.
         @SubscribeEvent
         public void onRenderGui(RenderGuiLayerEvent.Pre event) {
-            CameraItem.HeldCamera camera = CameraItem.find(MinecraftClient.getInstance().player, true);
+            CameraItem.HeldCamera camera = CameraItem.find(Minecraft.getInstance().player, true);
             if (camera != null) {
                 event.setCanceled(true);
             } else {
@@ -166,15 +166,15 @@ public class CameraptureClientNeoForge {
                 return;
             }
 
-            if (event.getName() == VanillaGuiLayers.CROSSHAIR && !MinecraftClient.getInstance().options.hudHidden) {
-                CameraViewFinder.drawCameraViewFinder(event.getGuiGraphics(), MinecraftClient.getInstance().textRenderer);
+            if (event.getName() == VanillaGuiLayers.CROSSHAIR && !Minecraft.getInstance().options.hideGui) {
+                CameraViewFinder.drawCameraViewFinder(event.getGuiGraphics(), Minecraft.getInstance().font);
             }
         }
 
         /// If we have an active camera, scroll to zoom instead.
         @SubscribeEvent
         public void onScroll(InputEvent.MouseScrollingEvent event) {
-            if (CameraItem.find(MinecraftClient.getInstance().player, true) != null) {
+            if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
                 PictureTaker.getInstance().zoom((float) (event.getScrollDeltaY() / 4f));
                 event.setCanceled(true);
             }
@@ -183,7 +183,7 @@ public class CameraptureClientNeoForge {
         /// Apply the camera zoom FOV if we have an active camera.
         @SubscribeEvent
         public void onFovModifier(ComputeFovModifierEvent event) {
-            if (CameraItem.find(MinecraftClient.getInstance().player, true) != null) {
+            if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
                 event.setNewFovModifier(PictureTaker.getInstance().getFovModifier());
             }
         }

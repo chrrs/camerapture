@@ -3,11 +3,11 @@ package me.chrr.camerapture.neoforge;
 import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.net.NetCodec;
 import me.chrr.camerapture.net.NetworkAdapter;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -30,11 +30,11 @@ public class NeoForgeNetworkAdapter implements NetworkAdapter {
         ClientPacketType<P> type = new ClientPacketType<>(netCodec, new ArrayList<>());
         this.clientPackets.put(clazz, type);
 
-        PacketCodec<ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
+        StreamCodec<ByteBuf, P> codec = ByteBufCodecs.fromCodec(netCodec.codec());
         registrar.playToServer(
-                new CustomPayload.Id<PacketPayload<P>>(netCodec.id()),
-                PacketCodec.tuple(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p)),
-                (payload, context) -> type.handlers().forEach(handler -> handler.accept(payload.packet, (ServerPlayerEntity) context.player()))
+                new CustomPacketPayload.Type<PacketPayload<P>>(netCodec.id()),
+                StreamCodec.composite(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p)),
+                (payload, context) -> type.handlers().forEach(handler -> handler.accept(payload.packet, (ServerPlayer) context.player()))
         );
     }
 
@@ -42,22 +42,22 @@ public class NeoForgeNetworkAdapter implements NetworkAdapter {
         ServerPacketType<P> type = new ServerPacketType<>(netCodec, new ArrayList<>());
         this.serverPackets.put(clazz, type);
 
-        PacketCodec<ByteBuf, P> codec = PacketCodecs.codec(netCodec.codec());
+        StreamCodec<ByteBuf, P> codec = ByteBufCodecs.fromCodec(netCodec.codec());
         registrar.playToClient(
-                new CustomPayload.Id<PacketPayload<P>>(netCodec.id()),
-                PacketCodec.tuple(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p)),
+                new CustomPacketPayload.Type<PacketPayload<P>>(netCodec.id()),
+                StreamCodec.composite(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p)),
                 (payload, context) -> type.handlers().forEach(handler -> handler.accept(payload.packet))
         );
     }
 
     @Override
-    public <P> void sendToClient(ServerPlayerEntity player, P packet) {
+    public <P> void sendToClient(ServerPlayer player, P packet) {
         @SuppressWarnings("unchecked") ServerPacketType<P> type = (ServerPacketType<P>) getServerPacketType(packet.getClass());
         PacketDistributor.sendToPlayer(player, new PacketPayload<>(type.netCodec().id(), packet));
     }
 
     @Override
-    public <P> void onReceiveFromClient(Class<P> clazz, BiConsumer<P, ServerPlayerEntity> handler) {
+    public <P> void onReceiveFromClient(Class<P> clazz, BiConsumer<P, ServerPlayer> handler) {
         this.getClientPacketType(clazz).handlers().add(handler);
     }
 
@@ -84,15 +84,15 @@ public class NeoForgeNetworkAdapter implements NetworkAdapter {
 
     /// This is the actual packet that's sent over the network. It contains the ID
     /// of the packet, along with the packet itself.
-    private record PacketPayload<P>(Identifier id, P packet) implements CustomPayload {
+    private record PacketPayload<P>(Identifier id, P packet) implements CustomPacketPayload {
         @Override
-        public Id<PacketPayload<P>> getId() {
-            return new Id<>(id);
+        public Type<PacketPayload<P>> type() {
+            return new Type<>(id);
         }
     }
 
     /// Record used for tracking the ID and handlers of a clientbound packet.
-    private record ClientPacketType<P>(NetCodec<P> netCodec, List<BiConsumer<P, ServerPlayerEntity>> handlers) {
+    private record ClientPacketType<P>(NetCodec<P> netCodec, List<BiConsumer<P, ServerPlayer>> handlers) {
     }
 
     /// Record used for tracking the ID and handlers of a serverbound packet.

@@ -5,25 +5,30 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.TooltipDisplayComponent;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.TypedEntityData;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.text.Text;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
@@ -34,62 +39,62 @@ import java.util.function.Consumer;
 
 public class PictureItem extends Item {
     public static final Identifier ID = Camerapture.id("picture");
-    public static final RegistryKey<Item> KEY = RegistryKey.of(RegistryKeys.ITEM, ID);
+    public static final ResourceKey<Item> KEY = ResourceKey.create(Registries.ITEM, ID);
 
     private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy 'at' HH:mm");
 
     public PictureItem() {
-        super(new Settings().registryKey(KEY));
+        super(new Properties().setId(KEY));
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
-        if (!user.isSneaking()) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        if (!player.isShiftKeyDown()) {
             // When not sneaking, we show the picture client-side through an event handler.
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         } else {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
     }
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        PlayerEntity player = context.getPlayer();
-        if (player == null || !player.isSneaking()) {
-            return ActionResult.PASS;
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        if (player == null || !player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
 
-        World world = context.getWorld();
-        Direction facing = context.getSide();
-        BlockPos pos = context.getBlockPos().offset(facing);
-        ItemStack itemStack = context.getStack();
+        Level level = context.getLevel();
+        Direction facing = context.getClickedFace();
+        BlockPos pos = context.getClickedPos().relative(facing);
+        ItemStack itemStack = context.getItemInHand();
 
         // Pictures can only be placed on walls.
-        if (facing.getAxis().isVertical() || !player.canPlaceOn(pos, facing, itemStack)) {
-            return ActionResult.PASS;
+        if (facing.getAxis().isVertical() || !player.mayUseItemAt(pos, facing, itemStack)) {
+            return InteractionResult.PASS;
         }
 
-        PictureFrameEntity pictureFrameEntity = new PictureFrameEntity(world, pos, facing);
-        if (!pictureFrameEntity.canStayAttached()) {
-            return ActionResult.PASS;
+        PictureFrameEntity entity = new PictureFrameEntity(level, pos, facing);
+        if (!entity.canStayAttached()) {
+            return InteractionResult.PASS;
         }
 
         // Correctly handle (+NBT) items
-        TypedEntityData<EntityType<?>> data = itemStack.get(DataComponentTypes.ENTITY_DATA);
+        TypedEntityData<EntityType<?>> data = itemStack.get(DataComponents.ENTITY_DATA);
         if (data != null) {
-            EntityType.loadFromEntityNbt(world, player, pictureFrameEntity, data);
+            EntityType.updateCustomEntityTag(level, player, entity, data);
         }
 
-        pictureFrameEntity.setItemStack(itemStack.copyWithCount(1));
+        entity.setItemStack(itemStack.copyWithCount(1));
 
-        if (!world.isClient()) {
-            pictureFrameEntity.onPlace();
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pictureFrameEntity.getEntityPos());
-            world.spawnEntity(pictureFrameEntity);
+        if (!level.isClientSide()) {
+            entity.onPlace();
+            level.gameEvent(player, GameEvent.ENTITY_PLACE, entity.position());
+            level.addFreshEntity(entity);
         }
 
-        itemStack.decrement(1);
-        return ActionResult.SUCCESS;
+        itemStack.shrink(1);
+        return InteractionResult.SUCCESS;
     }
 
     public static ItemStack create(String creator, UUID uuid) {
@@ -100,26 +105,26 @@ public class PictureItem extends Item {
 
     @SuppressWarnings("deprecation")
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> textConsumer, TooltipFlag type) {
         getTooltip(textConsumer, stack);
     }
 
-    public static void getTooltip(Consumer<Text> textConsumer, ItemStack stack) {
+    public static void getTooltip(Consumer<Component> textConsumer, ItemStack stack) {
         PictureData data = getPictureData(stack);
         if (data == null) {
             return;
         }
 
-        textConsumer.accept(Text.translatable(
+        textConsumer.accept(Component.translatable(
                 "item.camerapture.picture.creator_tooltip",
-                Text.literal(data.creator).formatted(Formatting.GRAY)
-        ).formatted(Formatting.DARK_GRAY));
+                Component.literal(data.creator).withStyle(ChatFormatting.GRAY)
+        ).withStyle(ChatFormatting.DARK_GRAY));
 
         String timestamp = SDF.format(new Date(data.timestamp));
-        textConsumer.accept(Text.translatable(
+        textConsumer.accept(Component.translatable(
                 "item.camerapture.picture.timestamp_tooltip",
-                Text.literal(timestamp).formatted(Formatting.GRAY)
-        ).formatted(Formatting.DARK_GRAY));
+                Component.literal(timestamp).withStyle(ChatFormatting.GRAY)
+        ).withStyle(ChatFormatting.DARK_GRAY));
     }
 
     @Nullable
@@ -129,11 +134,11 @@ public class PictureItem extends Item {
 
     public record PictureData(UUID id, String creator, long timestamp) {
         public static Codec<PictureData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Uuids.CODEC.fieldOf("id").forGetter(component -> component.id),
+                UUIDUtil.AUTHLIB_CODEC.fieldOf("id").forGetter(component -> component.id),
                 Codec.STRING.fieldOf("creator").forGetter(component -> component.creator),
                 Codec.LONG.fieldOf("timestamp").forGetter(component -> component.timestamp)
         ).apply(instance, PictureData::new));
 
-        public static PacketCodec<ByteBuf, PictureData> PACKET_CODEC = PacketCodecs.codec(CODEC);
+        public static StreamCodec<ByteBuf, PictureData> PACKET_CODEC = ByteBufCodecs.fromCodec(CODEC);
     }
 }

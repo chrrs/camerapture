@@ -2,7 +2,7 @@ package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.Camerapture;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class ServerPictureStore {
     }
 
     private Path getFilePath(MinecraftServer server, UUID uuid) {
-        Path dataFolder = server.getSavePath(WorldSavePath.ROOT).resolve("camerapture");
+        Path dataFolder = server.getWorldPath(LevelResource.ROOT).resolve("camerapture");
         return dataFolder.resolve(uuid + ".webp");
     }
 

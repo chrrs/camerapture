@@ -7,11 +7,11 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.util.ScreenshotRecorder;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.Screenshot;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -50,8 +50,8 @@ public class PictureTaker {
         }
 
         this.takingPicture = true;
-        this.hudWasHidden = MinecraftClient.getInstance().options.hudHidden;
-        MinecraftClient.getInstance().options.hudHidden = true;
+        this.hudWasHidden = Minecraft.getInstance().options.hideGui;
+        Minecraft.getInstance().options.hideGui = true;
     }
 
     /// Try reading an image from the file system and prepare it, requesting
@@ -63,9 +63,9 @@ public class PictureTaker {
         } catch (Exception e) {
             Camerapture.LOGGER.error("failed to read picture from file", e);
 
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                player.sendMessage(Text.translatable("text.camerapture.upload_failed").formatted(Formatting.RED), false);
+                player.displayClientMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED), false);
             }
         }
     }
@@ -79,15 +79,15 @@ public class PictureTaker {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // Restore the HUD to the previous state.
         this.takingPicture = false;
-        client.options.hudHidden = this.hudWasHidden;
+        client.options.hideGui = this.hudWasHidden;
 
         // Save the picture as a screenshot if enabled.
         if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
-            ScreenshotRecorder.saveScreenshot(client.runDirectory, client.getFramebuffer(), (text) -> {
+            Screenshot.grab(client.gameDirectory, client.getMainRenderTarget(), (text) -> {
             });
         }
 
@@ -98,7 +98,7 @@ public class PictureTaker {
         }
 
         // Take a screenshot while the HUD was hidden.
-        ScreenshotRecorder.takeScreenshot(client.getFramebuffer(), (nativeImage) -> {
+        Screenshot.takeScreenshot(client.getMainRenderTarget(), (nativeImage) -> {
             this.picture = ImageUtil.fromNativeImage(nativeImage);
             nativeImage.close();
 
@@ -145,9 +145,9 @@ public class PictureTaker {
             Camerapture.LOGGER.error("failed to send picture to server", e);
             this.picture = null;
 
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                player.sendMessage(Text.translatable("text.camerapture.upload_failed").formatted(Formatting.RED), false);
+                player.displayClientMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED), false);
             }
         }
     }

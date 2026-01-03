@@ -3,9 +3,9 @@ package me.chrr.camerapture.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.command.permission.Permission;
-import net.minecraft.command.permission.PermissionLevel;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.world.entity.player.Player;
 
 public class Config {
     public static Config DEFAULT = new Config();
@@ -68,14 +68,14 @@ public class Config {
             public int takePicture = 0;
             public int upload = 0;
 
-            public boolean canTakePicture(PlayerEntity player) {
-                return this.takePicture == 0 || player.getPermissions().hasPermission(
-                        new Permission.Level(PermissionLevel.fromLevel(this.takePicture)));
+            public boolean canTakePicture(Player player) {
+                return this.takePicture == 0 || player.permissions().hasPermission(
+                        new Permission.HasCommandLevel(PermissionLevel.byId(this.takePicture)));
             }
 
-            public boolean canUpload(PlayerEntity player) {
-                return this.upload == 0 || player.getPermissions().hasPermission(
-                        new Permission.Level(PermissionLevel.fromLevel(this.upload)));
+            public boolean canUpload(Player player) {
+                return this.upload == 0 || player.permissions().hasPermission(
+                        new Permission.HasCommandLevel(PermissionLevel.byId(this.upload)));
             }
 
                                           @Override

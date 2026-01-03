@@ -1,26 +1,26 @@
 package me.chrr.camerapture.util;
 
 import me.chrr.camerapture.picture.RemotePicture;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.LoadingDisplay;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.LoadingDotsText;
+import net.minecraft.network.chat.Component;
 
 public enum PictureDrawingUtil {
     ;
 
-    public static void drawPicture(DrawContext context, TextRenderer textRenderer, RemotePicture picture, int x, int y, int width, int height) {
+    public static void drawPicture(GuiGraphics graphics, Font font, RemotePicture picture, int x, int y, int width, int height) {
         switch (picture.getStatus()) {
             case FETCHING -> {
-                String loading = LoadingDisplay.get(System.currentTimeMillis());
-                Text fetching = Text.translatable("text.camerapture.fetching_picture");
-                context.drawCenteredTextWithShadow(textRenderer, fetching, x + width / 2, y + height / 2 - textRenderer.fontHeight, 0xffffff);
-                context.drawCenteredTextWithShadow(textRenderer, loading, x + width / 2, y + height / 2, 0x808080);
+                String loading = LoadingDotsText.get(System.currentTimeMillis());
+                Component fetching = Component.translatable("text.camerapture.fetching_picture");
+                graphics.drawCenteredString(font, fetching, x + width / 2, y + height / 2 - font.lineHeight, 0xffffff);
+                graphics.drawCenteredString(font, loading, x + width / 2, y + height / 2, 0x808080);
             }
             case ERROR -> {
-                Text error = Text.translatable("text.camerapture.fetching_failed");
-                context.drawCenteredTextWithShadow(textRenderer, error, x + width / 2, y + height / 2 - textRenderer.fontHeight / 2, 0xff0000);
+                Component error = Component.translatable("text.camerapture.fetching_failed");
+                graphics.drawCenteredString(font, error, x + width / 2, y + height / 2 - font.lineHeight / 2, 0xff0000);
             }
             case SUCCESS -> {
                 float scaledWidth = (float) width / picture.getWidth();
@@ -34,7 +34,7 @@ public enum PictureDrawingUtil {
                 int dx = x + width / 2 - newWidth / 2;
                 int dy = y + height / 2 - newHeight / 2;
 
-                context.drawTexture(RenderPipelines.GUI_TEXTURED, picture.getTextureIdentifier(),
+                graphics.blit(RenderPipelines.GUI_TEXTURED, picture.getTextureIdentifier(),
                         dx, dy, 0f, 0f, newWidth, newHeight, newWidth, newHeight);
             }
         }

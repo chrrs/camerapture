@@ -2,37 +2,37 @@ package me.chrr.camerapture.gui;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ArrayPropertyDelegate;
-import net.minecraft.screen.PropertyDelegate;
-import net.minecraft.screen.ScreenHandler;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-public class PictureFrameScreenHandler extends ScreenHandler {
+public class PictureFrameMenu extends AbstractContainerMenu {
     @Nullable
     private final PictureFrameEntity entity;
 
-    public PictureFrameScreenHandler(int syncId) {
-        this(syncId, null, new ArrayPropertyDelegate(4));
+    public PictureFrameMenu(int containerId) {
+        this(containerId, null, new SimpleContainerData(4));
     }
 
-    public PictureFrameScreenHandler(int syncId, @Nullable PictureFrameEntity entity, PropertyDelegate propertyDelegate) {
-        super(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, syncId);
+    public PictureFrameMenu(int containerId, @Nullable PictureFrameEntity entity, ContainerData propertyDelegate) {
+        super(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, containerId);
 
-        checkDataCount(propertyDelegate, 4);
-        this.addProperties(propertyDelegate);
+        checkContainerDataCount(propertyDelegate, 4);
+        this.addDataSlots(propertyDelegate);
         this.entity = entity;
     }
 
     @Override
-    public void setProperty(int id, int value) {
-        super.setProperty(id, value);
-        this.sendContentUpdates();
+    public void setData(int id, int value) {
+        super.setData(id, value);
+        this.broadcastChanges();
     }
 
     @Override
-    public boolean onButtonClick(PlayerEntity player, int id) {
+    public boolean clickMenuButton(Player player, int id) {
         if (this.entity == null) {
             return false;
         }
@@ -75,12 +75,12 @@ public class PictureFrameScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int slot) {
+    public ItemStack quickMoveStack(Player player, int slot) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 }

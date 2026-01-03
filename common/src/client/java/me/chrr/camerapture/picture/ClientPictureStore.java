@@ -4,9 +4,9 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -33,12 +33,12 @@ public class ClientPictureStore {
 
     /// Clear all the pictures from the picture store, and destroy all textures.
     public void clear() {
-        MinecraftClient.getInstance().executeSync(() -> {
+        Minecraft.getInstance().executeIfPossible(() -> {
             for (RemotePicture picture : pictures.values()) {
                 if (picture.getTextureIdentifier() != null) {
-                    MinecraftClient.getInstance()
+                    Minecraft.getInstance()
                             .getTextureManager()
-                            .destroyTexture(picture.getTextureIdentifier());
+                            .release(picture.getTextureIdentifier());
                 }
             }
 
@@ -99,11 +99,11 @@ public class ClientPictureStore {
 
         @SuppressWarnings("resource") NativeImage nativeImage = ImageUtil.toNativeImage(image);
 
-        MinecraftClient.getInstance().executeSync(() -> {
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "camerapture/" + id, nativeImage);
-            MinecraftClient.getInstance()
+        Minecraft.getInstance().executeIfPossible(() -> {
+            DynamicTexture texture = new DynamicTexture(() -> "camerapture/" + id, nativeImage);
+            Minecraft.getInstance()
                     .getTextureManager()
-                    .registerTexture(picture.getTextureIdentifier(), texture);
+                    .register(picture.getTextureIdentifier(), texture);
             picture.setStatus(RemotePicture.Status.SUCCESS);
         });
     }
@@ -157,7 +157,7 @@ public class ClientPictureStore {
         // We enable single-player picture caching when Replay Mod is installed.
         return CameraptureClient.replayModInstalled
                 || (Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
-                && !MinecraftClient.getInstance().isConnectedToLocalServer());
+                && !Minecraft.getInstance().isSingleplayer());
     }
 
     private Path getCacheFilePath(UUID uuid) {

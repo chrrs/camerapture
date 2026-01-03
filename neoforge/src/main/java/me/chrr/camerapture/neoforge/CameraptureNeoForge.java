@@ -15,11 +15,11 @@ import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.StatFormatter;
-import net.minecraft.stat.Stats;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.StatFormatter;
+import net.minecraft.stats.Stats;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -48,42 +48,42 @@ public class CameraptureNeoForge {
     @SubscribeEvent
     public void registerContent(RegisterEvent event) {
         // Camera
-        event.register(RegistryKeys.ITEM, registry ->
+        event.register(Registries.ITEM, registry ->
                 registry.register(CameraItem.KEY, Camerapture.CAMERA));
-        event.register(RegistryKeys.SOUND_EVENT, registry ->
+        event.register(Registries.SOUND_EVENT, registry ->
                 registry.register(Camerapture.id("camera_shutter"), Camerapture.CAMERA_SHUTTER));
 
-        event.register(RegistryKeys.CUSTOM_STAT, registry -> {
+        event.register(Registries.CUSTOM_STAT, registry -> {
             registry.register(Camerapture.PICTURES_TAKEN, Camerapture.PICTURES_TAKEN);
-            Stats.CUSTOM.getOrCreateStat(Camerapture.PICTURES_TAKEN, StatFormatter.DEFAULT);
+            Stats.CUSTOM.get(Camerapture.PICTURES_TAKEN, StatFormatter.DEFAULT);
         });
 
         // Picture
-        event.register(RegistryKeys.ITEM, registry ->
+        event.register(Registries.ITEM, registry ->
                 registry.register(PictureItem.KEY, Camerapture.PICTURE));
-        event.register(RegistryKeys.RECIPE_SERIALIZER, registry ->
+        event.register(Registries.RECIPE_SERIALIZER, registry ->
                 registry.register(Camerapture.id("picture_cloning"), Camerapture.PICTURE_CLONING));
-        event.register(RegistryKeys.RECIPE_SERIALIZER, registry ->
+        event.register(Registries.RECIPE_SERIALIZER, registry ->
                 registry.register(Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING));
 
         // Album
-        event.register(RegistryKeys.ITEM, registry ->
+        event.register(Registries.ITEM, registry ->
                 registry.register(AlbumItem.KEY, Camerapture.ALBUM));
-        event.register(RegistryKeys.SCREEN_HANDLER, registry ->
+        event.register(Registries.MENU, registry ->
                 registry.register(Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER));
-        event.register(RegistryKeys.SCREEN_HANDLER, registry ->
+        event.register(Registries.MENU, registry ->
                 registry.register(Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER));
 
         // Picture Frame
-        event.register(RegistryKeys.ENTITY_TYPE, registry ->
+        event.register(Registries.ENTITY_TYPE, registry ->
                 registry.register(PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME));
-        event.register(RegistryKeys.SCREEN_HANDLER, registry ->
+        event.register(Registries.MENU, registry ->
                 registry.register(Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER));
 
         // Data components
-        event.register(RegistryKeys.DATA_COMPONENT_TYPE, registry ->
+        event.register(Registries.DATA_COMPONENT_TYPE, registry ->
                 registry.register(Camerapture.id("picture_data"), Camerapture.PICTURE_DATA));
-        event.register(RegistryKeys.DATA_COMPONENT_TYPE, registry ->
+        event.register(Registries.DATA_COMPONENT_TYPE, registry ->
                 registry.register(Camerapture.id("camera_active"), Camerapture.CAMERA_ACTIVE));
     }
 
@@ -105,9 +105,9 @@ public class CameraptureNeoForge {
 
     @SubscribeEvent
     public void fillCreativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == ItemGroups.TOOLS) {
-            event.add(Camerapture.CAMERA);
-            event.add(Camerapture.ALBUM);
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(Camerapture.CAMERA);
+            event.accept(Camerapture.ALBUM);
         }
     }
 
@@ -116,7 +116,7 @@ public class CameraptureNeoForge {
         @SubscribeEvent
         public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
             Config config = Camerapture.CONFIG_MANAGER.getConfig();
-            Camerapture.NETWORK.sendToClient((ServerPlayerEntity) event.getEntity(), new SyncConfigPacket(SyncedConfig.fromServerConfig(config.server)));
+            Camerapture.NETWORK.sendToClient((ServerPlayer) event.getEntity(), new SyncConfigPacket(SyncedConfig.fromServerConfig(config.server)));
         }
 
         /// When the server is running, we start the timer that sends the pictures.

@@ -2,34 +2,34 @@ package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.config.Config;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 public class CameraItem extends Item {
     public static final Identifier ID = Camerapture.id("camera");
-    public static final RegistryKey<Item> KEY = RegistryKey.of(RegistryKeys.ITEM, ID);
+    public static final ResourceKey<Item> KEY = ResourceKey.create(Registries.ITEM, ID);
 
     public CameraItem() {
-        super(new Settings().registryKey(KEY).maxCount(1));
+        super(new Properties().setId(KEY).stacksTo(1));
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         boolean active = isActive(stack);
 
         // Retrieve permissions from the config.
@@ -37,33 +37,33 @@ public class CameraItem extends Item {
 
         // Note that when we sneak-right-click when the camera is not active,
         // the upload GUI is opened on the client side.
-        if (active || (!player.isSneaking() && config.permissionLevels.canTakePicture(player))) {
+        if (active || (!player.isShiftKeyDown() && config.permissionLevels.canTakePicture(player))) {
             setActive(stack, !active);
-            return ActionResult.CONSUME;
+            return InteractionResult.CONSUME;
         }
 
         // If we try to upload when it's disabled, we send a message to the player.
-        if (player.isSneaking()) {
+        if (player.isShiftKeyDown()) {
             if (!config.permissionLevels.canUpload(player)) {
-                player.sendMessage(Text.translatable("text.camerapture.uploading_disabled").formatted(Formatting.RED), true);
-                return ActionResult.FAIL;
+                player.displayClientMessage(Component.translatable("text.camerapture.uploading_disabled").withStyle(ChatFormatting.RED), true);
+                return InteractionResult.FAIL;
             }
 
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     // Deactivate the camera when it's not selected anymore.
     @Override
-    public void inventoryTick(ItemStack stack, ServerWorld world, Entity entity, @Nullable EquipmentSlot slot) {
-        if (slot == null || !(entity instanceof PlayerEntity player)) {
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+        if (slot == null || !(entity instanceof Player player)) {
             setActive(stack, false);
             return;
         }
 
-        if (player.getEquippedStack(slot) != stack) {
+        if (player.getItemBySlot(slot) != stack) {
             setActive(stack, false);
         }
     }
@@ -77,26 +77,26 @@ public class CameraItem extends Item {
     }
 
     /// Find the amount of paper that the player has.
-    public static int getPaperInInventory(PlayerEntity player) {
-        return player.getInventory().count(Items.PAPER);
+    public static int getPaperInInventory(Player player) {
+        return player.getInventory().countItem(Items.PAPER);
     }
 
     /// Return if the player can take a picture. They can if they are
     /// either in creative mode, or have at least a single piece of paper.
-    public static boolean canTakePicture(PlayerEntity player) {
-        return player.isInCreativeMode() || getPaperInInventory(player) > 0;
+    public static boolean canTakePicture(Player player) {
+        return player.hasInfiniteMaterials() || getPaperInInventory(player) > 0;
     }
 
     /// Find the camera item that the player is holding, if any.
     @Nullable
-    public static HeldCamera find(PlayerEntity player, boolean shouldBeActive) {
+    public static HeldCamera find(Player player, boolean shouldBeActive) {
         if (player == null) {
             return null;
         }
 
-        for (Hand hand : Hand.values()) {
-            ItemStack stack = player.getStackInHand(hand);
-            if (stack == null || !stack.isOf(Camerapture.CAMERA)) {
+        for (InteractionHand hand : InteractionHand.values()) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (stack == null || !stack.is(Camerapture.CAMERA)) {
                 continue;
             }
 
@@ -108,6 +108,6 @@ public class CameraItem extends Item {
         return null;
     }
 
-    public record HeldCamera(ItemStack stack, Hand hand) {
+    public record HeldCamera(ItemStack stack, InteractionHand hand) {
     }
 }

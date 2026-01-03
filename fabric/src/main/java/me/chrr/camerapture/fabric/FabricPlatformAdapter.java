@@ -5,7 +5,7 @@ import me.chrr.camerapture.fabric.event.ClientTakePictureCallback;
 import me.chrr.camerapture.net.NetworkAdapter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.ActionResult;
+import net.minecraft.world.InteractionResult;
 
 import java.nio.file.Path;
 
@@ -37,7 +37,7 @@ public class FabricPlatformAdapter implements PlatformAdapter {
 
     @Override
     public boolean canTakePicture() {
-        ActionResult result = ClientTakePictureCallback.EVENT.invoker().takePicture();
-        return result != ActionResult.FAIL;
+        InteractionResult result = ClientTakePictureCallback.EVENT.invoker().takePicture();
+        return result != InteractionResult.FAIL;
     }
 }

@@ -19,11 +19,11 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.stat.StatFormatter;
-import net.minecraft.stat.Stats;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.stats.StatFormatter;
+import net.minecraft.stats.Stats;
 
 public class CameraptureFabric implements ModInitializer {
     @Override
@@ -37,31 +37,31 @@ public class CameraptureFabric implements ModInitializer {
 
     public void registerContent() {
         // Camera
-        Registry.register(Registries.ITEM, CameraItem.KEY, Camerapture.CAMERA);
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(Camerapture.CAMERA));
-        Registry.register(Registries.SOUND_EVENT, Camerapture.CAMERA_SHUTTER.id(), Camerapture.CAMERA_SHUTTER);
+        Registry.register(BuiltInRegistries.ITEM, CameraItem.KEY, Camerapture.CAMERA);
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.CAMERA));
+        Registry.register(BuiltInRegistries.SOUND_EVENT, Camerapture.CAMERA_SHUTTER.location(), Camerapture.CAMERA_SHUTTER);
 
-        Registry.register(Registries.CUSTOM_STAT, "pictures_taken", Camerapture.PICTURES_TAKEN);
-        Stats.CUSTOM.getOrCreateStat(Camerapture.PICTURES_TAKEN, StatFormatter.DEFAULT);
+        Registry.register(BuiltInRegistries.CUSTOM_STAT, "pictures_taken", Camerapture.PICTURES_TAKEN);
+        Stats.CUSTOM.get(Camerapture.PICTURES_TAKEN, StatFormatter.DEFAULT);
 
         // Picture
-        Registry.register(Registries.ITEM, PictureItem.KEY, Camerapture.PICTURE);
-        Registry.register(Registries.RECIPE_SERIALIZER, Camerapture.id("picture_cloning"), Camerapture.PICTURE_CLONING);
+        Registry.register(BuiltInRegistries.ITEM, PictureItem.KEY, Camerapture.PICTURE);
+        Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Camerapture.id("picture_cloning"), Camerapture.PICTURE_CLONING);
 
         // Album
-        Registry.register(Registries.ITEM, AlbumItem.KEY, Camerapture.ALBUM);
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> content.add(Camerapture.ALBUM));
-        Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER);
-        Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER);
-        Registry.register(Registries.RECIPE_SERIALIZER, Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING);
+        Registry.register(BuiltInRegistries.ITEM, AlbumItem.KEY, Camerapture.ALBUM);
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.ALBUM));
+        Registry.register(BuiltInRegistries.MENU, Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER);
+        Registry.register(BuiltInRegistries.MENU, Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER);
+        Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING);
 
         // Picture Frame
-        Registry.register(Registries.ENTITY_TYPE, PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME);
-        Registry.register(Registries.SCREEN_HANDLER, Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER);
+        Registry.register(BuiltInRegistries.ENTITY_TYPE, PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME);
+        Registry.register(BuiltInRegistries.MENU, Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER);
 
         // Data components
-        Registry.register(Registries.DATA_COMPONENT_TYPE, Camerapture.id("picture_data"), Camerapture.PICTURE_DATA);
-        Registry.register(Registries.DATA_COMPONENT_TYPE, Camerapture.id("camera_active"), Camerapture.CAMERA_ACTIVE);
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Camerapture.id("picture_data"), Camerapture.PICTURE_DATA);
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, Camerapture.id("camera_active"), Camerapture.CAMERA_ACTIVE);
     }
 
     public void registerPackets() {

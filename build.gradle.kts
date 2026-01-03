@@ -47,14 +47,17 @@ subprojects {
     base.archivesName.set(rootProject.prop("mod", "name"))
 
     configure<LoomGradleExtensionAPI> {
+        repositories {
+            maven("https://maven.parchmentmc.org")
+        }
+
         dependencies {
             "minecraft"("com.mojang:minecraft:${versions.first()}")
 
-            // Patch Yarn to work properly with NeoForge.
             @Suppress("UnstableApiUsage")
             "mappings"(layered {
-                mappings("net.fabricmc:yarn:${prop("fabric", "yarnVersion")}:v2")
-                mappings("dev.architectury:yarn-mappings-patch-neoforge:${prop("neoforge", "yarnPatch")}")
+                officialMojangMappings()
+                parchment("org.parchmentmc.data:parchment-${prop("parchment", "version")}@zip")
             })
         }
     }

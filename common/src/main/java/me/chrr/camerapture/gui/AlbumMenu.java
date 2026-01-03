@@ -2,27 +2,27 @@ package me.chrr.camerapture.gui;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.AlbumItem;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
-public class AlbumScreenHandler extends ScreenHandler {
-    private final Inventory inventory;
+public class AlbumMenu extends AbstractContainerMenu {
+    private final Container inventory;
 
-    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(AlbumItem.SLOTS));
+    public AlbumMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, new SimpleContainer(AlbumItem.SLOTS));
     }
 
-    public AlbumScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
-        super(Camerapture.ALBUM_SCREEN_HANDLER, syncId);
+    public AlbumMenu(int containerId, Inventory playerInventory, Container inventory) {
+        super(Camerapture.ALBUM_SCREEN_HANDLER, containerId);
 
-        checkSize(inventory, AlbumItem.SLOTS);
+        checkContainerSize(inventory, AlbumItem.SLOTS);
         this.inventory = inventory;
-        inventory.onOpen(playerInventory.player);
+        inventory.startOpen(playerInventory.player);
 
         // Album inventory
         for (int page = 0; page < AlbumItem.PAGES; page++) {
@@ -53,22 +53,22 @@ public class AlbumScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
+    public boolean stillValid(Player player) {
+        return this.inventory.stillValid(player);
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int slotId) {
+    public ItemStack quickMoveStack(Player player, int slotId) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(slotId);
 
-        if (slot.hasStack()) {
-            ItemStack stack = slot.getStack();
+        if (slot.hasItem()) {
+            ItemStack stack = slot.getItem();
             itemStack = stack.copy();
 
             // If true, the shift-click is from the album to the player inventory.
             if (slotId < AlbumItem.SLOTS) {
-                if (!this.insertItem(stack, AlbumItem.SLOTS, AlbumItem.SLOTS + 36, true)) {
+                if (!this.moveItemStackTo(stack, AlbumItem.SLOTS, AlbumItem.SLOTS + 36, true)) {
                     return ItemStack.EMPTY;
                 }
             } else if (!this.tryAddPicture(stack)) {
@@ -77,9 +77,9 @@ public class AlbumScreenHandler extends ScreenHandler {
 
             // If we have inserted everything, we empty the original slot
             if (stack.isEmpty()) {
-                slot.setStack(ItemStack.EMPTY);
+                slot.setByPlayer(ItemStack.EMPTY);
             } else {
-                slot.markDirty();
+                slot.setChanged();
             }
 
             // If the stack count hasn't changed, we don't do anything.
@@ -87,23 +87,23 @@ public class AlbumScreenHandler extends ScreenHandler {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTakeItem(player, stack);
+            slot.onTake(player, stack);
         }
 
         return itemStack;
     }
 
     private boolean tryAddPicture(ItemStack stack) {
-        if (!stack.isOf(Camerapture.PICTURE)) {
+        if (!stack.is(Camerapture.PICTURE)) {
             return false;
         }
 
         // We put a single picture into the first free slot if it's available.
         for (int i = 0; i < AlbumItem.SLOTS; i++) {
             Slot slot = getSlot(i);
-            if (!slot.hasStack()) {
+            if (!slot.hasItem()) {
                 ItemStack picture = stack.split(1);
-                slot.setStack(picture);
+                slot.setByPlayer(picture);
                 return true;
             }
         }
@@ -112,8 +112,8 @@ public class AlbumScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public void onClosed(PlayerEntity player) {
-        super.onClosed(player);
-        this.inventory.onClose(player);
+    public void removed(Player player) {
+        super.removed(player);
+        this.inventory.stopOpen(player);
     }
 }

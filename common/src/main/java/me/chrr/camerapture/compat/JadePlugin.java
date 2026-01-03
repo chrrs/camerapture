@@ -3,8 +3,8 @@ package me.chrr.camerapture.compat;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
 

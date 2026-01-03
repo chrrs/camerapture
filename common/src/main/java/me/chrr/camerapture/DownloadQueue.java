@@ -2,8 +2,7 @@ package me.chrr.camerapture;
 
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
 import me.chrr.camerapture.picture.StoredPicture;
-import net.minecraft.server.network.ServerPlayerEntity;
-
+import net.minecraft.server.level.ServerPlayer;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,7 +23,7 @@ public class DownloadQueue {
     }
 
     /// Schedule a picture to be sent.
-    public void send(ServerPlayerEntity player, UUID id, StoredPicture picture) {
+    public void send(ServerPlayer player, UUID id, StoredPicture picture) {
         queue.add(new QueuedPicture(player, id, picture));
     }
 
@@ -48,7 +47,7 @@ public class DownloadQueue {
     /// Process a single item in the queue.
     private void processQueue() {
         QueuedPicture item = queue.poll();
-        if (item == null || item.recipient.isDisconnected()) {
+        if (item == null || item.recipient.hasDisconnected()) {
             return;
         }
 
@@ -60,6 +59,6 @@ public class DownloadQueue {
         return INSTANCE;
     }
 
-    private record QueuedPicture(ServerPlayerEntity recipient, UUID id, StoredPicture picture) {
+    private record QueuedPicture(ServerPlayer recipient, UUID id, StoredPicture picture) {
     }
 }

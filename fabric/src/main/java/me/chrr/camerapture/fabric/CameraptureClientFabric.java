@@ -16,11 +16,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.render.item.model.special.SpecialModelTypes;
-import net.minecraft.client.render.item.property.bool.BooleanProperties;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.special.SpecialModelRenderers;
+import net.minecraft.client.renderer.item.properties.conditional.ConditionalItemModelProperties;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
 
 public class CameraptureClientFabric implements ClientModInitializer {
     @Override
@@ -34,21 +34,21 @@ public class CameraptureClientFabric implements ClientModInitializer {
 
     public void registerClientContent() {
         // Picture
-        BooleanProperties.ID_MAPPER.put(Camerapture.id("should_render_picture"), ShouldRenderPicture.MAP_CODEC);
-        SpecialModelTypes.ID_MAPPER.put(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
+        ConditionalItemModelProperties.ID_MAPPER.put(Camerapture.id("should_render_picture"), ShouldRenderPicture.MAP_CODEC);
+        SpecialModelRenderers.ID_MAPPER.put(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
 
         // Picture Frame
         EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
-        HandledScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
+        MenuScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
 
         // Album
-        HandledScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
-        HandledScreens.register(Camerapture.ALBUM_LECTERN_SCREEN_HANDLER, AlbumLecternScreen::new);
+        MenuScreens.register(Camerapture.ALBUM_SCREEN_HANDLER, AlbumScreen::new);
+        MenuScreens.register(Camerapture.ALBUM_LECTERN_SCREEN_HANDLER, AlbumLecternScreen::new);
     }
 
     public void registerClientEvents() {
         // When attacking with an active camera, we want to take a picture.
-        ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
+        ClientPreAttackCallback.EVENT.register((minecraft, player, clickCount) -> {
             CameraItem.HeldCamera camera = CameraItem.find(player, true);
             if (camera == null) {
                 return false;
@@ -62,23 +62,23 @@ public class CameraptureClientFabric implements ClientModInitializer {
         });
 
         // Right-clicking on certain items should open client-side GUI's.
-        UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (!world.isClient()) {
-                return ActionResult.PASS;
+        UseItemCallback.EVENT.register((player, level, hand) -> {
+            if (!level.isClientSide()) {
+                return InteractionResult.PASS;
             }
 
-            ItemStack stack = player.getStackInHand(hand);
+            ItemStack stack = player.getItemInHand(hand);
             return CameraptureClient.onUseItem(player, stack);
         });
 
         // Clear cache and reset the picture taker configuration when logging out of a world.
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+        ClientPlayConnectionEvents.DISCONNECT.register((listener, minecraft) -> {
             ClientPictureStore.getInstance().clear();
             CameraptureClient.syncedConfig = SyncedConfig.fromServerConfig(Camerapture.CONFIG_MANAGER.getConfig().server);
         });
 
         // Process any received pictures once per tick.
-        ClientTickEvents.START_CLIENT_TICK.register((world) ->
+        ClientTickEvents.START_CLIENT_TICK.register((minecraft) ->
                 ClientPictureStore.getInstance().processQueue());
     }
 }

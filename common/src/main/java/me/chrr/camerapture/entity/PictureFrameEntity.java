@@ -1,59 +1,59 @@
 package me.chrr.camerapture.entity;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.gui.PictureFrameScreenHandler;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.DamageTypeTags;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.PropertyDelegate;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.EntityTrackerEntry;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
+import me.chrr.camerapture.gui.PictureFrameMenu;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerEntity;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class PictureFrameEntity extends ResizableDecorationEntity implements NamedScreenHandlerFactory {
+public class PictureFrameEntity extends ResizableDecorationEntity implements MenuProvider {
     public static final Identifier ID = Camerapture.id("picture_frame");
-    public static final RegistryKey<EntityType<?>> KEY = RegistryKey.of(RegistryKeys.ENTITY_TYPE, ID);
+    public static final ResourceKey<EntityType<?>> KEY = ResourceKey.create(Registries.ENTITY_TYPE, ID);
 
-    private static final TrackedData<ItemStack> ITEM_STACK = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
-    private static final TrackedData<Boolean> GLOWING = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> FIXED = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> ROTATION = DataTracker.registerData(PictureFrameEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final EntityDataAccessor<ItemStack> ITEM_STACK = SynchedEntityData.defineId(PictureFrameEntity.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<Boolean> GLOWING = SynchedEntityData.defineId(PictureFrameEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FIXED = SynchedEntityData.defineId(PictureFrameEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ROTATION = SynchedEntityData.defineId(PictureFrameEntity.class, EntityDataSerializers.INT);
 
-    public PictureFrameEntity(EntityType<? extends PictureFrameEntity> entityType, World world) {
+    public PictureFrameEntity(EntityType<? extends PictureFrameEntity> entityType, Level world) {
         super(entityType, world);
     }
 
-    public PictureFrameEntity(World world, BlockPos pos, Direction facing) {
+    public PictureFrameEntity(Level world, BlockPos pos, Direction facing) {
         super(Camerapture.PICTURE_FRAME, world);
 
         this.setAttachmentPos(pos);
@@ -61,125 +61,125 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(ITEM_STACK, ItemStack.EMPTY);
-        builder.add(GLOWING, false);
-        builder.add(FIXED, false);
-        builder.add(ROTATION, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ITEM_STACK, ItemStack.EMPTY);
+        builder.define(GLOWING, false);
+        builder.define(FIXED, false);
+        builder.define(ROTATION, 0);
     }
 
     @Override
-    public ActionResult interact(PlayerEntity player, Hand hand) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
         boolean canRotate = Camerapture.CONFIG_MANAGER.getConfig().server.canRotatePictures;
 
-        if (player.isSneaking()) {
-            player.openHandledScreen(this);
-            return ActionResult.SUCCESS;
+        if (player.isShiftKeyDown()) {
+            player.openMenu(this);
+            return InteractionResult.SUCCESS;
         } else if (canRotate && !isFixed()) {
-            if (!player.getEntityWorld().isClient()) {
+            if (!player.level().isClientSide()) {
                 setRotation(getRotation() + 1);
 
-                this.playSound(SoundEvents.ENTITY_ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
-                this.emitGameEvent(GameEvent.BLOCK_CHANGE, player);
+                this.playSound(SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.gameEvent(GameEvent.BLOCK_CHANGE, player);
             }
 
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public void onBreak(ServerWorld world, @Nullable Entity entity) {
-        this.playSound(SoundEvents.ENTITY_ITEM_FRAME_BREAK, 1f, 1f);
-        this.emitGameEvent(GameEvent.BLOCK_CHANGE, entity);
+    public void onBreak(ServerLevel level, @Nullable Entity entity) {
+        this.playSound(SoundEvents.ITEM_FRAME_BREAK, 1f, 1f);
+        this.gameEvent(GameEvent.BLOCK_CHANGE, entity);
 
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
-            itemStack.setHolder(null);
-            this.dropStack(world, itemStack);
+            itemStack.setEntityRepresentation(null);
+            this.spawnAtLocation(level, itemStack);
         }
     }
 
     @Override
     public void onPlace() {
-        this.playSound(SoundEvents.ENTITY_ITEM_FRAME_PLACE, 1f, 1f);
+        this.playSound(SoundEvents.ITEM_FRAME_PLACE, 1f, 1f);
     }
 
     public ItemStack getItemStack() {
-        return this.getDataTracker().get(ITEM_STACK);
+        return this.getEntityData().get(ITEM_STACK);
     }
 
     public void setItemStack(ItemStack itemStack) {
-        this.getDataTracker().set(ITEM_STACK, itemStack);
+        this.getEntityData().set(ITEM_STACK, itemStack);
     }
 
     public boolean isPictureGlowing() {
-        return this.getDataTracker().get(GLOWING);
+        return this.getEntityData().get(GLOWING);
     }
 
     public void setPictureGlowing(boolean glowing) {
-        this.getDataTracker().set(GLOWING, glowing);
+        this.getEntityData().set(GLOWING, glowing);
     }
 
     public boolean isFixed() {
-        return this.getDataTracker().get(FIXED);
+        return this.getEntityData().get(FIXED);
     }
 
     public void setFixed(boolean fixed) {
-        this.getDataTracker().set(FIXED, fixed);
+        this.getEntityData().set(FIXED, fixed);
         resetObstructionCheckCounter();
     }
 
     public int getRotation() {
-        return this.getDataTracker().get(ROTATION);
+        return this.getEntityData().get(ROTATION);
     }
 
     public void setRotation(int rotation) {
-        this.getDataTracker().set(ROTATION, rotation % 4);
+        this.getEntityData().set(ROTATION, rotation % 4);
     }
 
     @Override
-    public void onTrackedDataSet(TrackedData<?> data) {
-        super.onTrackedDataSet(data);
+    public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
+        super.onSyncedDataUpdated(data);
 
         if (data.equals(ITEM_STACK)) {
             ItemStack itemStack = getItemStack();
             if (!itemStack.isEmpty()) {
-                itemStack.setHolder(this);
+                itemStack.setEntityRepresentation(this);
             }
         }
     }
 
     @Override
-    public boolean shouldRender(double distance) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d = 16.0;
-        d *= 4.0 * getRenderDistanceMultiplier();
+        d *= 4.0 * getViewScale();
         return distance < d * d;
     }
 
     @Override
-    public void move(MovementType movementType, Vec3d movement) {
+    public void move(MoverType movementType, Vec3 movement) {
         if (!this.isFixed()) {
             super.move(movementType, movement);
         }
     }
 
     @Override
-    public void addVelocity(double deltaX, double deltaY, double deltaZ) {
+    public void push(double deltaX, double deltaY, double deltaZ) {
         if (!this.isFixed()) {
-            super.addVelocity(deltaX, deltaY, deltaZ);
+            super.push(deltaX, deltaY, deltaZ);
         }
     }
 
     @Override
-    public boolean damage(ServerWorld world, DamageSource source, float amount) {
-        if (this.isFixed() && !source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isSourceCreativePlayer()) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        if (this.isFixed() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isCreativePlayer()) {
             return false;
         }
 
-        return super.damage(world, source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     @Override
@@ -196,8 +196,8 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
         if (success) {
             int i = shrink ? 1 : -1;
             switch (direction) {
-                case DOWN -> setAttachmentPos(getAttachmentPos().offset(Direction.UP, i));
-                case LEFT -> setAttachmentPos(getAttachmentPos().offset(getFacing().rotateYCounterclockwise(), i));
+                case DOWN -> setAttachmentPos(getAttachmentPos().relative(Direction.UP, i));
+                case LEFT -> setAttachmentPos(getAttachmentPos().relative(getNearestViewDirection().getCounterClockWise(), i));
             }
         }
 
@@ -225,61 +225,61 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
     }
 
     @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
-        return new EntitySpawnS2CPacket(this, this.getFacing().getIndex(), this.getBlockPos());
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, this.getNearestViewDirection().get3DDataValue(), this.blockPosition());
     }
 
     @Override
-    public void onSpawnPacket(EntitySpawnS2CPacket packet) {
-        super.onSpawnPacket(packet);
-        this.setFacing(Direction.byIndex(packet.getEntityData()));
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        this.setFacing(Direction.from3DDataValue(packet.getData()));
     }
 
     @Override
-    protected void writeCustomData(WriteView view) {
-        super.writeCustomData(view);
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
 
-        view.put("item", ItemStack.CODEC, this.getItemStack());
-        view.putBoolean("picture_glowing", this.isPictureGlowing());
-        view.putBoolean("fixed", this.isFixed());
-        view.putInt("rotation", this.getRotation());
+        output.store("item", ItemStack.CODEC, this.getItemStack());
+        output.putBoolean("picture_glowing", this.isPictureGlowing());
+        output.putBoolean("fixed", this.isFixed());
+        output.putInt("rotation", this.getRotation());
     }
 
     @Override
-    protected void readCustomData(ReadView view) {
-        super.readCustomData(view);
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
 
-        Optional<ItemStack> itemStack = view.read("item", ItemStack.CODEC);
+        Optional<ItemStack> itemStack = input.read("item", ItemStack.CODEC);
         if (itemStack.isEmpty()) {
             Camerapture.LOGGER.warn("unable to load item for picture frame");
         } else {
             this.setItemStack(itemStack.get());
         }
 
-        this.setPictureGlowing(view.getBoolean("picture_glowing", false));
-        this.setFixed(view.getBoolean("fixed", false));
-        this.setRotation(view.getInt("rotation", 0));
+        this.setPictureGlowing(input.getBooleanOr("picture_glowing", false));
+        this.setFixed(input.getBooleanOr("fixed", false));
+        this.setRotation(input.getIntOr("rotation", 0));
     }
 
     @Override
-    public ItemStack getPickBlockStack() {
+    public ItemStack getPickResult() {
         return this.getItemStack().copy();
     }
 
     @Override
     public boolean hasCustomName() {
-        return getItemStack().get(DataComponentTypes.CUSTOM_NAME) != null;
+        return getItemStack().get(DataComponents.CUSTOM_NAME) != null;
     }
 
     @Nullable
     @Override
-    public Text getCustomName() {
-        return hasCustomName() ? getItemStack().getName() : null;
+    public Component getCustomName() {
+        return hasCustomName() ? getItemStack().getHoverName() : null;
     }
 
     @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        return new PictureFrameScreenHandler(syncId, this, new PropertyDelegate() {
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return new PictureFrameMenu(containerId, this, new ContainerData() {
             @Override
             public int get(int id) {
                 return switch (id) {
@@ -299,7 +299,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Nam
             }
 
             @Override
-            public int size() {
+            public int getCount() {
                 return 4;
             }
         });

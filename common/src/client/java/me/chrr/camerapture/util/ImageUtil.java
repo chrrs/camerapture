@@ -1,7 +1,7 @@
 package me.chrr.camerapture.util;
 
 import com.luciad.imageio.webp.WebPWriteParam;
-import net.minecraft.client.texture.NativeImage;
+import com.mojang.blaze3d.platform.NativeImage;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -26,7 +26,7 @@ public enum ImageUtil {
 
         for (int x = 0; x < image.getWidth(); x++) {
             for (int y = 0; y < image.getHeight(); y++) {
-                nativeImage.setColorArgb(x, y, image.getRGB(x, y));
+                nativeImage.setPixel(x, y, image.getRGB(x, y));
             }
         }
 
@@ -35,7 +35,7 @@ public enum ImageUtil {
 
     /// Convert a {@link NativeImage} to a {@link BufferedImage}.
     public static BufferedImage fromNativeImage(NativeImage image) {
-        int[] pixels = image.copyPixelsArgb();
+        int[] pixels = image.getPixels();
         BufferedImage bufferedImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
         bufferedImage.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
         return bufferedImage;

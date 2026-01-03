@@ -5,18 +5,18 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
@@ -36,13 +36,13 @@ public class PictureScreen extends Screen {
 
     private RemotePicture picture;
 
-    private Text pageNumber;
-    private Text customName;
+    private Component pageNumber;
+    private Component customName;
 
     private boolean ctrlHeld = false;
 
     public PictureScreen(List<ItemStack> pictures) {
-        super(Text.translatable("item.camerapture.picture"));
+        super(Component.translatable("item.camerapture.picture"));
         this.pictures = pictures;
 
         forceRefresh();
@@ -58,30 +58,30 @@ public class PictureScreen extends Screen {
             int barX = width / 2 - barWidth / 2;
             int barY = height - BORDER_THICKNESS - 20;
 
-            addDrawableChild(ButtonWidget.builder(Text.of("←"), button -> this.changeIndexBy(-1))
-                    .dimensions(barX, barY, 20, 20)
+            addRenderableWidget(Button.builder(Component.nullToEmpty("←"), button -> this.changeIndexBy(-1))
+                    .bounds(barX, barY, 20, 20)
                     .build());
-            addDrawableChild(ButtonWidget.builder(Text.of("→"), button -> this.changeIndexBy(1))
-                    .dimensions(barX + barWidth - 20, barY, 20, 20)
+            addRenderableWidget(Button.builder(Component.nullToEmpty("→"), button -> this.changeIndexBy(1))
+                    .bounds(barX + barWidth - 20, barY, 20, 20)
                     .build());
         }
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        super.render(graphics, mouseX, mouseY, delta);
 
         // Drawing the item name and page number
         if (!isSinglePicture()) {
             int barY = height - BORDER_THICKNESS - 20 / 2;
 
-            int pageNumberX = width / 2 - this.textRenderer.getWidth(this.pageNumber) / 2;
+            int pageNumberX = width / 2 - this.font.width(this.pageNumber) / 2;
             if (this.customName != null) {
-                int nameX = width / 2 - this.textRenderer.getWidth(this.customName) / 2;
-                context.drawText(this.textRenderer, this.customName, nameX, barY - 1 - textRenderer.fontHeight, Colors.WHITE, false);
-                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY + 1, Colors.WHITE, false);
+                int nameX = width / 2 - this.font.width(this.customName) / 2;
+                graphics.drawString(this.font, this.customName, nameX, barY - 1 - font.lineHeight, CommonColors.WHITE, false);
+                graphics.drawString(this.font, this.pageNumber, pageNumberX, barY + 1, CommonColors.WHITE, false);
             } else {
-                context.drawText(this.textRenderer, this.pageNumber, pageNumberX, barY - textRenderer.fontHeight / 2, Colors.WHITE, false);
+                graphics.drawString(this.font, this.pageNumber, pageNumberX, barY - font.lineHeight / 2, CommonColors.WHITE, false);
             }
         }
 
@@ -90,62 +90,62 @@ public class PictureScreen extends Screen {
         }
 
         if (this.ctrlHeld) {
-            Text text = Text.translatable("text.camerapture.save_as").formatted(Formatting.WHITE);
-            int tw = this.textRenderer.getWidth(text);
-            context.drawText(this.textRenderer, text, width / 2 - tw / 2, BORDER_THICKNESS - textRenderer.fontHeight - 2, Colors.WHITE, false);
+            Component text = Component.translatable("text.camerapture.save_as").withStyle(ChatFormatting.WHITE);
+            int tw = this.font.width(text);
+            graphics.drawString(this.font, text, width / 2 - tw / 2, BORDER_THICKNESS - font.lineHeight - 2, CommonColors.WHITE, false);
         }
 
         // Drawing the picture
         int bottomOffset = isSinglePicture() ? 0 : 24;
-        PictureDrawingUtil.drawPicture(context, textRenderer, picture, BORDER_THICKNESS, BORDER_THICKNESS, width - BORDER_THICKNESS * 2, height - BORDER_THICKNESS * 2 - bottomOffset);
+        PictureDrawingUtil.drawPicture(graphics, font, picture, BORDER_THICKNESS, BORDER_THICKNESS, width - BORDER_THICKNESS * 2, height - BORDER_THICKNESS * 2 - bottomOffset);
     }
 
     @Nullable
     public NativeImage getNativeImage() {
-        if (this.client == null ||
+        if (this.minecraft == null ||
                 this.picture == null
                 || this.picture.getStatus() != RemotePicture.Status.SUCCESS) {
             return null;
         }
 
-        AbstractTexture texture = client.getTextureManager().getTexture(this.picture.getTextureIdentifier());
-        if (!(texture instanceof NativeImageBackedTexture backedTexture)) {
+        AbstractTexture texture = minecraft.getTextureManager().getTexture(this.picture.getTextureIdentifier());
+        if (!(texture instanceof DynamicTexture backedTexture)) {
             return null;
         }
 
-        return backedTexture.getImage();
+        return backedTexture.getPixels();
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
-        if (input.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
+    public boolean keyPressed(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
             this.ctrlHeld = true;
-        } else if (input.key() == GLFW.GLFW_KEY_S && input.hasCtrl()) {
+        } else if (event.key() == GLFW.GLFW_KEY_S && event.hasControlDown()) {
             // On Ctrl-S, we prompt the user to save the image.
             NativeImage image = this.getNativeImage();
             if (image != null) {
                 saveAs(image);
                 return true;
             }
-        } else if (input.key() == GLFW.GLFW_KEY_LEFT) {
+        } else if (event.key() == GLFW.GLFW_KEY_LEFT) {
             this.changeIndexBy(-1);
             return true;
-        } else if (input.key() == GLFW.GLFW_KEY_RIGHT) {
+        } else if (event.key() == GLFW.GLFW_KEY_RIGHT) {
             this.changeIndexBy(1);
             return true;
         }
 
         // We leave the usual handling to last, so we override the arrow keys controlling focus.
-        return super.keyPressed(input);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean keyReleased(KeyInput input) {
-        if (input.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
+    public boolean keyReleased(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
             this.ctrlHeld = false;
         }
 
-        return super.keyReleased(input);
+        return super.keyReleased(event);
     }
 
     @Override
@@ -164,12 +164,12 @@ public class PictureScreen extends Screen {
     public void setPictures(List<ItemStack> pictures) {
         this.pictures = pictures;
         this.index = 0;
-        this.clearAndInit();
+        this.rebuildWidgets();
         this.forceRefresh();
     }
 
     private void forceRefresh() {
-        this.pageNumber = Text.literal((index + 1) + " / " + this.pictures.size()).formatted(Formatting.GRAY);
+        this.pageNumber = Component.literal((index + 1) + " / " + this.pictures.size()).withStyle(ChatFormatting.GRAY);
         if (this.index >= this.pictures.size()) {
             this.picture = null;
             this.customName = null;
@@ -184,7 +184,7 @@ public class PictureScreen extends Screen {
 
         this.picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
 
-        this.customName = stack.get(DataComponentTypes.CUSTOM_NAME);
+        this.customName = stack.get(DataComponents.CUSTOM_NAME);
     }
 
     private boolean isSinglePicture() {
@@ -204,7 +204,7 @@ public class PictureScreen extends Screen {
                 }
 
                 try {
-                    image.writeTo(Path.of(path));
+                    image.writeToFile(Path.of(path));
                 } catch (IOException e) {
                     Camerapture.LOGGER.error("failed to save picture to disk", e);
                 }

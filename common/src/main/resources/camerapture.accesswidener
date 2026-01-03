@@ -1,11 +1,11 @@
 accessWidener v2 named
 
 # This is marked private in 1.21.9
-accessible field net/minecraft/server/network/ServerPlayerEntity server Lnet/minecraft/server/MinecraftServer;
+accessible field net/minecraft/server/level/ServerPlayer server Lnet/minecraft/server/MinecraftServer;
 
 # Marked public by Fabric and NeoForge, but we don't have that here.
-transitive-accessible class net/minecraft/screen/ScreenHandlerType$Factory
-accessible method net/minecraft/screen/ScreenHandlerType <init> (Lnet/minecraft/screen/ScreenHandlerType$Factory;Lnet/minecraft/resource/featuretoggle/FeatureSet;)V
+transitive-accessible class net/minecraft/world/inventory/MenuType$MenuSupplier
+accessible method net/minecraft/world/inventory/MenuType <init> (Lnet/minecraft/world/inventory/MenuType$MenuSupplier;Lnet/minecraft/world/flag/FeatureFlagSet;)V
 
 # Used when upgrading NBT to data components
-accessible class net/minecraft/datafixer/fix/ItemStackComponentizationFix$StackData
+accessible class net/minecraft/util/datafix/fixes/ItemStackComponentizationFix$ItemStackData

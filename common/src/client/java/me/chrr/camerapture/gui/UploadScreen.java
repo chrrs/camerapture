@@ -3,15 +3,15 @@ package me.chrr.camerapture.gui;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.PressableTextWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.PlainTextButton;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
@@ -26,51 +26,51 @@ public class UploadScreen extends Screen {
     private static final int backgroundWidth = 256;
     private static final int backgroundHeight = 128;
 
-    private PressableTextWidget browseButton;
+    private PlainTextButton browseButton;
 
     public UploadScreen() {
-        super(Text.translatable("text.camerapture.upload_picture.title").formatted(Formatting.BOLD));
+        super(Component.translatable("text.camerapture.upload_picture.title").withStyle(ChatFormatting.BOLD));
     }
 
     @Override
     protected void init() {
         super.init();
 
-        Text text = Text.translatable("text.camerapture.upload_picture.browse").formatted(Formatting.UNDERLINE);
-        int w = textRenderer.getWidth(text);
+        Component text = Component.translatable("text.camerapture.upload_picture.browse").withStyle(ChatFormatting.UNDERLINE);
+        int w = font.width(text);
 
-        browseButton = addDrawableChild(new PressableTextWidget(
-                this.width / 2 - w / 2, this.height / 2 + textRenderer.fontHeight + 4, w,
-                textRenderer.fontHeight, text, (button) -> browseFile(), textRenderer));
+        browseButton = addRenderableWidget(new PlainTextButton(
+                this.width / 2 - w / 2, this.height / 2 + font.lineHeight + 4, w,
+                font.lineHeight, text, (button) -> browseFile(), font));
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        super.render(graphics, mouseX, mouseY, delta);
 
-        Text description = Text.translatable("text.camerapture.upload_picture.description");
+        Component description = Component.translatable("text.camerapture.upload_picture.description");
 
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - textRenderer.fontHeight - 16, Colors.WHITE);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - font.lineHeight - 16, CommonColors.WHITE);
 
-        boolean canTakePicture = this.client != null && this.client.player != null && CameraItem.canTakePicture(this.client.player);
+        boolean canTakePicture = this.minecraft.player != null && CameraItem.canTakePicture(this.minecraft.player);
         browseButton.visible = canTakePicture;
 
         if (!canTakePicture) {
             if (System.currentTimeMillis() % 1000 < 500) {
-                int y = this.height / 2 + textRenderer.fontHeight + 4;
-                context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.no_paper"), this.width / 2, y, Colors.RED);
+                int y = this.height / 2 + font.lineHeight + 4;
+                graphics.drawCenteredString(font, Component.translatable("text.camerapture.no_paper"), this.width / 2, y, CommonColors.RED);
             }
         } else {
-            context.drawCenteredTextWithShadow(this.textRenderer, description, this.width / 2, this.height / 2, Colors.WHITE);
+            graphics.drawCenteredString(this.font, description, this.width / 2, this.height / 2, CommonColors.WHITE);
         }
     }
 
     @Override
-    public void onFilesDropped(List<Path> paths) {
+    public void onFilesDrop(List<Path> paths) {
         for (Path path : paths) {
             if (tryUpload(path)) {
-                this.close();
+                this.onClose();
                 return;
             }
         }
@@ -90,7 +90,7 @@ public class UploadScreen extends Screen {
 
                 try {
                     if (tryUpload(Path.of(path))) {
-                        MinecraftClient.getInstance().executeSync(this::close);
+                        Minecraft.getInstance().executeIfPossible(this::onClose);
                     }
                 } catch (InvalidPathException e) {
                     Camerapture.LOGGER.error("tinyfd returned invalid path", e);
@@ -100,7 +100,7 @@ public class UploadScreen extends Screen {
     }
 
     private boolean tryUpload(Path path) {
-        boolean canTakePicture = this.client != null && this.client.player != null && CameraItem.canTakePicture(this.client.player);
+        boolean canTakePicture = this.minecraft.player != null && CameraItem.canTakePicture(this.minecraft.player);
         if (!canTakePicture) {
             return false;
         }

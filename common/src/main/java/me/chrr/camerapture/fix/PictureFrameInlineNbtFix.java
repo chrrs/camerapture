@@ -6,8 +6,8 @@ import com.mojang.datafixers.OpticFinder;
 import com.mojang.datafixers.TypeRewriteRule;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
-import net.minecraft.datafixer.FixUtil;
-import net.minecraft.datafixer.TypeReferences;
+import net.minecraft.util.datafix.ExtraDataFixUtils;
+import net.minecraft.util.datafix.fixes.References;
 
 public class PictureFrameInlineNbtFix extends DataFix {
     public PictureFrameInlineNbtFix(Schema outputSchema) {
@@ -16,9 +16,9 @@ public class PictureFrameInlineNbtFix extends DataFix {
 
     @Override
     protected TypeRewriteRule makeRule() {
-        OpticFinder<?> opticFinder = DSL.namedChoice("camerapture:picture_frame", this.getInputSchema().getChoiceType(TypeReferences.ENTITY, "camerapture:picture_frame"));
+        OpticFinder<?> opticFinder = DSL.namedChoice("camerapture:picture_frame", this.getInputSchema().getChoiceType(References.ENTITY, "camerapture:picture_frame"));
         return this.fixTypeEverywhereTyped("InlineBlockPosFormatFix - Camerapture Picture Frame",
-                this.getInputSchema().getType(TypeReferences.ENTITY), (entityTyped) ->
+                this.getInputSchema().getType(References.ENTITY), (entityTyped) ->
                         entityTyped.updateTyped(opticFinder, (pictureFrameTyped) ->
                                 pictureFrameTyped.update(DSL.remainderFinder(), this::fixPictureFrameFields)));
     }
@@ -42,6 +42,6 @@ public class PictureFrameInlineNbtFix extends DataFix {
                     default -> facing.createString("north");
                 });
 
-        return FixUtil.consolidateBlockPos(dynamic, "TileX", "TileY", "TileZ", "block_pos");
+        return ExtraDataFixUtils.fixInlineBlockPos(dynamic, "TileX", "TileY", "TileZ", "block_pos");
     }
 }

@@ -1,7 +1,7 @@
 package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.Camerapture;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 

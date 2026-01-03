@@ -1,31 +1,30 @@
 package me.chrr.camerapture.gui;
 
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.util.KeyboardUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.screen.narration.NarrationPart;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.input.AbstractInput;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerListener;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerListener;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.Consumer;
 
 /// This UI is inspired largely by the equivalent UI in the
 /// <a href="https://modrinth.com/mod/camera-mod">Forge camera mod</a>.
-public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler> implements ScreenHandlerListener {
+public class PictureFrameScreen extends AbstractContainerScreen<PictureFrameMenu> implements ContainerListener {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_picture_frame.png");
 
     private int frameWidth = 0;
@@ -33,84 +32,84 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
     private boolean glowing = false;
     private boolean fixed = false;
 
-    private ButtonWidget upButton;
-    private ButtonWidget leftButton;
-    private ButtonWidget rightButton;
-    private ButtonWidget downButton;
+    private Button upButton;
+    private Button leftButton;
+    private Button rightButton;
+    private Button downButton;
 
     private SmallCheckboxWidget glowingCheckbox;
     private SmallCheckboxWidget fixedCheckbox;
 
-    public PictureFrameScreen(PictureFrameScreenHandler screenHandler, PlayerInventory inventory, Text title) {
-        super(screenHandler, inventory, title);
-        screenHandler.addListener(this);
+    public PictureFrameScreen(PictureFrameMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+        menu.addSlotListener(this);
 
-        this.backgroundWidth = 158;
-        this.backgroundHeight = 52;
+        this.imageWidth = 158;
+        this.imageHeight = 52;
     }
 
     @Override
     protected void init() {
         super.init();
 
-        upButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 0 : 1);
-                            this.frameHeight += KeyboardUtil.hasShiftDown() ? -1 : 1;
+        upButton = addRenderableWidget(
+                Button.builder(Component.empty(), button -> {
+                            this.sendButtonPressPacket(this.minecraft.hasShiftDown() ? 0 : 1);
+                            this.frameHeight += this.minecraft.hasShiftDown() ? -1 : 1;
                         })
-                        .dimensions(width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2 - 20 - 4, backgroundWidth, 20)
+                        .bounds(width / 2 - imageWidth / 2, height / 2 - imageHeight / 2 - 20 - 4, imageWidth, 20)
                         .build());
 
-        rightButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 2 : 3);
-                            this.frameWidth += KeyboardUtil.hasShiftDown() ? -1 : 1;
-                        }).dimensions(width / 2 + backgroundWidth / 2 + 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
+        rightButton = addRenderableWidget(
+                Button.builder(Component.empty(), button -> {
+                            this.sendButtonPressPacket(this.minecraft.hasShiftDown() ? 2 : 3);
+                            this.frameWidth += this.minecraft.hasShiftDown() ? -1 : 1;
+                        }).bounds(width / 2 + imageWidth / 2 + 4, height / 2 - imageHeight / 2, 20, imageHeight)
                         .build());
 
-        downButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 4 : 5);
-                            this.frameHeight += KeyboardUtil.hasShiftDown() ? -1 : 1;
+        downButton = addRenderableWidget(
+                Button.builder(Component.empty(), button -> {
+                            this.sendButtonPressPacket(this.minecraft.hasShiftDown() ? 4 : 5);
+                            this.frameHeight += this.minecraft.hasShiftDown() ? -1 : 1;
                         })
-                        .dimensions(width / 2 - backgroundWidth / 2, height / 2 + backgroundHeight / 2 + 4, backgroundWidth, 20)
+                        .bounds(width / 2 - imageWidth / 2, height / 2 + imageHeight / 2 + 4, imageWidth, 20)
                         .build());
 
-        leftButton = addDrawableChild(
-                ButtonWidget.builder(Text.empty(), button -> {
-                            this.sendButtonPressPacket(KeyboardUtil.hasShiftDown() ? 6 : 7);
-                            this.frameWidth += KeyboardUtil.hasShiftDown() ? -1 : 1;
-                        }).dimensions(width / 2 - backgroundWidth / 2 - 20 - 4, height / 2 - backgroundHeight / 2, 20, backgroundHeight)
+        leftButton = addRenderableWidget(
+                Button.builder(Component.empty(), button -> {
+                            this.sendButtonPressPacket(this.minecraft.hasShiftDown() ? 6 : 7);
+                            this.frameWidth += this.minecraft.hasShiftDown() ? -1 : 1;
+                        }).bounds(width / 2 - imageWidth / 2 - 20 - 4, height / 2 - imageHeight / 2, 20, imageHeight)
                         .build());
 
-        glowingCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.glowing"), (glowing) -> {
+        glowingCheckbox = addRenderableWidget(new SmallCheckboxWidget(Component.translatable("text.camerapture.edit_picture_frame.glowing"), (glowing) -> {
             this.sendButtonPressPacket(8);
             this.glowing = glowing;
-        }, width / 2 - backgroundWidth / 2 + 7, height / 2 - backgroundHeight / 2 + 34, false, this.glowing));
+        }, width / 2 - imageWidth / 2 + 7, height / 2 - imageHeight / 2 + 34, false, this.glowing));
 
-        fixedCheckbox = addDrawableChild(new SmallCheckboxWidget(Text.translatable("text.camerapture.edit_picture_frame.fixed"), (fixed) -> {
+        fixedCheckbox = addRenderableWidget(new SmallCheckboxWidget(Component.translatable("text.camerapture.edit_picture_frame.fixed"), (fixed) -> {
             this.sendButtonPressPacket(9);
             this.fixed = fixed;
-        }, width / 2 + backgroundWidth / 2 - 7 - 11, height / 2 - backgroundHeight / 2 + 34, true, this.fixed));
+        }, width / 2 + imageWidth / 2 - 7 - 11, height / 2 - imageHeight / 2 + 34, true, this.fixed));
 
         updateButtons();
     }
 
     private void sendButtonPressPacket(int id) {
-        if (this.client == null || this.client.interactionManager == null) {
+        if (this.minecraft.gameMode == null) {
             return;
         }
 
-        this.client.interactionManager.clickButton(this.handler.syncId, id);
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, id);
     }
 
     @Override
-    public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {
+    public void slotChanged(AbstractContainerMenu menu, int slotId, ItemStack stack) {
         // This screen has no slots.
     }
 
     @Override
-    public void onPropertyUpdate(ScreenHandler handler, int property, int value) {
+    public void dataChanged(AbstractContainerMenu menu, int property, int value) {
         switch (property) {
             case 0 -> this.frameWidth = value;
             case 1 -> this.frameHeight = value;
@@ -122,32 +121,32 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
     }
 
     @Override
-    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
+    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0f, 0f, imageWidth, imageHeight, 256, 256);
     }
 
     @Override
-    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), backgroundWidth / 2, 7, Colors.WHITE);
-        context.drawCenteredTextWithShadow(textRenderer, Text.translatable("text.camerapture.edit_picture_frame.shrink_hint"), backgroundWidth / 2, 7 + textRenderer.fontHeight + 2, Colors.GRAY);
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawCenteredString(font, Component.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), imageWidth / 2, 7, CommonColors.WHITE);
+        graphics.drawCenteredString(font, Component.translatable("text.camerapture.edit_picture_frame.shrink_hint"), imageWidth / 2, 7 + font.lineHeight + 2, CommonColors.GRAY);
     }
 
     private void updateButtons() {
-        if (KeyboardUtil.hasShiftDown()) {
-            upButton.setMessage(Text.of("↓"));
-            leftButton.setMessage(Text.of("→"));
-            rightButton.setMessage(Text.of("←"));
-            downButton.setMessage(Text.of("↑"));
+        if (this.minecraft.hasShiftDown()) {
+            upButton.setMessage(Component.nullToEmpty("↓"));
+            leftButton.setMessage(Component.nullToEmpty("→"));
+            rightButton.setMessage(Component.nullToEmpty("←"));
+            downButton.setMessage(Component.nullToEmpty("↑"));
 
             upButton.active = frameHeight > 1;
             leftButton.active = frameWidth > 1;
             rightButton.active = frameWidth > 1;
             downButton.active = frameHeight > 1;
         } else {
-            upButton.setMessage(Text.of("↑"));
-            leftButton.setMessage(Text.of("←"));
-            rightButton.setMessage(Text.of("→"));
-            downButton.setMessage(Text.of("↓"));
+            upButton.setMessage(Component.nullToEmpty("↑"));
+            leftButton.setMessage(Component.nullToEmpty("←"));
+            rightButton.setMessage(Component.nullToEmpty("→"));
+            downButton.setMessage(Component.nullToEmpty("↓"));
 
             upButton.active = frameHeight < 16;
             leftButton.active = frameWidth < 16;
@@ -160,31 +159,31 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent event) {
         updateButtons();
-        return super.keyPressed(input);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean keyReleased(KeyInput input) {
+    public boolean keyReleased(KeyEvent event) {
         updateButtons();
-        return super.keyReleased(input);
+        return super.keyReleased(event);
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         // We don't pause the game, so we can actually see the picture frame
         // update in the background while we're editing it.
         return false;
     }
 
-    private static class SmallCheckboxWidget extends PressableWidget {
+    private static class SmallCheckboxWidget extends AbstractButton {
         private final boolean leftText;
         private boolean checked;
 
         private final Consumer<Boolean> onChange;
 
-        public SmallCheckboxWidget(Text text, Consumer<Boolean> onChange, int x, int y, boolean leftText, boolean checked) {
+        public SmallCheckboxWidget(Component text, Consumer<Boolean> onChange, int x, int y, boolean leftText, boolean checked) {
             super(x, y, 11, 11, text);
 
             this.onChange = onChange;
@@ -193,36 +192,36 @@ public class PictureFrameScreen extends HandledScreen<PictureFrameScreenHandler>
         }
 
         @Override
-        public void onPress(AbstractInput input) {
+        public void onPress(InputWithModifiers input) {
             this.checked = !this.checked;
             onChange.accept(checked);
         }
 
         @Override
-        protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-            builder.put(NarrationPart.TITLE, this.getNarrationMessage());
+        protected void updateWidgetNarration(NarrationElementOutput output) {
+            output.add(NarratedElementType.TITLE, this.createNarrationMessage());
 
             if (this.active) {
+                String action = this.checked ? "uncheck" : "check";
                 if (this.isFocused()) {
-                    builder.put(NarrationPart.USAGE, Text.translatable("narration.checkbox.usage.focused"));
+                    output.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.focused." + action));
                 } else {
-                    builder.put(NarrationPart.USAGE, Text.translatable("narration.checkbox.usage.hovered"));
+                    output.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.hovered." + action));
                 }
             }
         }
 
         @Override
-        protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
-            MinecraftClient minecraftClient = MinecraftClient.getInstance();
-            TextRenderer textRenderer = minecraftClient.textRenderer;
+        protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            Font font = Minecraft.getInstance().font;
 
-            int textX = getX() + (leftText ? -4 - textRenderer.getWidth(getMessage()) : 11 + 4);
-            context.drawTextWithShadow(textRenderer, getMessage(), textX, getY() + 2, 0xffe0e0e0);
+            int textX = getX() + (leftText ? -4 - font.width(getMessage()) : 11 + 4);
+            graphics.drawString(font, getMessage(), textX, getY() + 2, 0xffe0e0e0);
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), this.isSelected() ? 11 : 0, 52, 11, 11, 256, 256);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), this.isHoveredOrFocused() ? 11 : 0, 52, 11, 11, 256, 256);
 
             if (checked) {
-                context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
+                graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), 22, 52, 11, 11, 256, 256);
             }
         }
     }

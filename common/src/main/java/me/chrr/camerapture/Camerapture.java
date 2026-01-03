@@ -3,9 +3,9 @@ package me.chrr.camerapture;
 import com.mojang.serialization.Codec;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
-import me.chrr.camerapture.gui.AlbumLecternScreenHandler;
-import me.chrr.camerapture.gui.AlbumScreenHandler;
-import me.chrr.camerapture.gui.PictureFrameScreenHandler;
+import me.chrr.camerapture.gui.AlbumLecternMenu;
+import me.chrr.camerapture.gui.AlbumMenu;
+import me.chrr.camerapture.gui.PictureFrameMenu;
 import me.chrr.camerapture.item.*;
 import me.chrr.camerapture.net.NetworkAdapter;
 import me.chrr.camerapture.net.clientbound.PictureErrorPacket;
@@ -15,23 +15,23 @@ import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.picture.StoredPicture;
-import net.minecraft.component.ComponentType;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CustomRecipe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -58,38 +58,38 @@ public class Camerapture {
 
     // Camera
     public static Item CAMERA = new CameraItem();
-    public static final SoundEvent CAMERA_SHUTTER = SoundEvent.of(id("camera_shutter"));
+    public static final SoundEvent CAMERA_SHUTTER = SoundEvent.createVariableRangeEvent(id("camera_shutter"));
     public static final Identifier PICTURES_TAKEN = id("pictures_taken");
 
     // Picture
     public static Item PICTURE = new PictureItem();
-    public static final SpecialCraftingRecipe.SpecialRecipeSerializer<PictureCloningRecipe> PICTURE_CLONING =
-            new SpecialCraftingRecipe.SpecialRecipeSerializer<>(PictureCloningRecipe::new);
+    public static final CustomRecipe.Serializer<PictureCloningRecipe> PICTURE_CLONING =
+            new CustomRecipe.Serializer<>(PictureCloningRecipe::new);
 
     // Album
     public static final Item ALBUM = new AlbumItem();
-    public static final ScreenHandlerType<AlbumScreenHandler> ALBUM_SCREEN_HANDLER = new ScreenHandlerType<>(AlbumScreenHandler::new, FeatureSet.empty());
-    public static final ScreenHandlerType<AlbumLecternScreenHandler> ALBUM_LECTERN_SCREEN_HANDLER =
-            new ScreenHandlerType<>((syncId, playerInventory) -> new AlbumLecternScreenHandler(syncId), FeatureSet.empty());
-    public static final SpecialCraftingRecipe.SpecialRecipeSerializer<AlbumCloningRecipe> ALBUM_CLONING =
-            new SpecialCraftingRecipe.SpecialRecipeSerializer<>(AlbumCloningRecipe::new);
+    public static final MenuType<AlbumMenu> ALBUM_SCREEN_HANDLER = new MenuType<>(AlbumMenu::new, FeatureFlagSet.of());
+    public static final MenuType<AlbumLecternMenu> ALBUM_LECTERN_SCREEN_HANDLER =
+            new MenuType<>((containerId, playerInventory) -> new AlbumLecternMenu(containerId), FeatureFlagSet.of());
+    public static final CustomRecipe.Serializer<AlbumCloningRecipe> ALBUM_CLONING =
+            new CustomRecipe.Serializer<>(AlbumCloningRecipe::new);
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
-            EntityType.Builder.<PictureFrameEntity>create(PictureFrameEntity::new, SpawnGroup.MISC)
-                    .maxTrackingRange(10)
-                    .dimensions(0.5F, 0.5F)
+            EntityType.Builder.<PictureFrameEntity>of(PictureFrameEntity::new, MobCategory.MISC)
+                    .clientTrackingRange(10)
+                    .sized(0.5F, 0.5F)
                     .eyeHeight(0.0F)
                     .build(PictureFrameEntity.KEY);
-    public static final ScreenHandlerType<PictureFrameScreenHandler> PICTURE_FRAME_SCREEN_HANDLER =
-            new ScreenHandlerType<>((syncId, pi) -> new PictureFrameScreenHandler(syncId), FeatureSet.empty());
+    public static final MenuType<PictureFrameMenu> PICTURE_FRAME_SCREEN_HANDLER =
+            new MenuType<>((containerId, pi) -> new PictureFrameMenu(containerId), FeatureFlagSet.of());
 
     // Data Components
-    public static final ComponentType<PictureItem.PictureData> PICTURE_DATA = ComponentType.<PictureItem.PictureData>builder()
-            .codec(PictureItem.PictureData.CODEC).packetCodec(PictureItem.PictureData.PACKET_CODEC)
+    public static final DataComponentType<PictureItem.PictureData> PICTURE_DATA = DataComponentType.<PictureItem.PictureData>builder()
+            .persistent(PictureItem.PictureData.CODEC).networkSynchronized(PictureItem.PictureData.PACKET_CODEC)
             .build();
-    public static final ComponentType<Boolean> CAMERA_ACTIVE = ComponentType.<Boolean>builder()
-            .codec(Codec.BOOL).packetCodec(PacketCodecs.BOOLEAN)
+    public static final DataComponentType<Boolean> CAMERA_ACTIVE = DataComponentType.<Boolean>builder()
+            .persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL)
             .build();
 
     public static void registerPacketHandlers() {
@@ -102,21 +102,22 @@ public class Camerapture {
 
             // If the player is in creative mode, skip taking any paper.
             if (!player.isCreative()) {
-                if (Inventories.remove(player.getInventory(), (stack) -> stack.isOf(Items.PAPER), 1, false) != 1) {
+                if (ContainerHelper.clearOrCountMatchingItems(player.getInventory(), (stack) -> stack.is(Items.PAPER), 1, false) != 1) {
                     return;
                 }
             }
 
             // We don't want to play the sound when the player is uploading a picture, only when it's being taken.
             if (CameraItem.isActive(camera.stack())) {
-                player.getEntityWorld().playSoundFromEntity(null, player, CAMERA_SHUTTER, SoundCategory.PLAYERS, 1f, 1f);
+                //noinspection resource: we don't want to close the level.
+                player.level().playSound(null, player, CAMERA_SHUTTER, SoundSource.PLAYERS, 1f, 1f);
             }
 
             CameraItem.setActive(camera.stack(), false);
-            player.getItemCooldownManager().set(camera.stack(), 20 * 3);
-            player.swingHand(camera.hand(), true);
+            player.getCooldowns().addCooldown(camera.stack(), 20 * 3);
+            player.swing(camera.hand(), true);
 
-            player.incrementStat(PICTURES_TAKEN);
+            player.awardStat(PICTURES_TAKEN);
 
             UUID id = ServerPictureStore.getInstance().reserveId();
             NETWORK.sendToClient(player, new RequestUploadPacket(id));
@@ -151,10 +152,10 @@ public class Camerapture {
                             ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
 
                             // We have to do this on a separate thread, because it might spawn an item entity.
-                            server.execute(() -> player.getInventory().offerOrDrop(picture));
+                            server.execute(() -> player.getInventory().placeItemBackInInventory(picture));
                         } catch (Exception e) {
                             LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
-                            player.sendMessage(Text.translatable("text.camerapture.picture_failed").formatted(Formatting.RED), false);
+                            player.displayClientMessage(Component.translatable("text.camerapture.picture_failed").withStyle(ChatFormatting.RED), false);
                         }
                     });
                 }));
@@ -195,6 +196,6 @@ public class Camerapture {
     }
 
     public static Identifier id(String path) {
-        return Identifier.of("camerapture", path);
+        return Identifier.fromNamespaceAndPath("camerapture", path);
     }
 }

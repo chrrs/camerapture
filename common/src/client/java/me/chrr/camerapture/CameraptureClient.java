@@ -16,10 +16,10 @@ import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
 import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -122,36 +122,36 @@ public class CameraptureClient {
     }
 
     /// Right-clicking on certain items should open client-side GUI's.
-    public static ActionResult onUseItem(PlayerEntity player, ItemStack stack) {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public static InteractionResult onUseItem(Player player, ItemStack stack) {
+        Minecraft client = Minecraft.getInstance();
 
         if (client.player != player) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
-        if (stack.isOf(Camerapture.PICTURE)) {
+        if (stack.is(Camerapture.PICTURE)) {
             // Right-clicking a picture item should open the picture screen.
             if (PictureItem.getPictureData(stack) != null) {
-                client.executeSync(() -> client.setScreen(new PictureScreen(List.of(stack))));
-                return ActionResult.SUCCESS;
+                client.executeIfPossible(() -> client.setScreen(new PictureScreen(List.of(stack))));
+                return InteractionResult.SUCCESS;
             }
-        } else if (stack.isOf(Camerapture.ALBUM) && !player.isSneaking()) {
+        } else if (stack.is(Camerapture.ALBUM) && !player.isShiftKeyDown()) {
             // Right-clicking the album should open the gallery screen.
             List<ItemStack> pictures = AlbumItem.getPictures(stack);
             if (!pictures.isEmpty()) {
-                client.executeSync(() -> client.setScreen(new PictureScreen(pictures)));
-                return ActionResult.SUCCESS;
+                client.executeIfPossible(() -> client.setScreen(new PictureScreen(pictures)));
+                return InteractionResult.SUCCESS;
             }
         } else if (syncedConfig.permissionLevels().canUpload(player)
-                && player.isSneaking()
-                && stack.isOf(Camerapture.CAMERA)
+                && player.isShiftKeyDown()
+                && stack.is(Camerapture.CAMERA)
                 && !CameraItem.isActive(stack)
-                && !player.getItemCooldownManager().isCoolingDown(stack)) {
+                && !player.getCooldowns().isOnCooldown(stack)) {
             // Shift-right clicking the camera should open the upload screen.
-            client.executeSync(() -> client.setScreen(new UploadScreen()));
-            return ActionResult.SUCCESS;
+            client.executeIfPossible(() -> client.setScreen(new UploadScreen()));
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 }

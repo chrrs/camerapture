@@ -6,44 +6,44 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.PageTurnWidget;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.PageButton;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.resources.Identifier;
 
-public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
+public class AlbumScreen extends AbstractContainerScreen<AlbumMenu> {
     private static final Identifier TEXTURE = Camerapture.id("textures/gui/edit_album.png");
 
     private int activePage = 0;
-    private Text pageText = Text.empty();
+    private Component pageText = Component.empty();
 
-    private PageTurnWidget previousButton;
-    private PageTurnWidget nextButton;
+    private PageButton previousButton;
+    private PageButton nextButton;
 
-    public AlbumScreen(AlbumScreenHandler handler, PlayerInventory inventory, Text title) {
-        super(handler, inventory, title);
+    public AlbumScreen(AlbumMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
 
-        this.backgroundWidth = 280;
-        this.backgroundHeight = 237;
+        this.imageWidth = 280;
+        this.imageHeight = 237;
 
-        this.playerInventoryTitleX = 60;
-        this.playerInventoryTitleY = this.backgroundHeight - 94;
+        this.inventoryLabelX = 60;
+        this.inventoryLabelY = this.imageHeight - 94;
 
-        this.titleX = 19;
-        this.titleY = 15;
+        this.titleLabelX = 19;
+        this.titleLabelY = 15;
     }
 
     @Override
     protected void init() {
         super.init();
 
-        previousButton = addDrawableChild(new PageTurnWidget(x + 22, y + 121, false, button -> this.changePage(-1), true));
-        nextButton = addDrawableChild(new PageTurnWidget(x + 234, y + 121, true, button -> this.changePage(1), true));
+        previousButton = addRenderableWidget(new PageButton(leftPos + 22, topPos + 121, false, button -> this.changePage(-1), true));
+        nextButton = addRenderableWidget(new PageButton(leftPos + 234, topPos + 121, true, button -> this.changePage(1), true));
         updatePage();
     }
 
@@ -55,62 +55,62 @@ public class AlbumScreen extends HandledScreen<AlbumScreenHandler> {
     private void updatePage() {
         for (int i = 0; i < AlbumItem.SLOTS; i++) {
             int page = i / AlbumItem.ITEMS_PER_PAGE;
-            ((PictureSlot) this.handler.slots.get(i)).setEnabled(page == this.activePage);
+            ((PictureSlot) this.menu.slots.get(i)).setEnabled(page == this.activePage);
         }
 
-        this.pageText = Text.translatable("book.pageIndicator", this.activePage + 1, AlbumItem.PAGES);
+        this.pageText = Component.translatable("book.pageIndicator", this.activePage + 1, AlbumItem.PAGES);
         this.previousButton.visible = this.activePage != 0;
         this.nextButton.visible = this.activePage != AlbumItem.PAGES - 1;
     }
 
     @Override
-    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight, 512, 512);
+    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 512, 512);
     }
 
     @Override
-    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         // We're overriding this method to make the inventory title black.
-        context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, Colors.BLACK, false);
-        context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, Colors.DARK_GRAY, false);
+        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, CommonColors.BLACK, false);
+        graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, CommonColors.DARK_GRAY, false);
 
         // Draw the page number text
-        int textWidth = this.textRenderer.getWidth(this.pageText);
-        int pageX = this.backgroundWidth - this.titleX - textWidth;
-        context.drawText(this.textRenderer, this.pageText, pageX, this.titleY, Colors.BLACK, false);
+        int textWidth = this.font.width(this.pageText);
+        int pageX = this.imageWidth - this.titleLabelX - textWidth;
+        graphics.drawString(this.font, this.pageText, pageX, this.titleLabelY, CommonColors.BLACK, false);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        drawMouseoverTooltip(context, mouseX, mouseY);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        super.render(graphics, mouseX, mouseY, delta);
+        renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
-    protected boolean isClickOutsideBounds(double mouseX, double mouseY, int left, int top) {
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int left, int top) {
         int xOffset = mouseY - top > 148 ? 52 : 0;
         return mouseX < left + xOffset
                 || mouseY < top
-                || mouseX >= left + this.backgroundWidth - xOffset
-                || mouseY >= top + this.backgroundHeight;
+                || mouseX >= left + this.imageWidth - xOffset
+                || mouseY >= top + this.imageHeight;
     }
 
     @Override
-    protected void drawSlot(DrawContext context, Slot slot, int mouseX, int mouseY) {
+    protected void renderSlot(GuiGraphics graphics, Slot slot, int mouseX, int mouseY) {
         if (!(slot instanceof PictureSlot pictureSlot)) {
-            super.drawSlot(context, slot, mouseX, mouseY);
+            super.renderSlot(graphics, slot, mouseX, mouseY);
             return;
         }
 
-        if (pictureSlot.hasStack()) {
-            PictureItem.PictureData pictureData = PictureItem.getPictureData(slot.getStack());
+        if (pictureSlot.hasItem()) {
+            PictureItem.PictureData pictureData = PictureItem.getPictureData(slot.getItem());
             if (pictureData != null) {
                 RemotePicture picture = ClientPictureStore.getInstance().ensureRemotePicture(pictureData.id());
-                PictureDrawingUtil.drawPicture(context, textRenderer, picture,
+                PictureDrawingUtil.drawPicture(graphics, font, picture,
                         slot.x, slot.y, pictureSlot.getWidth(), pictureSlot.getHeight());
             }
         } else {
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, slot.x - 1, slot.y - 1, 280, 0, pictureSlot.getWidth() + 2, pictureSlot.getHeight() + 2, 512, 512);
         }
     }
 }

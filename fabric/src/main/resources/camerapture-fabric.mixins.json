@@ -4,12 +4,12 @@
     "package": "me.chrr.camerapture.fabric.mixin",
     "compatibilityLevel": "JAVA_17",
     "client": [
-        "AbstractClientPlayerEntityMixin",
+        "AbstractClientPlayerMixin",
         "GameRendererMixin",
-        "HeldItemRendererMixin",
-        "InGameHudMixin",
-        "MouseMixin",
-        "PlayerEntityRendererMixin"
+        "ItemInHandRendererMixin",
+        "GuiMixin",
+        "MouseHandlerMixin",
+        "AvatarRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 1
