@@ -1,3 +1,10 @@
+## 1.10.12
+
+- Fix data fixer for 1.21.6+.
+- Switch to a more stable WebP library.
+
+This'll probably be the last update for 1.20.1 and 1.21.1.
+
 ## 1.10.11
 
 - Fix not being able to upload without being OP.
