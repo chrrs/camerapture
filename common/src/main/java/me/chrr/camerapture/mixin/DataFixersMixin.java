@@ -14,12 +14,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.BiFunction;
 
 @Mixin(DataFixers.class)
-public abstract class SchemasMixin {
+public abstract class DataFixersMixin {
     @Shadow
     @Final
     private static BiFunction<Integer, Schema, Schema> SAME_NAMESPACED;
 
-    @Inject(method = "addFixers", at = @At(value = "TAIL"))
+    @Inject(method = "addFixers", at = @At(value = "CONSTANT", args = "intValue=4531"))
     private static void build(DataFixerBuilder builder, CallbackInfo ci) {
         Schema _1_21_6 = builder.addSchema(4430, SAME_NAMESPACED);
         builder.addFixer(new PictureFrameInlineNbtFix(_1_21_6));
