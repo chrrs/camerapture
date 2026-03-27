@@ -1,3 +1,9 @@
+## 1.10.13
+
+- Update to 26.1, drop support for 1.20.1 and 1.21.1.
+- Support Windows on ARM processors.
+- Support both Fabric and NeoForge with the same JAR file.
+
 ## 1.10.12
 
 - Fix data fixer for 1.21.6+.
