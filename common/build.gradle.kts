@@ -12,6 +12,6 @@ dependencies {
     compileOnly("maven.modrinth:jade:${rootProject.property("jade.version")!!}+fabric")
     compileOnly("maven.modrinth:first-person-model:${rootProject.property("firstpersonmodel.version")!!}")
 
-    jij(implementation("dev.matrixlab.webp4j:webp4j-core:2.1.0")!!)
+    jij(implementation("dev.matrixlab.webp4j:webp4j-core:2.1.1")!!)
     jij(tapestryModule("tapestry-base")!!)
 }
