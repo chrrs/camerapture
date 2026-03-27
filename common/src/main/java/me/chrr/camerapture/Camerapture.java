@@ -1,6 +1,7 @@
 package me.chrr.camerapture;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import me.chrr.camerapture.config.ConfigManager;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.gui.AlbumLecternMenu;
@@ -15,10 +16,12 @@ import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.picture.StoredPicture;
+import me.chrr.tapestry.base.Tapestry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
@@ -31,12 +34,11 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -49,8 +51,8 @@ public class Camerapture {
     public static final Executor EXECUTOR = Executors.newCachedThreadPool();
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
-    public static final PlatformAdapter PLATFORM = ServiceLoader.load(PlatformAdapter.class).iterator().next();
-    public static final NetworkAdapter NETWORK = PLATFORM.createNetworkAdapter();
+    public static final PlatformAdapter PLATFORM = Tapestry.implementation(id("platform_adapter"));
+    public static final NetworkAdapter NETWORK = Tapestry.implementation(id("network_adapter"));
 
     // Server-bound packets have a way lower limit on size.
     public static final int CLIENT_SECTION_SIZE = 30_000;
@@ -63,16 +65,16 @@ public class Camerapture {
 
     // Picture
     public static Item PICTURE = new PictureItem();
-    public static final CustomRecipe.Serializer<PictureCloningRecipe> PICTURE_CLONING =
-            new CustomRecipe.Serializer<>(PictureCloningRecipe::new);
+    public static final RecipeSerializer<PictureCloningRecipe> PICTURE_CLONING = new RecipeSerializer<>(
+            MapCodec.unit(PictureCloningRecipe.INSTANCE), StreamCodec.unit(PictureCloningRecipe.INSTANCE));
 
     // Album
     public static final Item ALBUM = new AlbumItem();
     public static final MenuType<AlbumMenu> ALBUM_SCREEN_HANDLER = new MenuType<>(AlbumMenu::new, FeatureFlagSet.of());
     public static final MenuType<AlbumLecternMenu> ALBUM_LECTERN_SCREEN_HANDLER =
             new MenuType<>((containerId, playerInventory) -> new AlbumLecternMenu(containerId), FeatureFlagSet.of());
-    public static final CustomRecipe.Serializer<AlbumCloningRecipe> ALBUM_CLONING =
-            new CustomRecipe.Serializer<>(AlbumCloningRecipe::new);
+    public static final RecipeSerializer<AlbumCloningRecipe> ALBUM_CLONING = new RecipeSerializer<>(
+            MapCodec.unit(AlbumCloningRecipe.INSTANCE), StreamCodec.unit(AlbumCloningRecipe.INSTANCE));
 
     // Picture Frame
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
@@ -144,9 +146,6 @@ public class Camerapture {
                     EXECUTOR.execute(() -> {
                         try {
                             MinecraftServer server = player.server;
-                            if (server == null) {
-                                return;
-                            }
 
                             ServerPictureStore.getInstance().put(server, uuid, new StoredPicture(bytes));
                             ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
@@ -155,7 +154,7 @@ public class Camerapture {
                             server.execute(() -> player.getInventory().placeItemBackInInventory(picture));
                         } catch (Exception e) {
                             LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
-                            player.displayClientMessage(Component.translatable("text.camerapture.picture_failed").withStyle(ChatFormatting.RED), false);
+                            player.sendSystemMessage(Component.translatable("text.camerapture.picture_failed").withStyle(ChatFormatting.RED), false);
                         }
                     });
                 }));

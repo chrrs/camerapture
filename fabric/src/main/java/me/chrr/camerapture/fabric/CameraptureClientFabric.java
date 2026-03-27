@@ -10,18 +10,20 @@ import me.chrr.camerapture.picture.PictureTaker;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.render.ShouldRenderPicture;
+import me.chrr.tapestry.gradle.annotation.FabricEntrypoint;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 import net.minecraft.client.renderer.item.properties.conditional.ConditionalItemModelProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.InteractionResult;
 
+@FabricEntrypoint("client")
 public class CameraptureClientFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
@@ -38,7 +40,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
         SpecialModelRenderers.ID_MAPPER.put(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
 
         // Picture Frame
-        EntityRendererRegistry.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
+        EntityRenderers.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
         MenuScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
 
         // Album

@@ -3,6 +3,7 @@ package me.chrr.camerapture.neoforge;
 import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.net.NetCodec;
 import me.chrr.camerapture.net.NetworkAdapter;
+import me.chrr.tapestry.gradle.annotation.Implementation;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -22,6 +23,7 @@ import java.util.function.Consumer;
 /// NeoForge implementation of {@link NetworkAdapter}. This uses the networking API
 /// as provided by NeoForge. We need to keep track of handlers per packet, as
 /// you can't have multiple listeners for a single packet usually.
+@Implementation("camerapture:network_adapter")
 public class NeoForgeNetworkAdapter implements NetworkAdapter {
     private final Map<Class<?>, ServerPacketType<?>> serverPackets = new HashMap<>();
     private final Map<Class<?>, ClientPacketType<?>> clientPackets = new HashMap<>();

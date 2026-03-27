@@ -5,7 +5,7 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
@@ -68,8 +68,8 @@ public class PictureScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         // Drawing the item name and page number
         if (!isSinglePicture()) {
@@ -78,10 +78,10 @@ public class PictureScreen extends Screen {
             int pageNumberX = width / 2 - this.font.width(this.pageNumber) / 2;
             if (this.customName != null) {
                 int nameX = width / 2 - this.font.width(this.customName) / 2;
-                graphics.drawString(this.font, this.customName, nameX, barY - 1 - font.lineHeight, CommonColors.WHITE, false);
-                graphics.drawString(this.font, this.pageNumber, pageNumberX, barY + 1, CommonColors.WHITE, false);
+                graphics.text(this.font, this.customName, nameX, barY - 1 - font.lineHeight, CommonColors.WHITE, false);
+                graphics.text(this.font, this.pageNumber, pageNumberX, barY + 1, CommonColors.WHITE, false);
             } else {
-                graphics.drawString(this.font, this.pageNumber, pageNumberX, barY - font.lineHeight / 2, CommonColors.WHITE, false);
+                graphics.text(this.font, this.pageNumber, pageNumberX, barY - font.lineHeight / 2, CommonColors.WHITE, false);
             }
         }
 
@@ -92,7 +92,7 @@ public class PictureScreen extends Screen {
         if (this.ctrlHeld) {
             Component text = Component.translatable("text.camerapture.save_as").withStyle(ChatFormatting.WHITE);
             int tw = this.font.width(text);
-            graphics.drawString(this.font, text, width / 2 - tw / 2, BORDER_THICKNESS - font.lineHeight - 2, CommonColors.WHITE, false);
+            graphics.text(this.font, text, width / 2 - tw / 2, BORDER_THICKNESS - font.lineHeight - 2, CommonColors.WHITE, false);
         }
 
         // Drawing the picture

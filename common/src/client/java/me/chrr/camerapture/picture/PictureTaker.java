@@ -65,7 +65,7 @@ public class PictureTaker {
 
             LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                player.displayClientMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED), false);
+                player.sendSystemMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED));
             }
         }
     }
@@ -147,7 +147,7 @@ public class PictureTaker {
 
             LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                player.displayClientMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED), false);
+                player.sendSystemMessage(Component.translatable("text.camerapture.upload_failed").withStyle(ChatFormatting.RED));
             }
         }
     }

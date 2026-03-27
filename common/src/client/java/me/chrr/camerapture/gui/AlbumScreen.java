@@ -7,7 +7,7 @@ import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,10 +26,7 @@ public class AlbumScreen extends AbstractContainerScreen<AlbumMenu> {
     private PageButton nextButton;
 
     public AlbumScreen(AlbumMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-
-        this.imageWidth = 280;
-        this.imageHeight = 237;
+        super(menu, inventory, title, 280, 237);
 
         this.inventoryLabelX = 60;
         this.inventoryLabelY = this.imageHeight - 94;
@@ -64,26 +61,21 @@ public class AlbumScreen extends AbstractContainerScreen<AlbumMenu> {
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        super.extractBackground(graphics, mouseX, mouseY, a);
         graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 512, 512);
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         // We're overriding this method to make the inventory title black.
-        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, CommonColors.BLACK, false);
-        graphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, CommonColors.DARK_GRAY, false);
+        graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, CommonColors.BLACK, false);
+        graphics.text(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, CommonColors.DARK_GRAY, false);
 
         // Draw the page number text
         int textWidth = this.font.width(this.pageText);
         int pageX = this.imageWidth - this.titleLabelX - textWidth;
-        graphics.drawString(this.font, this.pageText, pageX, this.titleLabelY, CommonColors.BLACK, false);
-    }
-
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
-        renderTooltip(graphics, mouseX, mouseY);
+        graphics.text(this.font, this.pageText, pageX, this.titleLabelY, CommonColors.BLACK, false);
     }
 
     @Override
@@ -96,9 +88,9 @@ public class AlbumScreen extends AbstractContainerScreen<AlbumMenu> {
     }
 
     @Override
-    protected void renderSlot(GuiGraphics graphics, Slot slot, int mouseX, int mouseY) {
+    protected void extractSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY) {
         if (!(slot instanceof PictureSlot pictureSlot)) {
-            super.renderSlot(graphics, slot, mouseX, mouseY);
+            super.extractSlot(graphics, slot, mouseX, mouseY);
             return;
         }
 

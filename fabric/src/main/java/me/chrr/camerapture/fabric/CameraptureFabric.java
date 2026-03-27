@@ -15,9 +15,10 @@ import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.clientbound.SyncConfigPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
+import me.chrr.tapestry.gradle.annotation.FabricEntrypoint;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -25,6 +26,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.Stats;
 
+@FabricEntrypoint("main")
 public class CameraptureFabric implements ModInitializer {
     @Override
     public void onInitialize() {
@@ -38,7 +40,7 @@ public class CameraptureFabric implements ModInitializer {
     public void registerContent() {
         // Camera
         Registry.register(BuiltInRegistries.ITEM, CameraItem.KEY, Camerapture.CAMERA);
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.CAMERA));
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.CAMERA));
         Registry.register(BuiltInRegistries.SOUND_EVENT, Camerapture.CAMERA_SHUTTER.location(), Camerapture.CAMERA_SHUTTER);
 
         Registry.register(BuiltInRegistries.CUSTOM_STAT, "pictures_taken", Camerapture.PICTURES_TAKEN);
@@ -50,7 +52,7 @@ public class CameraptureFabric implements ModInitializer {
 
         // Album
         Registry.register(BuiltInRegistries.ITEM, AlbumItem.KEY, Camerapture.ALBUM);
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.ALBUM));
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(content -> content.accept(Camerapture.ALBUM));
         Registry.register(BuiltInRegistries.MENU, Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER);
         Registry.register(BuiltInRegistries.MENU, Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER);
         Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, Camerapture.id("album_cloning"), Camerapture.ALBUM_CLONING);

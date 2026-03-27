@@ -21,7 +21,7 @@ public abstract class AbstractContainerScreenMixin {
     @Shadow
     protected abstract boolean isHovering(int x, int y, int width, int height, double pointX, double pointY);
 
-    @ModifyArgs(method = {"renderSlotHighlightBack", "renderSlotHighlightFront"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
+    @ModifyArgs(method = {"extractSlotHighlightBack", "extractSlotHighlightFront"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
     public void drawSlotHighlight(Args args) {
         if (this.hoveredSlot instanceof SizedSlot sizedSlot) {
             args.set(4, sizedSlot.getWidth() + 8);

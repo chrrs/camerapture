@@ -9,6 +9,7 @@ import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.LoadingDotsText;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -16,7 +17,6 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
@@ -95,7 +95,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
         // the shading based on the normals, as text is always drawn as-is.
         RenderType renderType = state.isPictureGlowing
                 ? RenderTypes.text(picture.getTextureIdentifier())
-                : RenderTypes.entityCutout(picture.getTextureIdentifier());
+                : RenderTypes.entityCutoutCull(picture.getTextureIdentifier());
 
         collector.submitCustomGeometry(poseStack, renderType, (matrix, buffer) -> {
             Matrix4f position = matrix.pose();

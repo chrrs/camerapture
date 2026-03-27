@@ -3,12 +3,14 @@ package me.chrr.camerapture.compat;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.item.PictureItem;
+import me.chrr.tapestry.gradle.annotation.FabricEntrypoint;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import snownee.jade.api.*;
 import snownee.jade.api.config.IPluginConfig;
 
 @WailaPlugin
+@FabricEntrypoint("jade")
 public class JadePlugin implements IWailaPlugin {
     @Override
     public void registerClient(IWailaClientRegistration registration) {

@@ -1,4 +1,4 @@
-accessWidener v2 named
+accessWidener v2 official
 
 # This is marked private in 1.21.9
 accessible field net/minecraft/server/level/ServerPlayer server Lnet/minecraft/server/MinecraftServer;

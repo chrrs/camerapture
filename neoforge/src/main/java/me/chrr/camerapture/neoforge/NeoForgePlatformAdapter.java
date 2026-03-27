@@ -1,7 +1,7 @@
 package me.chrr.camerapture.neoforge;
 
 import me.chrr.camerapture.PlatformAdapter;
-import me.chrr.camerapture.net.NetworkAdapter;
+import me.chrr.tapestry.gradle.annotation.Implementation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
@@ -9,12 +9,8 @@ import net.neoforged.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 
+@Implementation("camerapture:platform_adapter")
 public class NeoForgePlatformAdapter implements PlatformAdapter {
-    @Override
-    public NetworkAdapter createNetworkAdapter() {
-        return new NeoForgeNetworkAdapter();
-    }
-
     @Override
     public Path getConfigFolder() {
         return FMLPaths.CONFIGDIR.get();

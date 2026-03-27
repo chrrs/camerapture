@@ -1,27 +1,17 @@
-fun Project.hasProp(namespace: String, key: String) = hasProperty("$namespace.$key")
-fun Project.prop(namespace: String, key: String) = property("$namespace.$key") as String
-
-architectury {
-    common("fabric", "neoforge")
-}
-
-loom {
-    accessWidenerPath.set(file("src/main/resources/camerapture.accesswidener"))
-    splitEnvironmentSourceSets()
-
-    @Suppress("UnstableApiUsage")
-    mixin.useLegacyMixinAp = false
-}
-
 repositories {
     maven("https://maven.shedaniel.me/") { content { includeGroup("me.shedaniel.cloth") } }
     maven("https://api.modrinth.com/maven") { content { includeGroup("maven.modrinth") } }
+    maven("https://maven.chrr.me/releases") { content { includeGroup("me.chrr.tapestry") } }
 }
 
 dependencies {
-    modCompileOnlyApi("me.shedaniel.cloth:cloth-config-fabric:${rootProject.prop("clothconfig", "version")}")
-    modCompileOnlyApi("maven.modrinth:jade:${rootProject.prop("jade", "version")}+fabric")
-    modCompileOnlyApi("maven.modrinth:first-person-model:${rootProject.prop("firstpersonmodel", "version")}")
+    fun tapestryModule(name: String) =
+        implementation("me.chrr.tapestry:$name:${rootProject.property("tapestry.version")}+mc${rootProject.property("minecraft.version")}")
 
-    implementation("dev.matrixlab:webp4j:1.3.0")
+    compileOnlyApi("me.shedaniel.cloth:cloth-config-fabric:${rootProject.property("clothconfig.version")!!}")
+    compileOnly("maven.modrinth:jade:${rootProject.property("jade.version")!!}+fabric")
+    compileOnly("maven.modrinth:first-person-model:${rootProject.property("firstpersonmodel.version")!!}")
+
+    jij(implementation("dev.matrixlab.webp4j:webp4j-core:2.1.0")!!)
+    jij(tapestryModule("tapestry-base")!!)
 }

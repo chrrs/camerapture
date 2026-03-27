@@ -6,7 +6,7 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.DeltaTracker;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,8 +22,8 @@ public abstract class GuiMixin {
 
     /// Hide the GUI and draw the camera overlay and viewfinder
     /// when the player is holding an active camera.
-    @Inject(method = "render", at = @At(value = "HEAD"), cancellable = true)
-    public void onHudRender(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At(value = "HEAD"), cancellable = true)
+    public void onHudRender(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci) {
         CameraItem.HeldCamera camera = CameraItem.find(Minecraft.getInstance().player, true);
         if (camera != null) {
             ci.cancel();

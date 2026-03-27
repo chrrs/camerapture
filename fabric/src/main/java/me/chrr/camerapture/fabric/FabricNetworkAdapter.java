@@ -3,6 +3,7 @@ package me.chrr.camerapture.fabric;
 import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.net.NetCodec;
 import me.chrr.camerapture.net.NetworkAdapter;
+import me.chrr.tapestry.gradle.annotation.Implementation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -24,6 +25,7 @@ import java.util.function.Consumer;
 /// Fabric implementation of {@link NetworkAdapter}. This uses the networking API
 /// as provided by Fabric API. We need to keep track of handlers per packet, as
 /// you can't have multiple listeners for a single packet usually.
+@Implementation("camerapture:network_adapter")
 public class FabricNetworkAdapter implements NetworkAdapter {
     private final Map<Class<?>, ServerPacketType<?>> serverPackets = new HashMap<>();
     private final Map<Class<?>, ClientPacketType<?>> clientPackets = new HashMap<>();
@@ -33,7 +35,7 @@ public class FabricNetworkAdapter implements NetworkAdapter {
         this.clientPackets.put(clazz, type);
 
         StreamCodec<ByteBuf, P> codec = ByteBufCodecs.fromCodec(netCodec.codec());
-        PayloadTypeRegistry.playC2S().register(
+        PayloadTypeRegistry.serverboundPlay().register(
                 new CustomPacketPayload.Type<PacketPayload<P>>(netCodec.id()),
                 StreamCodec.composite(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p))
         );
@@ -49,7 +51,7 @@ public class FabricNetworkAdapter implements NetworkAdapter {
         this.serverPackets.put(clazz, type);
 
         StreamCodec<io.netty.buffer.ByteBuf, P> codec = ByteBufCodecs.fromCodec(netCodec.codec());
-        PayloadTypeRegistry.playS2C().register(
+        PayloadTypeRegistry.clientboundPlay().register(
                 new CustomPacketPayload.Type<PacketPayload<P>>(netCodec.id()),
                 StreamCodec.composite(codec, PacketPayload::packet, p -> new PacketPayload<>(netCodec.id(), p))
         );

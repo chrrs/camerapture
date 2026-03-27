@@ -4,7 +4,7 @@ import me.chrr.camerapture.Camerapture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -41,11 +41,8 @@ public class PictureFrameScreen extends AbstractContainerScreen<PictureFrameMenu
     private SmallCheckboxWidget fixedCheckbox;
 
     public PictureFrameScreen(PictureFrameMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
+        super(menu, inventory, title, 158, 52);
         menu.addSlotListener(this);
-
-        this.imageWidth = 158;
-        this.imageHeight = 52;
     }
 
     @Override
@@ -121,14 +118,15 @@ public class PictureFrameScreen extends AbstractContainerScreen<PictureFrameMenu
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        super.extractBackground(graphics, mouseX, mouseY, a);
         graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0f, 0f, imageWidth, imageHeight, 256, 256);
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawCenteredString(font, Component.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), imageWidth / 2, 7, CommonColors.WHITE);
-        graphics.drawCenteredString(font, Component.translatable("text.camerapture.edit_picture_frame.shrink_hint"), imageWidth / 2, 7 + font.lineHeight + 2, CommonColors.GRAY);
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        graphics.centeredText(font, Component.translatable("text.camerapture.edit_picture_frame.size", frameWidth, frameHeight), imageWidth / 2, 7, CommonColors.WHITE);
+        graphics.centeredText(font, Component.translatable("text.camerapture.edit_picture_frame.shrink_hint"), imageWidth / 2, 7 + font.lineHeight + 2, CommonColors.GRAY);
     }
 
     private void updateButtons() {
@@ -212,11 +210,11 @@ public class PictureFrameScreen extends AbstractContainerScreen<PictureFrameMenu
         }
 
         @Override
-        protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             Font font = Minecraft.getInstance().font;
 
             int textX = getX() + (leftText ? -4 - font.width(getMessage()) : 11 + 4);
-            graphics.drawString(font, getMessage(), textX, getY() + 2, 0xffe0e0e0);
+            graphics.text(font, getMessage(), textX, getY() + 2, 0xffe0e0e0);
 
             graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), this.isHoveredOrFocused() ? 11 : 0, 52, 11, 11, 256, 256);
 

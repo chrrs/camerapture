@@ -2,19 +2,15 @@ package me.chrr.camerapture.fabric;
 
 import me.chrr.camerapture.PlatformAdapter;
 import me.chrr.camerapture.fabric.event.ClientTakePictureCallback;
-import me.chrr.camerapture.net.NetworkAdapter;
+import me.chrr.tapestry.gradle.annotation.Implementation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.InteractionResult;
 
 import java.nio.file.Path;
 
+@Implementation("camerapture:platform_adapter")
 public class FabricPlatformAdapter implements PlatformAdapter {
-    @Override
-    public NetworkAdapter createNetworkAdapter() {
-        return new FabricNetworkAdapter();
-    }
-
     @Override
     public Path getConfigFolder() {
         return FabricLoader.getInstance().getConfigDir();

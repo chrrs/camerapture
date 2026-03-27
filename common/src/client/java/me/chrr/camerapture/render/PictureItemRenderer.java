@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -31,7 +30,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
     }
 
     @Override
-    public void submit(@Nullable UUID data, ItemDisplayContext displayContext, PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, boolean glint, int i) {
+    public void submit(@Nullable UUID data, PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, boolean hasFoil, int outlineColor) {
         if (data == null) {
             return;
         }
@@ -57,7 +56,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         }
 
         // Render the picture.
-        RenderType renderLayer = RenderTypes.entityCutoutNoCull(picture.getTextureIdentifier());
+        RenderType renderLayer = RenderTypes.entityCutout(picture.getTextureIdentifier());
         collector.submitCustomGeometry(poseStack, renderLayer, (matrix, buffer) -> {
             Matrix4f matrix4f = matrix.pose();
             buffer.addVertex(matrix4f, 1f, 0f, 0f).setColor(0xffffffff).setUv(1f, 1f).setOverlay(overlay).setLight(light).setNormal(matrix, 0f, 0f, 1f);
@@ -83,7 +82,7 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         return pictureData != null ? pictureData.id() : null;
     }
 
-    public static class Unbaked implements SpecialModelRenderer.Unbaked {
+    public static class Unbaked implements SpecialModelRenderer.Unbaked<UUID> {
         public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(Unbaked::new);
 
         @Override

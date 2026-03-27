@@ -1,23 +1,20 @@
 package me.chrr.camerapture.item;
 
 import me.chrr.camerapture.Camerapture;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
+
 import java.util.List;
 import java.util.Optional;
 
 public class PictureCloningRecipe extends CustomRecipe {
-    public PictureCloningRecipe(CraftingBookCategory category) {
-        super(category);
-    }
+    public static final PictureCloningRecipe INSTANCE = new PictureCloningRecipe();
 
     @Override
     public boolean matches(CraftingInput input, Level level) {
@@ -25,7 +22,7 @@ public class PictureCloningRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+    public ItemStack assemble(CraftingInput input) {
         return getRecipe(input.items()).map(Tuple::getA).orElse(null);
     }
 

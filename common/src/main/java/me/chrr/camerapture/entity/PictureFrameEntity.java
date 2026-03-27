@@ -70,7 +70,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Men
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         boolean canRotate = Camerapture.CONFIG_MANAGER.getConfig().server.canRotatePictures;
 
         if (player.isShiftKeyDown()) {
@@ -97,8 +97,7 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Men
 
         ItemStack itemStack = this.getItemStack();
         if (!itemStack.isEmpty()) {
-            itemStack.setEntityRepresentation(null);
-            this.spawnAtLocation(level, itemStack);
+            this.spawnAtLocation(level, itemStack.copy());
         }
     }
 
@@ -138,18 +137,6 @@ public class PictureFrameEntity extends ResizableDecorationEntity implements Men
 
     public void setRotation(int rotation) {
         this.getEntityData().set(ROTATION, rotation % 4);
-    }
-
-    @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
-        super.onSyncedDataUpdated(data);
-
-        if (data.equals(ITEM_STACK)) {
-            ItemStack itemStack = getItemStack();
-            if (!itemStack.isEmpty()) {
-                itemStack.setEntityRepresentation(this);
-            }
-        }
     }
 
     @Override

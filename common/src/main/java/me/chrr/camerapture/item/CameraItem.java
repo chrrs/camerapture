@@ -45,7 +45,7 @@ public class CameraItem extends Item {
         // If we try to upload when it's disabled, we send a message to the player.
         if (player.isShiftKeyDown()) {
             if (!config.permissionLevels.canUpload(player)) {
-                player.displayClientMessage(Component.translatable("text.camerapture.uploading_disabled").withStyle(ChatFormatting.RED), true);
+                player.sendSystemMessage(Component.translatable("text.camerapture.uploading_disabled").withStyle(ChatFormatting.RED));
                 return InteractionResult.FAIL;
             }
 

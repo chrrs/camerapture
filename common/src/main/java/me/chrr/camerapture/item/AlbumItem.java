@@ -50,7 +50,7 @@ public class AlbumItem extends Item {
     public static List<ItemStack> getPictures(ItemStack album) {
         ItemContainerContents container = album.get(DataComponents.CONTAINER);
         if (container != null) {
-            return container.nonEmptyStream().toList();
+            return container.nonEmptyItemCopyStream().toList();
         } else {
             return List.of();
         }

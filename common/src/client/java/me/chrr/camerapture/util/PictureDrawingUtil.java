@@ -3,24 +3,24 @@ package me.chrr.camerapture.util;
 import me.chrr.camerapture.picture.RemotePicture;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.LoadingDotsText;
 import net.minecraft.network.chat.Component;
 
 public enum PictureDrawingUtil {
     ;
 
-    public static void drawPicture(GuiGraphics graphics, Font font, RemotePicture picture, int x, int y, int width, int height) {
+    public static void drawPicture(GuiGraphicsExtractor graphics, Font font, RemotePicture picture, int x, int y, int width, int height) {
         switch (picture.getStatus()) {
             case FETCHING -> {
                 String loading = LoadingDotsText.get(System.currentTimeMillis());
                 Component fetching = Component.translatable("text.camerapture.fetching_picture");
-                graphics.drawCenteredString(font, fetching, x + width / 2, y + height / 2 - font.lineHeight, 0xffffff);
-                graphics.drawCenteredString(font, loading, x + width / 2, y + height / 2, 0x808080);
+                graphics.centeredText(font, fetching, x + width / 2, y + height / 2 - font.lineHeight, 0xffffff);
+                graphics.centeredText(font, loading, x + width / 2, y + height / 2, 0x808080);
             }
             case ERROR -> {
                 Component error = Component.translatable("text.camerapture.fetching_failed");
-                graphics.drawCenteredString(font, error, x + width / 2, y + height / 2 - font.lineHeight / 2, 0xff0000);
+                graphics.centeredText(font, error, x + width / 2, y + height / 2 - font.lineHeight / 2, 0xff0000);
             }
             case SUCCESS -> {
                 float scaledWidth = (float) width / picture.getWidth();

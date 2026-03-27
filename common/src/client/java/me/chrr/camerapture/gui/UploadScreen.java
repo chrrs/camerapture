@@ -5,7 +5,7 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.PlainTextButton;
 import net.minecraft.network.chat.Component;
@@ -45,13 +45,13 @@ public class UploadScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         Component description = Component.translatable("text.camerapture.upload_picture.description");
 
         graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, width / 2 - backgroundWidth / 2, height / 2 - backgroundHeight / 2, 0f, 0f, backgroundWidth, backgroundHeight, 256, 256);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - font.lineHeight - 16, CommonColors.WHITE);
+        graphics.centeredText(this.font, this.title, this.width / 2, this.height / 2 - font.lineHeight - 16, CommonColors.WHITE);
 
         boolean canTakePicture = this.minecraft.player != null && CameraItem.canTakePicture(this.minecraft.player);
         browseButton.visible = canTakePicture;
@@ -59,10 +59,10 @@ public class UploadScreen extends Screen {
         if (!canTakePicture) {
             if (System.currentTimeMillis() % 1000 < 500) {
                 int y = this.height / 2 + font.lineHeight + 4;
-                graphics.drawCenteredString(font, Component.translatable("text.camerapture.no_paper"), this.width / 2, y, CommonColors.RED);
+                graphics.centeredText(font, Component.translatable("text.camerapture.no_paper"), this.width / 2, y, CommonColors.RED);
             }
         } else {
-            graphics.drawCenteredString(this.font, description, this.width / 2, this.height / 2, CommonColors.WHITE);
+            graphics.centeredText(this.font, description, this.width / 2, this.height / 2, CommonColors.WHITE);
         }
     }
 
