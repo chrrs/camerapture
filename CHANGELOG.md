@@ -1,3 +1,7 @@
+## 1.10.14
+
+- Update Tapestry, which fixes some config things.
+
 ## 1.10.13
 
 - Update to 26.1, drop support for 1.20.1 and 1.21.1.

@@ -6,7 +6,7 @@ repositories {
 
 dependencies {
     fun tapestryModule(name: String) =
-        implementation("me.chrr.tapestry:$name:${rootProject.property("tapestry.version")}+mc${rootProject.property("minecraft.version")}")
+        implementation("me.chrr.tapestry:$name:${rootProject.property("tapestry.version")}")
 
     compileOnlyApi("me.shedaniel.cloth:cloth-config-fabric:${rootProject.property("clothconfig.version")!!}")
     compileOnly("maven.modrinth:jade:${rootProject.property("jade.version")!!}+fabric")

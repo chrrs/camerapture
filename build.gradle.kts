@@ -1,7 +1,7 @@
 import me.chrr.tapestry.gradle.platform.PlatformType
 
 plugins {
-    id("me.chrr.tapestry.gradle") version "1.0.2"
+    id("me.chrr.tapestry.gradle") version "1.0.4"
 }
 
 tapestry {
