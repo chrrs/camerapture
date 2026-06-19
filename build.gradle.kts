@@ -1,7 +1,7 @@
 import me.chrr.tapestry.gradle.platform.PlatformType
 
 plugins {
-    id("me.chrr.tapestry.gradle") version "1.0.4"
+    id("me.chrr.tapestry.gradle") version "1.1.1"
 }
 
 tapestry {
@@ -35,12 +35,10 @@ tapestry {
     }
 
     depends {
-        minecraft = prop("minecraft.compatible").map { it.split(",") }
-        fabric("fabric-api", slug = "fabric-api")
-
-        // FIXME: replace Cloth Config with Tapestry Config.
-        fabric("cloth-config", slug = "cloth-config") { optional = true }
-        neoforge("cloth-config", slug = "cloth-config") { optional = true }
+        minecraft.version(prop("minecraft.compatible").get())
+        mod(fabric = "fabric-api").slug("fabric-api")
+        mod(fabric = "cloth-config", neoforge = "cloth-config").slug("cloth-config").optional()
+        mod("tapestry")
     }
 
     game {

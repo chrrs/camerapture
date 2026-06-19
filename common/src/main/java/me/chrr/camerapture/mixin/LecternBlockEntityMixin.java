@@ -32,9 +32,9 @@ public abstract class LecternBlockEntityMixin {
 
     /// Overwrite the book screen when the lectern contains an album.
     @Inject(method = "createMenu", at = @At(value = "HEAD"), cancellable = true)
-    public void createMenu(int i, Inventory playerInventory, Player playerEntity, CallbackInfoReturnable<AbstractContainerMenu> cir) {
+    public void createMenu(int containerId, Inventory inventory, Player player, CallbackInfoReturnable<AbstractContainerMenu> cir) {
         if (getBook().is(Camerapture.ALBUM)) {
-            cir.setReturnValue(new AlbumLecternMenu(i, this.bookAccess));
+            cir.setReturnValue(new AlbumLecternMenu(containerId, this.bookAccess));
             cir.cancel();
         }
     }

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AbstractClientPlayerMixin {
     /// Apply the camera zoom FOV if we have an active camera.
     @Inject(method = "getFieldOfViewModifier", at = @At(value = "HEAD"), cancellable = true)
-    public void getFovMultiplier(boolean firstPerson, float fovEffectScale, CallbackInfoReturnable<Float> cir) {
+    public void getFovMultiplier(boolean firstPerson, float effectScale, CallbackInfoReturnable<Float> cir) {
         if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
             cir.setReturnValue(PictureTaker.getInstance().getFovModifier());
         }

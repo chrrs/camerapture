@@ -14,19 +14,19 @@ import net.minecraft.util.datafix.fixes.ItemStackComponentizationFix;
 @Mixin(ItemStackComponentizationFix.class)
 public class ItemStackComponentizationFixMixin {
     @Inject(method = "fixItemStack", at = @At(value = "TAIL"))
-    private static void fixStack(ItemStackComponentizationFix.ItemStackData data, Dynamic<?> dynamic, CallbackInfo ci) {
-        if (data.is("camerapture:picture")) {
-            camerapture$fixPicture(data, dynamic);
+    private static void fixStack(ItemStackComponentizationFix.ItemStackData itemStack, Dynamic<?> dynamic, CallbackInfo ci) {
+        if (itemStack.is("camerapture:picture")) {
+            camerapture$fixPicture(itemStack, dynamic);
         }
 
-        if (data.is("camerapture:album")) {
-            camerapture$fixAlbum(data, dynamic);
+        if (itemStack.is("camerapture:album")) {
+            camerapture$fixAlbum(itemStack, dynamic);
         }
 
         // For the camera, we just remove the 'active' tag.
         // It should be inactive by default.
-        if (data.is("camerapture:camera")) {
-            data.removeTag("active");
+        if (itemStack.is("camerapture:camera")) {
+            itemStack.removeTag("active");
         }
     }
 

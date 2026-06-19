@@ -12,12 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
-    @Shadow
-    public abstract Minecraft getMinecraft();
-
     /// We need to notify the picture taker when the render tick ends.
     @Inject(method = "render", at = @At(value = "TAIL"))
-    private void onRenderTickEnd(DeltaTracker tickCounter, boolean tick, CallbackInfo ci) {
+    private void onRenderTickEnd(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         PictureTaker.getInstance().renderTickEnd();
     }
 }

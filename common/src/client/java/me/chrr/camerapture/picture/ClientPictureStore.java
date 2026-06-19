@@ -155,7 +155,7 @@ public class ClientPictureStore {
         // We enable single-player picture caching when Replay Mod is installed.
         return CameraptureClient.replayModInstalled
                 || (Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
-                && !Minecraft.getInstance().isSingleplayer());
+                && !Minecraft.getInstance().hasSingleplayerServer());
     }
 
     private Path getCacheFilePath(UUID uuid) {

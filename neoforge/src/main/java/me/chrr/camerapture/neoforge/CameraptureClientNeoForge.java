@@ -166,7 +166,7 @@ public class CameraptureClientNeoForge {
                 return;
             }
 
-            if (event.getName() == VanillaGuiLayers.CROSSHAIR && !Minecraft.getInstance().options.hideGui) {
+            if (event.getName() == VanillaGuiLayers.CROSSHAIR && !Minecraft.getInstance().gui.hud.isHidden()) {
                 CameraViewFinder.drawCameraViewFinder(event.getGuiGraphics(), Minecraft.getInstance().font);
             }
         }

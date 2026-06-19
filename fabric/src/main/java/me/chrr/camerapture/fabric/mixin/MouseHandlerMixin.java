@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MouseHandlerMixin {
     /// If we have an active camera, scroll to zoom instead.
     @Inject(method = "onScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/ScrollWheelHandler;onMouseScroll(DD)Lorg/joml/Vector2i;"), cancellable = true)
-    public void onScroll(long window, double horizontal, double vertical, CallbackInfo ci) {
+    public void onScroll(long handle, double xoffset, double yoffset, CallbackInfo ci) {
         if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
-            PictureTaker.getInstance().zoom((float) (vertical / 4f));
+            PictureTaker.getInstance().zoom((float) (yoffset / 4f));
             ci.cancel();
         }
     }

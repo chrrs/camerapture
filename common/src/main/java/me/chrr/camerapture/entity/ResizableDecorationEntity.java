@@ -122,7 +122,7 @@ public abstract class ResizableDecorationEntity extends Entity {
         }
 
         // Find the center of the top-left piece.
-        Vec3 center = attachmentPos.getCenter();
+        Vec3 center = Vec3.atCenterOf(attachmentPos);
         center = center.subtract(new Vec3(facing.getStepX(), 0, facing.getStepZ()).scale(0.5 - THICKNESS / 2));
 
         this.setPosRaw(center.x, center.y, center.z);

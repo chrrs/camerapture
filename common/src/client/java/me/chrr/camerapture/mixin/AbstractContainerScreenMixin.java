@@ -19,7 +19,7 @@ public abstract class AbstractContainerScreenMixin {
     protected Slot hoveredSlot;
 
     @Shadow
-    protected abstract boolean isHovering(int x, int y, int width, int height, double pointX, double pointY);
+    protected abstract boolean isHovering(int left, int top, int w, int h, double xm, double ym);
 
     @ModifyArgs(method = {"extractSlotHighlightBack", "extractSlotHighlightFront"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
     public void drawSlotHighlight(Args args) {
@@ -30,9 +30,9 @@ public abstract class AbstractContainerScreenMixin {
     }
 
     @Inject(method = "isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z", at = @At(value = "HEAD"), cancellable = true)
-    private void isHovering(Slot slot, double mouseX, double mouseY, CallbackInfoReturnable<Boolean> cir) {
+    private void isHovering(Slot slot, double xm, double ym, CallbackInfoReturnable<Boolean> cir) {
         if (slot instanceof SizedSlot sizedSlot) {
-            cir.setReturnValue(isHovering(slot.x, slot.y, sizedSlot.getWidth(), sizedSlot.getHeight(), mouseX, mouseY));
+            cir.setReturnValue(isHovering(slot.x, slot.y, sizedSlot.getWidth(), sizedSlot.getHeight(), xm, ym));
             cir.cancel();
         }
     }

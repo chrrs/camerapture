@@ -7,11 +7,11 @@ import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
 import me.chrr.camerapture.util.ImageUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.Screenshot;
-import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -50,8 +50,10 @@ public class PictureTaker {
         }
 
         this.takingPicture = true;
-        this.hudWasHidden = Minecraft.getInstance().options.hideGui;
-        Minecraft.getInstance().options.hideGui = true;
+        this.hudWasHidden = Minecraft.getInstance().gui.hud.isHidden();
+
+        if (!this.hudWasHidden)
+            Minecraft.getInstance().gui.hud.toggle();
     }
 
     /// Try reading an image from the file system and prepare it, requesting
@@ -83,11 +85,13 @@ public class PictureTaker {
 
         // Restore the HUD to the previous state.
         this.takingPicture = false;
-        client.options.hideGui = this.hudWasHidden;
+
+        if (!this.hudWasHidden)
+            client.gui.hud.toggle();
 
         // Save the picture as a screenshot if enabled.
         if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
-            Screenshot.grab(client.gameDirectory, client.getMainRenderTarget(), (text) -> {
+            Screenshot.grab(client.gameDirectory, client.gameRenderer.mainRenderTarget(), (text) -> {
             });
         }
 
@@ -98,7 +102,7 @@ public class PictureTaker {
         }
 
         // Take a screenshot while the HUD was hidden.
-        Screenshot.takeScreenshot(client.getMainRenderTarget(), (nativeImage) -> {
+        Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), (nativeImage) -> {
             this.picture = ImageUtil.fromNativeImage(nativeImage);
             nativeImage.close();
 

@@ -172,7 +172,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
     @Override
     protected boolean shouldShowName(PictureFrameEntity entity, double squaredDistanceToCamera) {
-        return Minecraft.renderNames() && super.shouldShowName(entity, squaredDistanceToCamera);
+        return !Minecraft.getInstance().gui.hud.isHidden() && super.shouldShowName(entity, squaredDistanceToCamera);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
         // When hovering, render a "block" outline to make the frame appear as a block.
         Minecraft client = Minecraft.getInstance();
-        state.shouldRenderOutline = !this.entityRenderDispatcher.options.hideGui
+        state.shouldRenderOutline = !Minecraft.getInstance().gui.hud.isHidden()
                 && CameraItem.find(client.player, true) == null
                 && client.hitResult instanceof EntityHitResult hitResult
                 && hitResult.getEntity() == entity;

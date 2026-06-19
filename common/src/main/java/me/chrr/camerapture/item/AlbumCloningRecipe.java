@@ -1,8 +1,8 @@
 package me.chrr.camerapture.item;
 
+import com.mojang.datafixers.util.Pair;
 import me.chrr.camerapture.Camerapture;
 import net.minecraft.core.NonNullList;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -23,15 +23,15 @@ public class AlbumCloningRecipe extends CustomRecipe {
 
     @Override
     public ItemStack assemble(CraftingInput input) {
-        return getRecipe(input.items()).map(Tuple::getA).orElse(null);
+        return getRecipe(input.items()).map(Pair::getFirst).orElse(null);
     }
 
     @Override
     public NonNullList<ItemStack> getRemainingItems(CraftingInput input) {
-        return getRecipe(input.items()).map(Tuple::getB).orElse(null);
+        return getRecipe(input.items()).map(Pair::getSecond).orElse(null);
     }
 
-    private Optional<Tuple<ItemStack, NonNullList<ItemStack>>> getRecipe(List<ItemStack> items) {
+    private Optional<Pair<ItemStack, NonNullList<ItemStack>>> getRecipe(List<ItemStack> items) {
         NonNullList<ItemStack> remainder = NonNullList.withSize(items.size(), ItemStack.EMPTY);
         ItemStack album = ItemStack.EMPTY;
         boolean book = false;
@@ -59,7 +59,7 @@ public class AlbumCloningRecipe extends CustomRecipe {
         if (album.isEmpty() || !book) {
             return Optional.empty();
         } else {
-            return Optional.of(new Tuple<>(album.copy(), remainder));
+            return Optional.of(new Pair<>(album.copy(), remainder));
         }
     }
 

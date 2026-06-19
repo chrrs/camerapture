@@ -20,11 +20,10 @@ public abstract class ItemInHandRendererMixin {
     private Minecraft minecraft;
 
     /// Hide the hands when the player is holding an active camera.
-    @Inject(method = "renderHandsWithItems(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/player/LocalPlayer;I)V", at = @At(value = "HEAD"), cancellable = true)
-    public void onRenderHands(float tickProgress, PoseStack matrices, SubmitNodeCollector orderedRenderCommandQueue, LocalPlayer player, int light, CallbackInfo ci) {
+    @Inject(method = "submitHandsWithItems(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/player/LocalPlayer;I)V", at = @At(value = "HEAD"), cancellable = true)
+    public void onRenderHands(float frameInterp, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, LocalPlayer player, int lightCoords, CallbackInfo ci) {
         CameraItem.HeldCamera camera = CameraItem.find(minecraft.player, true);
-        if (camera != null) {
+        if (camera != null)
             ci.cancel();
-        }
     }
 }

@@ -17,8 +17,8 @@ public class AvatarRendererMixin {
     /// If we're holding a camera, we want to have the arm pose as if we're
     /// charging a bow and arrow, so we hold the camera up.
     @Inject(method = "getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;", at = @At(value = "TAIL"), cancellable = true)
-    private static void getArmPose(Avatar player, ItemStack stack, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
-        if (stack.is(Camerapture.CAMERA) && CameraItem.isActive(stack)) {
+    private static void getArmPose(Avatar avatar, ItemStack itemInHand, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
+        if (itemInHand.is(Camerapture.CAMERA) && CameraItem.isActive(itemInHand)) {
             cir.setReturnValue(HumanoidModel.ArmPose.BOW_AND_ARROW);
         }
     }
