@@ -3,6 +3,9 @@ accessWidener v2 official
 # This is marked private in 1.21.9
 accessible field net/minecraft/server/level/ServerPlayer server Lnet/minecraft/server/MinecraftServer;
 
+# This is marked private in 26.2
+accessible field net/minecraft/client/gui/Hud isHidden Z
+
 # Marked public by Fabric and NeoForge, but we don't have that here.
 transitive-accessible class net/minecraft/world/inventory/MenuType$MenuSupplier
 accessible method net/minecraft/world/inventory/MenuType <init> (Lnet/minecraft/world/inventory/MenuType$MenuSupplier;Lnet/minecraft/world/flag/FeatureFlagSet;)V

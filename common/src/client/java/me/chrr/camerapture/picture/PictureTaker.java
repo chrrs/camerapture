@@ -50,10 +50,10 @@ public class PictureTaker {
         }
 
         this.takingPicture = true;
-        this.hudWasHidden = Minecraft.getInstance().gui.hud.isHidden();
 
-        if (!this.hudWasHidden)
-            Minecraft.getInstance().gui.hud.toggle();
+        Minecraft minecraft = Minecraft.getInstance();
+        this.hudWasHidden = minecraft.gui.hud.isHidden;
+        minecraft.gui.hud.isHidden = true;
     }
 
     /// Try reading an image from the file system and prepare it, requesting
@@ -81,34 +81,30 @@ public class PictureTaker {
             return;
         }
 
-        Minecraft client = Minecraft.getInstance();
-
-        // Restore the HUD to the previous state.
-        this.takingPicture = false;
-
-        if (!this.hudWasHidden)
-            client.gui.hud.toggle();
-
-        // Save the picture as a screenshot if enabled.
-        if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot) {
-            Screenshot.grab(client.gameDirectory, client.gameRenderer.mainRenderTarget(), (text) -> {
-            });
-        }
+        Minecraft minecraft = Minecraft.getInstance();
 
         // We de-activate the camera client-side immediately, to make it feel more responsive.
-        CameraItem.HeldCamera activeCamera = CameraItem.find(client.player, true);
-        if (activeCamera != null) {
+        CameraItem.HeldCamera activeCamera = CameraItem.find(minecraft.player, true);
+        if (activeCamera != null)
             CameraItem.setActive(activeCamera.stack(), false);
-        }
+
+        // Save the picture as a screenshot if enabled.
+        if (Camerapture.CONFIG_MANAGER.getConfig().client.saveScreenshot)
+            Screenshot.grab(minecraft.gameDirectory, minecraft.gameRenderer.mainRenderTarget(), (_) -> {
+            });
 
         // Take a screenshot while the HUD was hidden.
-        Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), (nativeImage) -> {
+        Screenshot.takeScreenshot(minecraft.gameRenderer.mainRenderTarget(), (nativeImage) -> {
             this.picture = ImageUtil.fromNativeImage(nativeImage);
             nativeImage.close();
 
             // Request a new picture ID from the server.
             Camerapture.NETWORK.sendToServer(new NewPicturePacket());
         });
+
+        // Restore the HUD to the previous state.
+        this.takingPicture = false;
+        minecraft.gui.hud.isHidden = this.hudWasHidden;
     }
 
     /// Upload the stored picture to the server when requested, using the specified picture ID.

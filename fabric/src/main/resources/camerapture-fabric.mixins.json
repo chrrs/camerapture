@@ -7,7 +7,7 @@
         "AbstractClientPlayerMixin",
         "GameRendererMixin",
         "ItemInHandRendererMixin",
-        "GuiMixin",
+        "HudMixin",
         "MouseHandlerMixin",
         "AvatarRendererMixin"
     ],
