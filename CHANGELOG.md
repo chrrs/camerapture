@@ -1,3 +1,7 @@
+## 1.10.15
+
+- Properly hide the GUI when taking a picture on Fabric 26.2.
+
 ## 1.10.14
 
 - Update Tapestry, which fixes some config things.
