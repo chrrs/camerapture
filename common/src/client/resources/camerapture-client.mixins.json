@@ -6,7 +6,8 @@
     "client": [
         "GameRendererMixin",
         "AbstractContainerScreenMixin",
-        "MouseHandlerMixin"
+        "MouseHandlerMixin",
+        "MinecraftMixin"
     ],
     "injectors": {
         "defaultRequire": 1

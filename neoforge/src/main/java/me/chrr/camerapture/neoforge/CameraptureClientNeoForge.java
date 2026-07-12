@@ -2,6 +2,7 @@ package me.chrr.camerapture.neoforge;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
+import me.chrr.camerapture.CameraCaptureControls;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
 import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.*;
@@ -192,6 +193,11 @@ public class CameraptureClientNeoForge {
         @SubscribeEvent
         public void onClientTick(ClientTickEvent.Pre event) {
             ClientPictureStore.getInstance().processQueue();
+        }
+
+        @SubscribeEvent
+        public void onClientTickPost(ClientTickEvent.Post event) {
+            CameraCaptureControls.tick();
         }
     }
 }
