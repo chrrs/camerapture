@@ -8,9 +8,48 @@ public enum CameraAspectRatio {
     RATIO_16_9,
     RATIO_4_3;
 
-    public CameraAspectRatio next() {
-        CameraAspectRatio[] values = values();
-        return values[(ordinal() + 1) % values.length];
+    private static final double RATIO_MATCH_EPSILON = 0.02;
+
+    public CameraAspectRatio next(int screenWidth, int screenHeight) {
+        CameraAspectRatio next = this;
+        do {
+            CameraAspectRatio[] values = values();
+            next = values[(next.ordinal() + 1) % values.length];
+        } while (!next.isAvailable(screenWidth, screenHeight) && next != this);
+        return next;
+    }
+
+    /// {@code SCREEN} is hidden when the window is already 16:9 or 4:3 (or the inverse).
+    public boolean isAvailable(int screenWidth, int screenHeight) {
+        if (this != SCREEN) {
+            return true;
+        }
+
+        double screenRatio = (double) screenWidth / (double) screenHeight;
+        return !matchesKnownRatio(screenRatio, 16.0 / 9.0)
+                && !matchesKnownRatio(screenRatio, 4.0 / 3.0);
+    }
+
+    /// If {@code SCREEN} is redundant for this window, map it to the matching fixed ratio.
+    public CameraAspectRatio resolve(int screenWidth, int screenHeight) {
+        if (this != SCREEN || isAvailable(screenWidth, screenHeight)) {
+            return this;
+        }
+
+        double screenRatio = (double) screenWidth / (double) screenHeight;
+        if (matchesKnownRatio(screenRatio, 16.0 / 9.0)) {
+            return RATIO_16_9;
+        }
+        if (matchesKnownRatio(screenRatio, 4.0 / 3.0)) {
+            return RATIO_4_3;
+        }
+        return this;
+    }
+
+    private static boolean matchesKnownRatio(double widthOverHeight, double knownRatio) {
+        double landscape = widthOverHeight >= 1.0 ? widthOverHeight : 1.0 / widthOverHeight;
+        double knownLandscape = knownRatio >= 1.0 ? knownRatio : 1.0 / knownRatio;
+        return Math.abs(landscape - knownLandscape) <= RATIO_MATCH_EPSILON;
     }
 
     /// Width divided by height for the chosen ratio and orientation.

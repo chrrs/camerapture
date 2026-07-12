@@ -34,6 +34,7 @@ public enum CameraViewFinder {
         int height = graphics.guiHeight();
 
         PictureTaker taker = PictureTaker.getInstance();
+        taker.aspectRatio = taker.aspectRatio.resolve(width, height);
         double ratio = taker.getCaptureWidthOverHeight(width, height);
         CaptureCrop.Rect crop = CaptureCrop.centerCrop(width, height, ratio);
 

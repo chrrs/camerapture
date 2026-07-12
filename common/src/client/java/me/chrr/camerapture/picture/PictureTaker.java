@@ -46,11 +46,15 @@ public class PictureTaker {
     }
 
     public void cycleAspectRatio() {
-        this.aspectRatio = this.aspectRatio.next();
+        Minecraft client = Minecraft.getInstance();
+        int width = client.getWindow().getGuiScaledWidth();
+        int height = client.getWindow().getGuiScaledHeight();
+        this.aspectRatio = this.aspectRatio.resolve(width, height).next(width, height);
     }
 
     public double getCaptureWidthOverHeight(int width, int height) {
-        return this.aspectRatio.widthOverHeight(this.orientation, width, height);
+        return this.aspectRatio.resolve(width, height)
+                .widthOverHeight(this.orientation, width, height);
     }
 
     /// Take a screenshot and prepare it, requesting for it to be uploaded.
