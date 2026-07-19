@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.fml.ModContainer;
@@ -180,8 +181,9 @@ public class CameraptureClientNeoForge {
             }
         }
 
-        /// Apply the camera zoom FOV if we have an active camera.
-        @SubscribeEvent
+        /// Apply the camera zoom FOV if we have an active camera. This is registered on low priority, to make sure
+        /// we're applying the FOV modifier last.
+        @SubscribeEvent(priority = EventPriority.LOW)
         public void onFovModifier(ComputeFovModifierEvent event) {
             if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
                 event.setNewFovModifier(PictureTaker.getInstance().getFovModifier());
