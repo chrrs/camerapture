@@ -46,10 +46,17 @@ public class PictureTaker {
     }
 
     public void cycleAspectRatio() {
+        cycleAspectRatio(1);
+    }
+
+    public void cycleAspectRatio(int direction) {
         Minecraft client = Minecraft.getInstance();
         int width = client.getWindow().getGuiScaledWidth();
         int height = client.getWindow().getGuiScaledHeight();
-        this.aspectRatio = this.aspectRatio.resolve(width, height).next(width, height);
+        CameraAspectRatio current = this.aspectRatio.resolve(width, height);
+        this.aspectRatio = direction < 0
+                ? current.previous(width, height)
+                : current.next(width, height);
     }
 
     public double getCaptureWidthOverHeight(int width, int height) {

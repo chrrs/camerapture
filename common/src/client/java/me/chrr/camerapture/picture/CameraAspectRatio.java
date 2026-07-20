@@ -1,5 +1,7 @@
 package me.chrr.camerapture.picture;
 
+import net.minecraft.network.chat.Component;
+
 /// Aspect ratio family used when capturing a picture.
 /// Combined with {@link CameraOrientation} this covers screen, screen inverse,
 /// 16:9, 9:16, 4:3, and 3:4.
@@ -8,15 +10,25 @@ public enum CameraAspectRatio {
     RATIO_16_9,
     RATIO_4_3;
 
-    private static final double RATIO_MATCH_EPSILON = 0.02;
+    /// Tight match so "16:9" / "4:3" labels only apply to essentially exact window ratios.
+    private static final double RATIO_MATCH_EPSILON = 0.001;
 
     public CameraAspectRatio next(int screenWidth, int screenHeight) {
-        CameraAspectRatio next = this;
+        return step(screenWidth, screenHeight, 1);
+    }
+
+    public CameraAspectRatio previous(int screenWidth, int screenHeight) {
+        return step(screenWidth, screenHeight, -1);
+    }
+
+    private CameraAspectRatio step(int screenWidth, int screenHeight, int delta) {
+        CameraAspectRatio[] values = values();
+        CameraAspectRatio current = this;
         do {
-            CameraAspectRatio[] values = values();
-            next = values[(next.ordinal() + 1) % values.length];
-        } while (!next.isAvailable(screenWidth, screenHeight) && next != this);
-        return next;
+            int index = Math.floorMod(current.ordinal() + delta, values.length);
+            current = values[index];
+        } while (!current.isAvailable(screenWidth, screenHeight) && current != this);
+        return current;
     }
 
     /// {@code SCREEN} is hidden when the window is already 16:9 or 4:3 (or the inverse).
@@ -67,17 +79,13 @@ public enum CameraAspectRatio {
         return ratio;
     }
 
-    public String translationKey(CameraOrientation orientation) {
+    public Component getLabel(CameraOrientation orientation) {
         return switch (this) {
-            case SCREEN -> orientation == CameraOrientation.PORTRAIT
+            case SCREEN -> Component.translatable(orientation == CameraOrientation.PORTRAIT
                     ? "text.camerapture.aspect.screen_inverse"
-                    : "text.camerapture.aspect.screen";
-            case RATIO_16_9 -> orientation == CameraOrientation.PORTRAIT
-                    ? "text.camerapture.aspect.9_16"
-                    : "text.camerapture.aspect.16_9";
-            case RATIO_4_3 -> orientation == CameraOrientation.PORTRAIT
-                    ? "text.camerapture.aspect.3_4"
-                    : "text.camerapture.aspect.4_3";
+                    : "text.camerapture.aspect.screen");
+            case RATIO_16_9 -> Component.literal(orientation == CameraOrientation.PORTRAIT ? "9:16" : "16:9");
+            case RATIO_4_3 -> Component.literal(orientation == CameraOrientation.PORTRAIT ? "3:4" : "4:3");
         };
     }
 }

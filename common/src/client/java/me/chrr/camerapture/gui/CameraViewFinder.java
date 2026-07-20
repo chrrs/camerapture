@@ -51,9 +51,9 @@ public enum CameraViewFinder {
         if (!Camerapture.CONFIG_MANAGER.getConfig().client.simpleCameraHud) {
             graphics.text(font, Component.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh * 3, CommonColors.WHITE, false);
             graphics.text(font, Component.translatable("text.camerapture.orientation",
-                    Component.translatable(taker.orientation.translationKey())), textX, textY - fh * 2, CommonColors.WHITE, false);
+                    taker.orientation.getLabel()), textX, textY - fh * 2, CommonColors.WHITE, false);
             graphics.text(font, Component.translatable("text.camerapture.aspect",
-                    Component.translatable(taker.aspectRatio.translationKey(taker.orientation))), textX, textY - fh, CommonColors.WHITE, false);
+                    taker.aspectRatio.getLabel(taker.orientation)), textX, textY - fh, CommonColors.WHITE, false);
         }
 
         if (!CameraItem.canTakePicture(player)) {

@@ -2,7 +2,6 @@ package me.chrr.camerapture.neoforge;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
-import me.chrr.camerapture.CameraCaptureControls;
 import me.chrr.camerapture.compat.ClothConfigScreenFactory;
 import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.*;
@@ -172,13 +171,24 @@ public class CameraptureClientNeoForge {
             }
         }
 
-        /// If we have an active camera, scroll to zoom instead.
+        /// Active camera: scroll zooms, shift+scroll cycles aspect ratio.
         @SubscribeEvent
         public void onScroll(InputEvent.MouseScrollingEvent event) {
-            if (CameraItem.find(Minecraft.getInstance().player, true) != null) {
-                PictureTaker.getInstance().zoom((float) (event.getScrollDeltaY() / 4f));
-                event.setCanceled(true);
+            Minecraft client = Minecraft.getInstance();
+            if (CameraItem.find(client.player, true) == null) {
+                return;
             }
+
+            if (client.options.keyShift.isDown()) {
+                double vertical = event.getScrollDeltaY();
+                if (vertical != 0) {
+                    PictureTaker.getInstance().cycleAspectRatio(vertical > 0 ? 1 : -1);
+                }
+            } else {
+                PictureTaker.getInstance().zoom((float) (event.getScrollDeltaY() / 4f));
+            }
+
+            event.setCanceled(true);
         }
 
         /// Apply the camera zoom FOV if we have an active camera.
@@ -193,11 +203,6 @@ public class CameraptureClientNeoForge {
         @SubscribeEvent
         public void onClientTick(ClientTickEvent.Pre event) {
             ClientPictureStore.getInstance().processQueue();
-        }
-
-        @SubscribeEvent
-        public void onClientTickPost(ClientTickEvent.Post event) {
-            CameraCaptureControls.tick();
         }
     }
 }

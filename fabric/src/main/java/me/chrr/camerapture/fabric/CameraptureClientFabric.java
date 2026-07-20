@@ -2,7 +2,6 @@ package me.chrr.camerapture.fabric;
 
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
-import me.chrr.camerapture.CameraCaptureControls;
 import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.CameraItem;
@@ -83,8 +82,5 @@ public class CameraptureClientFabric implements ClientModInitializer {
         // Process any received pictures once per tick.
         ClientTickEvents.START_CLIENT_TICK.register((minecraft) ->
                 ClientPictureStore.getInstance().processQueue());
-
-        ClientTickEvents.END_CLIENT_TICK.register((minecraft) ->
-                CameraCaptureControls.tick());
     }
 }
