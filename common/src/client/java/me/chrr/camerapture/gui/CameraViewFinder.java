@@ -3,6 +3,7 @@ package me.chrr.camerapture.gui;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.PictureTaker;
+import me.chrr.camerapture.util.CaptureCrop;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,6 +21,7 @@ public enum CameraViewFinder {
     ;
 
     private static final SimpleDateFormat SDF_DATE = new SimpleDateFormat("yyyy/MM/dd");
+    private static final int LETTERBOX_COLOR = 0x99000000;
 
     /// Draw the camera view finder to the screen.
     public static void drawCameraViewFinder(GuiGraphicsExtractor graphics, Font font) {
@@ -31,17 +33,27 @@ public enum CameraViewFinder {
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
 
-        drawViewFinder(graphics, 10, 10, width - 10, height - 10, 2, 30);
+        PictureTaker taker = PictureTaker.getInstance();
+        taker.aspectRatio = taker.aspectRatio.resolve(width, height);
+        double ratio = taker.getCaptureWidthOverHeight(width, height);
+        CaptureCrop.Rect crop = CaptureCrop.centerCrop(width, height, ratio);
+
+        drawLetterbox(graphics, width, height, crop);
+        drawViewFinder(graphics, crop.x() + 10, crop.y() + 10, crop.x() + crop.width() - 10, crop.y() + crop.height() - 10, 2, 30);
         drawViewFinder(graphics, width / 2 - 20, height / 2 - 20, width / 2 + 20, height / 2 + 20, 1, 10);
 
-        drawZoomBar(graphics, font, width - 10, height / 2 - height / 6, height / 3);
+        drawZoomBar(graphics, font, Math.min(width - 10, crop.x() + crop.width() - 10), height / 2 - height / 6, height / 3);
 
         int fh = font.lineHeight;
-        int textX = 25;
-        int textY = height - 25;
+        int textX = Math.max(25, crop.x() + 15);
+        int textY = Math.min(height - 25, crop.y() + crop.height() - 15);
 
         if (!Camerapture.CONFIG_MANAGER.getConfig().client.simpleCameraHud) {
-            graphics.text(font, Component.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh, CommonColors.WHITE, false);
+            graphics.text(font, Component.translatable("text.camerapture.date", SDF_DATE.format(new Date())), textX, textY - fh * 3, CommonColors.WHITE, false);
+            graphics.text(font, Component.translatable("text.camerapture.orientation",
+                    taker.orientation.getLabel()), textX, textY - fh * 2, CommonColors.WHITE, false);
+            graphics.text(font, Component.translatable("text.camerapture.aspect",
+                    taker.aspectRatio.getLabel(taker.orientation)), textX, textY - fh, CommonColors.WHITE, false);
         }
 
         if (!CameraItem.canTakePicture(player)) {
@@ -56,9 +68,25 @@ public enum CameraViewFinder {
 
             Component text = Component.translatable("text.camerapture.paper_available", paper);
             int w = font.width(text);
-            int x = width - 25 - w;
-            int y = height - 25 - fh;
+            int x = Math.min(width - 25 - w, crop.x() + crop.width() - 15 - w);
+            int y = Math.min(height - 25 - fh, crop.y() + crop.height() - 15 - fh);
             graphics.text(font, text, x, y, CommonColors.WHITE, false);
+        }
+    }
+
+    private static void drawLetterbox(GuiGraphicsExtractor graphics, int width, int height, CaptureCrop.Rect crop) {
+        if (crop.width() == width && crop.height() == height) {
+            return;
+        }
+
+        if (crop.x() > 0) {
+            graphics.fill(0, 0, crop.x(), height, LETTERBOX_COLOR);
+            graphics.fill(crop.x() + crop.width(), 0, width, height, LETTERBOX_COLOR);
+        }
+
+        if (crop.y() > 0) {
+            graphics.fill(crop.x(), 0, crop.x() + crop.width(), crop.y(), LETTERBOX_COLOR);
+            graphics.fill(crop.x(), crop.y() + crop.height(), crop.x() + crop.width(), height, LETTERBOX_COLOR);
         }
     }
 

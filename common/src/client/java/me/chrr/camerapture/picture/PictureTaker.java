@@ -30,6 +30,8 @@ public class PictureTaker {
     private static final PictureTaker INSTANCE = new PictureTaker();
 
     public float zoomLevel = MIN_ZOOM;
+    public CameraOrientation orientation = CameraOrientation.LANDSCAPE;
+    public CameraAspectRatio aspectRatio = CameraAspectRatio.SCREEN;
 
     private boolean hudWasHidden = false;
     private boolean takingPicture = false;
@@ -37,6 +39,29 @@ public class PictureTaker {
     private BufferedImage picture;
 
     private PictureTaker() {
+    }
+
+    public void toggleOrientation() {
+        this.orientation = this.orientation.next();
+    }
+
+    public void cycleAspectRatio() {
+        cycleAspectRatio(1);
+    }
+
+    public void cycleAspectRatio(int direction) {
+        Minecraft client = Minecraft.getInstance();
+        int width = client.getWindow().getGuiScaledWidth();
+        int height = client.getWindow().getGuiScaledHeight();
+        CameraAspectRatio current = this.aspectRatio.resolve(width, height);
+        this.aspectRatio = direction < 0
+                ? current.previous(width, height)
+                : current.next(width, height);
+    }
+
+    public double getCaptureWidthOverHeight(int width, int height) {
+        return this.aspectRatio.resolve(width, height)
+                .widthOverHeight(this.orientation, width, height);
     }
 
     /// Take a screenshot and prepare it, requesting for it to be uploaded.
@@ -97,10 +122,13 @@ public class PictureTaker {
             CameraItem.setActive(activeCamera.stack(), false);
         }
 
-        // Take a screenshot while the HUD was hidden.
+        // Take a screenshot while the HUD was hidden, then crop to the selected aspect ratio.
         Screenshot.takeScreenshot(client.getMainRenderTarget(), (nativeImage) -> {
-            this.picture = ImageUtil.fromNativeImage(nativeImage);
+            BufferedImage full = ImageUtil.fromNativeImage(nativeImage);
             nativeImage.close();
+
+            double ratio = getCaptureWidthOverHeight(full.getWidth(), full.getHeight());
+            this.picture = ImageUtil.cropToAspect(full, ratio);
 
             // Request a new picture ID from the server.
             Camerapture.NETWORK.sendToServer(new NewPicturePacket());

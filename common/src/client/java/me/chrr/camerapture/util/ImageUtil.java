@@ -35,6 +35,21 @@ public enum ImageUtil {
         return bufferedImage;
     }
 
+    /// Center-crop a {@link BufferedImage} to the given width/height ratio.
+    public static BufferedImage cropToAspect(BufferedImage image, double widthOverHeight) {
+        CaptureCrop.Rect crop = CaptureCrop.centerCrop(image.getWidth(), image.getHeight(), widthOverHeight);
+        if (crop.width() == image.getWidth() && crop.height() == image.getHeight()) {
+            return image;
+        }
+
+        BufferedImage cropped = new BufferedImage(crop.width(), crop.height(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = cropped.createGraphics();
+        g.drawImage(image, 0, 0, crop.width(), crop.height(),
+                crop.x(), crop.y(), crop.x() + crop.width(), crop.y() + crop.height(), null);
+        g.dispose();
+        return cropped;
+    }
+
     /// Shrink a {@link BufferedImage} to be of a maximum dimension in either
     /// direction, while the aspect ratio is kept the same.
     public static BufferedImage clampSize(BufferedImage image, int maxDimension) {
