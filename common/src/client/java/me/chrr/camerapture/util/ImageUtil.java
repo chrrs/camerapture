@@ -15,12 +15,32 @@ public enum ImageUtil {
     ;
 
     /// Convert a {@link BufferedImage} to a {@link NativeImage}.
+    ///
+    /// This runs for every picture a client loads, so for a world full of posters it's the bulk of the
+    /// cost of a picture appearing. Two things matter here:
+    ///
+    /// Pixels are read in one bulk call rather than per pixel. `BufferedImage#getRGB(int, int)` goes
+    /// through the raster and colour model on every single call, whereas the bulk overload hands off to
+    /// an optimised path.
+    ///
+    /// The loop then walks rows, not columns. Both the source array and NativeImage's buffer are laid
+    /// out row-major (`(x + y * width) * 4`), so iterating x in the outer loop — as this did — jumped a
+    /// whole row's stride on every step and missed cache on essentially every write.
+    ///
+    /// The writes stay per-pixel because NativeImage exposes no bulk setter.
     public static NativeImage toNativeImage(BufferedImage image) {
-        NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, image.getWidth(), image.getHeight(), false);
+        int width = image.getWidth();
+        int height = image.getHeight();
 
-        for (int x = 0; x < image.getWidth(); x++) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                nativeImage.setPixel(x, y, image.getRGB(x, y));
+        NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+
+        int[] pixels = new int[width * height];
+        image.getRGB(0, 0, width, height, pixels, 0, width);
+
+        for (int y = 0; y < height; y++) {
+            int row = y * width;
+            for (int x = 0; x < width; x++) {
+                nativeImage.setPixel(x, y, pixels[row + x]);
             }
         }
 

@@ -15,14 +15,24 @@ public class Config {
 
     /// Client-specific config options.
     public static class Client {
-        public int version = 3;
+        public int version = 4;
 
-        public boolean cachePictures = false;
+        /// On by default since v4. Without it a client re-downloads every picture it looks at, every
+        /// session — on a server with a few thousand posters that's hundreds of megabytes per player
+        /// per login, and it all comes off the server's picture bandwidth. Only ever applies to
+        /// multiplayer; see ClientPictureStore#shouldCacheToDisk.
+        public boolean cachePictures = true;
         public boolean saveScreenshot = false;
         public boolean simpleCameraHud = false;
         public float zoomMouseSensitivity = 0.5f;
 
         public void upgrade() {
+            if (this.version < 4) {
+                // Adopt the new default. Existing configs were written when it was off and almost
+                // certainly never changed it deliberately.
+                this.cachePictures = DEFAULT.client.cachePictures;
+            }
+
             this.version = DEFAULT.client.version;
         }
     }

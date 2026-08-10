@@ -39,7 +39,11 @@ public class PictureFrameBlock extends HorizontalDirectionalBlock implements Ent
 
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
 
-    // Thin slab shapes for each direction (1/16 thick on the wall face)
+    /// How far the frame stands off the wall, in blocks.
+    public static final double FRAME_THICKNESS = 0.0625;
+
+    // Thin slab shapes for each direction (1/16 thick on the wall face), used when there's no block
+    // entity to read a size from — these are exactly the width-1 height-1 case.
     private static final VoxelShape NORTH_SHAPE = Block.box(0.0, 0.0, 15.0, 16.0, 16.0, 16.0);
     private static final VoxelShape SOUTH_SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 16.0, 1.0);
     private static final VoxelShape EAST_SHAPE = Block.box(0.0, 0.0, 0.0, 1.0, 16.0, 16.0);
@@ -73,54 +77,19 @@ public class PictureFrameBlock extends HorizontalDirectionalBlock implements Ent
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-        int width = 1;
-        int height = 1;
-
+        // Raycasts call this for every block along the look vector, every frame, so it must not build a
+        // shape per call. The block entity keeps one cached per size; the constants below cover the
+        // window where a frame's state exists but its block entity doesn't.
         if (level.getBlockEntity(pos) instanceof PictureFrameBlockEntity blockEntity) {
-            width = blockEntity.getFrameWidth();
-            height = blockEntity.getFrameHeight();
+            return blockEntity.getFrameShape();
         }
 
-        double thickness = 0.0625;
-        double minX, minY = 0.0, minZ;
-        double maxX, maxY = (double) height, maxZ;
-
-        switch (facing) {
-            case SOUTH -> {
-                minX = -0.5;
-                maxX = (double) width - 0.5;
-                minZ = 0.0;
-                maxZ = thickness;
-            }
-            case EAST -> {
-                minX = 0.0;
-                maxX = thickness;
-                minZ = 0.5 - (double) width;
-                maxZ = 0.5;
-            }
-            case WEST -> {
-                minX = 1.0 - thickness;
-                maxX = 1.0;
-                minZ = -0.5;
-                maxZ = (double) width - 0.5;
-            }
-            default -> { // NORTH
-                minX = 0.5 - (double) width;
-                maxX = 0.5;
-                minZ = 1.0 - thickness;
-                maxZ = 1.0;
-            }
-        }
-
-        return Block.box(
-                Math.max(-256.0, minX * 16.0),
-                Math.max(-256.0, minY * 16.0),
-                Math.max(-256.0, minZ * 16.0),
-                Math.min(256.0, maxX * 16.0),
-                Math.min(256.0, maxY * 16.0),
-                Math.min(256.0, maxZ * 16.0)
-        );
+        return switch (state.getValue(FACING)) {
+            case SOUTH -> SOUTH_SHAPE;
+            case EAST -> EAST_SHAPE;
+            case WEST -> WEST_SHAPE;
+            default -> NORTH_SHAPE;
+        };
     }
 
     @Nullable

@@ -45,14 +45,46 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Camerapture {
     public static final String MOD_ID = "camerapture";
     public static final Logger LOGGER = LogManager.getLogger("Camerapture");
 
-    public static final Executor EXECUTOR = Executors.newCachedThreadPool();
+    public static final Executor EXECUTOR = createExecutor();
     public static final ConfigManager CONFIG_MANAGER = new ConfigManager();
+
+    /// Picture work — disk reads and writes, WebP decoding — runs here, off the game thread.
+    ///
+    /// Deliberately a fixed pool rather than a cached one: download requests come straight from clients,
+    /// so with a few hundred players a cached pool would spawn a thread per in-flight request and could
+    /// run the server out of them. A bounded pool turns a request flood into a queue instead. The queue
+    /// itself stays unbounded because each task is only a UUID and a player reference, and duplicate
+    /// requests already collapse in ServerPictureStore and DownloadQueue.
+    ///
+    /// Threads are daemons that time out when idle, so the pool can never hold up JVM shutdown, and
+    /// they're named so they're identifiable in a profiler or thread dump.
+    private static Executor createExecutor() {
+        int threads = Math.max(4, Runtime.getRuntime().availableProcessors());
+
+        AtomicInteger counter = new AtomicInteger();
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                threads, threads,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                runnable -> {
+                    Thread thread = new Thread(runnable, "camerapture-worker-" + counter.incrementAndGet());
+                    thread.setDaemon(true);
+                    return thread;
+                }
+        );
+
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
+    }
 
     public static final PlatformAdapter PLATFORM = Tapestry.implementation(id("platform_adapter"));
     public static final NetworkAdapter NETWORK = Tapestry.implementation(id("network_adapter"));
@@ -177,20 +209,25 @@ public class Camerapture {
 
         // Client requests a picture with a certain UUID
         NETWORK.onReceiveFromClient(RequestDownloadPacket.class, (packet, player) -> {
-            try {
-                StoredPicture picture = ServerPictureStore.getInstance().get(player.server, packet.uuid());
+            // Packet handlers run on the server thread on both loaders, and a cache miss here reads the
+            // picture off the disk. Do that on the executor instead, like uploads already do — nothing
+            // below touches game state, and DownloadQueue does the actual sending on its own thread.
+            EXECUTOR.execute(() -> {
+                try {
+                    StoredPicture picture = ServerPictureStore.getInstance().get(player.server, packet.uuid());
 
-                if (picture == null) {
-                    LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
+                    if (picture == null) {
+                        LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
+                        NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid()));
+                        return;
+                    }
+
+                    DownloadQueue.getInstance().send(player, packet.uuid(), picture);
+                } catch (Exception e) {
+                    LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
                     NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid()));
-                    return;
                 }
-
-                DownloadQueue.getInstance().send(player, packet.uuid(), picture);
-            } catch (Exception e) {
-                LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
-                NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid()));
-            }
+            });
         });
     }
 

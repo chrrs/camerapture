@@ -8,7 +8,6 @@ import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
-import me.chrr.camerapture.render.PictureFrameBlockEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.render.ShouldRenderPicture;
 import net.minecraft.client.Minecraft;
@@ -80,7 +79,7 @@ public class CameraptureClientNeoForge {
 
     @SubscribeEvent
     public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, PictureFrameBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, NeoPictureFrameBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -194,15 +193,6 @@ public class CameraptureClientNeoForge {
         @SubscribeEvent
         public void onClientTick(ClientTickEvent.Pre event) {
             ClientPictureStore.getInstance().processQueue();
-        }
-
-        /// Ensure picture frames are extracted even when their 1x1 block pos chunk section is culled.
-        @SubscribeEvent
-        public void onExtractLevelRenderState(ExtractLevelRenderStateEvent event) {
-            me.chrr.camerapture.render.ClientPictureFrameTracker.ensureFramesExtracted(
-                    event.getRenderState(),
-                    event.getDeltaTracker().getGameTimeDeltaPartialTick(false)
-            );
         }
     }
 }

@@ -83,13 +83,5 @@ public class CameraptureClientFabric implements ClientModInitializer {
         // Process any received pictures once per tick.
         ClientTickEvents.START_CLIENT_TICK.register((minecraft) ->
                 ClientPictureStore.getInstance().processQueue());
-
-        // Ensure picture frames are extracted even when their 1x1 block pos chunk section is culled
-        net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents.END_EXTRACTION.register(context ->
-                me.chrr.camerapture.render.ClientPictureFrameTracker.ensureFramesExtracted(
-                        context.levelState(),
-                        context.deltaTracker().getGameTimeDeltaPartialTick(false)
-                )
-        );
     }
 }

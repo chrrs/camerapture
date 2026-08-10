@@ -16,8 +16,25 @@ public class RemotePicture {
     private int width = 0;
     private int height = 0;
 
+    /// When this picture was last asked for. The store uses it to tell pictures that are currently on
+    /// screen apart from ones merely still cached, so it never evicts a texture that's in use.
+    private volatile long lastAccess = System.currentTimeMillis();
+
     public RemotePicture(UUID id) {
         this.textureIdentifier = Camerapture.id("pictures/" + id.toString());
+    }
+
+    void touch() {
+        this.lastAccess = System.currentTimeMillis();
+    }
+
+    long getLastAccess() {
+        return lastAccess;
+    }
+
+    /// Roughly what this picture costs on the GPU, as RGBA. Zero until the size is known.
+    long getTextureBytes() {
+        return (long) width * height * 4L;
     }
 
     public Status getStatus() {

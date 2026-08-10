@@ -172,18 +172,41 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         collector.submitText(poseStack, x - width / 2f, y, Component.translationArg(text).getVisualOrderText(), false, Font.DisplayMode.NORMAL, light, color, 0, 0);
     }
 
+    /// Deliberately far below the 256 a beacon uses. Because we render off-screen, every frame inside
+    /// this radius is extracted and submitted every tick with no frustum culling on Fabric, so on a
+    /// server with thousands of posters in one area this radius directly sets the per-frame cost. A
+    /// picture is long unreadable by 96 blocks out.
     @Override
     public int getViewDistance() {
-        return 256;
+        return 96;
     }
 
+    /// Rejected before any render state is allocated. Measured against the whole frame rather than the
+    /// anchor block, since a wide frame reaches well past its anchor — which is the entire reason we
+    /// render off-screen in the first place.
     @Override
     public boolean shouldRender(PictureFrameBlockEntity blockEntity, Vec3 cameraPos) {
+        double viewDistance = getViewDistance();
+        return blockEntity.getRenderBox().distanceToSqr(cameraPos) <= viewDistance * viewDistance;
+    }
+
+    /// A frame is anchored by a single 1x1 block but can render up to 16x16 blocks away from it. If we let the
+    /// normal path handle us, [net.minecraft.client.renderer.extract.LevelExtractor] only ever looks at block
+    /// entities inside *visible chunk sections*, so standing next to a wide frame and turning away from the anchor
+    /// pushes the anchor's section out of the frustum and the whole picture vanishes.
+    ///
+    /// Rendering off-screen puts us in `ClientLevel#getGloballyRenderedBlockEntities`, which is extracted every
+    /// frame regardless of section culling. This is the same mechanism beacons use.
+    @Override
+    public boolean shouldRenderOffScreen() {
         return true;
     }
 
-    public AABB getRenderBoundingBox(PictureFrameBlockEntity blockEntity) {
-        return new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+    /// The area this frame actually draws into, in world space. NeoForge frustum-culls globally rendered
+    /// block entities against this; see `NeoPictureFrameBlockEntityRenderer`. Vanilla/Fabric has no
+    /// equivalent hook, which is why `shouldRender` above carries the distance check on both loaders.
+    public static AABB getFrameRenderBox(PictureFrameBlockEntity blockEntity) {
+        return blockEntity.getRenderBox();
     }
 
     public static class RenderState extends BlockEntityRenderState {
