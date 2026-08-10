@@ -16,6 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /// The client-side picture store. This class manages picture son the client side.
 /// Its cache is cleared when you leave a world. It also manages caching pictures
 /// to disk when that's enabled, and converts them to NativeImages for Minecraft
@@ -23,8 +26,8 @@ import java.util.*;
 public class ClientPictureStore {
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
-    private final Queue<QueuedBytes> byteQueue = new LinkedList<>();
-    private final Map<UUID, RemotePicture> pictures = new HashMap<>();
+    private final Queue<QueuedBytes> byteQueue = new ConcurrentLinkedQueue<>();
+    private final Map<UUID, RemotePicture> pictures = new ConcurrentHashMap<>();
 
     private ClientPictureStore() {
     }
@@ -134,17 +137,18 @@ public class ClientPictureStore {
                 .orElseGet(() -> ensureRemotePicture(id));
     }
 
-    /// Processes a single image from the queue.
+    /// Processes all images from the queue.
     public void processQueue() {
-        QueuedBytes item = byteQueue.poll();
-        if (item != null) {
+        QueuedBytes item;
+        while ((item = byteQueue.poll()) != null) {
+            final QueuedBytes queuedItem = item;
             Camerapture.EXECUTOR.execute(() -> {
                 try {
-                    processReceivedImage(item.id, ImageUtil.decodeImageFromWebP(item.bytes));
-                    cacheBytesToDisk(item.id, item.bytes);
+                    processReceivedImage(queuedItem.id, ImageUtil.decodeImageFromWebP(queuedItem.bytes));
+                    cacheBytesToDisk(queuedItem.id, queuedItem.bytes);
                 } catch (Exception e) {
-                    Camerapture.LOGGER.error("failed to decode received image bytes for image {}", item.id, e);
-                    RemotePicture picture = pictures.computeIfAbsent(item.id, RemotePicture::new);
+                    Camerapture.LOGGER.error("failed to decode received image bytes for image {}", queuedItem.id, e);
+                    RemotePicture picture = pictures.computeIfAbsent(queuedItem.id, RemotePicture::new);
                     picture.setStatus(RemotePicture.Status.ERROR);
                 }
             });

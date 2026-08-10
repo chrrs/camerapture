@@ -23,8 +23,16 @@ public class ByteCollector {
     }
 
     public boolean push(byte[] bytes, int bytesLeft) {
+        if (bytesLeft < 0 || bytes == null) {
+            return false;
+        }
+
         if (this.bytes == null) {
-            this.bytes = new byte[bytes.length + bytesLeft];
+            long totalSize = (long) bytes.length + (long) bytesLeft;
+            if (totalSize > 10_000_000L) {
+                return false;
+            }
+            this.bytes = new byte[(int) totalSize];
         }
 
         if (offset + bytes.length + bytesLeft != this.bytes.length) {

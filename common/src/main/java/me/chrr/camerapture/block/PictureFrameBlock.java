@@ -139,12 +139,7 @@ public class PictureFrameBlock extends HorizontalDirectionalBlock implements Ent
             if (level.getBlockEntity(pos) instanceof PictureFrameBlockEntity blockEntity) {
                 if (blockEntity.isFixed()) return;
 
-                Direction facing = state.getValue(FACING);
-                BlockPos backingPos = pos.relative(facing.getOpposite());
-                BlockState backingState = level.getBlockState(backingPos);
-
-                //noinspection deprecation
-                if (!backingState.isSolid()) {
+                if (!canSurvive(state, level, pos)) {
                     if (level instanceof ServerLevel serverLevel) {
                         blockEntity.dropItem(serverLevel);
                     }
@@ -158,7 +153,7 @@ public class PictureFrameBlock extends HorizontalDirectionalBlock implements Ent
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction facing = state.getValue(FACING);
         BlockPos backingPos = pos.relative(facing.getOpposite());
-        //noinspection deprecation
-        return level.getBlockState(backingPos).isSolid();
+        BlockState backingState = level.getBlockState(backingPos);
+        return backingState.isFaceSturdy(level, backingPos, facing) || backingState.isSolid();
     }
 }

@@ -20,13 +20,15 @@ public class ServerPictureStore {
 
     private static final ServerPictureStore INSTANCE = new ServerPictureStore();
 
-    private final Set<UUID> reservedIds = new HashSet<>();
-    private final Map<UUID, StoredPicture> pictureCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<UUID, StoredPicture> eldest) {
-            return size() > CACHE_SIZE;
-        }
-    };
+    private final Set<UUID> reservedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final Map<UUID, StoredPicture> pictureCache = Collections.synchronizedMap(
+            new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<UUID, StoredPicture> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            }
+    );
 
     /// Use {@link #getInstance()} instead of creating a new one.
     private ServerPictureStore() {
