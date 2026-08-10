@@ -172,16 +172,16 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         collector.submitText(poseStack, x - width / 2f, y, Component.translationArg(text).getVisualOrderText(), false, Font.DisplayMode.NORMAL, light, color, 0, 0);
     }
 
+    @Override
+    public int getViewDistance() {
+        return 256;
+    }
+
     public AABB getRenderBoundingBox(PictureFrameBlockEntity blockEntity) {
-        Direction facing = blockEntity.getFacing();
-        Direction parallel = facing.getCounterClockWise();
-
         BlockPos pos = blockEntity.getBlockPos();
-        BlockPos corner = pos
-                .relative(parallel, blockEntity.getFrameWidth() - 1)
-                .relative(Direction.UP, blockEntity.getFrameHeight() - 1);
-
-        return AABB.encapsulatingFullBlocks(pos, corner).inflate(1.0);
+        int width = blockEntity.getFrameWidth();
+        int height = blockEntity.getFrameHeight();
+        return new AABB(pos).inflate(width, height, width);
     }
 
     public static class RenderState extends BlockEntityRenderState {
