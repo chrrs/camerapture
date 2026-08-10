@@ -1,3 +1,17 @@
+## 2.0.0
+
+- Refactored picture frames from entities (`PictureFrameEntity`) to blocks (`PictureFrameBlock` and `PictureFrameBlockEntity`).
+- Added dynamic VoxelShape computation matching frame dimensions and facing orientation.
+- Fixed frustum culling and view distance issues for large off-screen picture frames.
+- Implemented byte-bounded LRU caching in `ServerPictureStore` (capped at 256MB) and per-picture load locks to collapse duplicate concurrent disk reads.
+- Implemented client-side LRU memory caching and automatic texture resource disposal.
+- Enabled client-side disk caching by default in client config (version 4) to save multiplayer bandwidth.
+- Added lightweight `WebPHeader` parser to validate image dimensions before full decoding.
+- Added server and client-side maximum resolution checks (`maxImageResolution`) to prevent memory exhaustion.
+- Improved network packet handling and thread-safe download queue processing.
+- Updated Jade compatibility plugin for block entities.
+- Removed legacy entity system code, inline NBT data fixers, and unneeded mixins.
+
 ## 1.10.15
 
 - Properly hide the GUI when taking a picture on Fabric 26.2.
