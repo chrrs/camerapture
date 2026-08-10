@@ -14,6 +14,8 @@ import me.chrr.camerapture.net.clientbound.RequestUploadPacket;
 import me.chrr.camerapture.net.serverbound.NewPicturePacket;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
 import me.chrr.camerapture.net.serverbound.UploadPartialPicturePacket;
+import me.chrr.camerapture.block.PictureFrameBlock;
+import me.chrr.camerapture.block.PictureFrameBlockEntity;
 import me.chrr.camerapture.picture.ServerPictureStore;
 import me.chrr.camerapture.picture.StoredPicture;
 import me.chrr.tapestry.base.Tapestry;
@@ -35,6 +37,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,7 +80,12 @@ public class Camerapture {
     public static final RecipeSerializer<AlbumCloningRecipe> ALBUM_CLONING = new RecipeSerializer<>(
             MapCodec.unit(AlbumCloningRecipe.INSTANCE), StreamCodec.unit(AlbumCloningRecipe.INSTANCE));
 
-    // Picture Frame
+    // Picture Frame Block
+    public static final Block PICTURE_FRAME_BLOCK = new PictureFrameBlock();
+    public static final BlockEntityType<PictureFrameBlockEntity> PICTURE_FRAME_BLOCK_ENTITY =
+            new BlockEntityType<>(PictureFrameBlockEntity::new, java.util.Set.of(PICTURE_FRAME_BLOCK));
+
+    // Picture Frame Entity (kept for migration — will be removed in a future version)
     public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
             EntityType.Builder.<PictureFrameEntity>of(PictureFrameEntity::new, MobCategory.MISC)
                     .clientTrackingRange(10)

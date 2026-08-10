@@ -2,6 +2,7 @@
     "item.camerapture.camera": "Camera",
     "item.camerapture.picture": "Picture",
     "item.camerapture.album": "Album",
+    "block.camerapture.picture_frame": "Picture Frame",
     "entity.camerapture.picture_frame": "Picture Frame",
     "stat.camerapture.pictures_taken": "Pictures Taken",
     "item.camerapture.picture.creator_tooltip": "Taken by %s",

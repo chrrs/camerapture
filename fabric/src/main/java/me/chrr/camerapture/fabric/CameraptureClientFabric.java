@@ -7,6 +7,7 @@ import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
+import me.chrr.camerapture.render.PictureFrameBlockEntityRenderer;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.render.ShouldRenderPicture;
@@ -17,6 +18,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 import net.minecraft.client.renderer.item.properties.conditional.ConditionalItemModelProperties;
@@ -40,6 +42,7 @@ public class CameraptureClientFabric implements ClientModInitializer {
         SpecialModelRenderers.ID_MAPPER.put(Camerapture.id("picture"), PictureItemRenderer.Unbaked.MAP_CODEC);
 
         // Picture Frame
+        BlockEntityRenderers.register(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, PictureFrameBlockEntityRenderer::new);
         EntityRenderers.register(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
         MenuScreens.register(Camerapture.PICTURE_FRAME_SCREEN_HANDLER, PictureFrameScreen::new);
 

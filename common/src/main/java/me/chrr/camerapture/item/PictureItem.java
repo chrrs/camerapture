@@ -4,12 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import me.chrr.camerapture.Camerapture;
-import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.block.PictureFrameBlock;
+import me.chrr.camerapture.block.PictureFrameBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -19,15 +19,14 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.*;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
-import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,23 +73,29 @@ public class PictureItem extends Item {
             return InteractionResult.PASS;
         }
 
-        PictureFrameEntity entity = new PictureFrameEntity(level, pos, facing);
-        if (!entity.canStayAttached()) {
+        // Check that placement position is available
+        if (!level.getBlockState(pos).canBeReplaced()) {
             return InteractionResult.PASS;
         }
 
-        // Correctly handle (+NBT) items
-        TypedEntityData<EntityType<?>> data = itemStack.get(DataComponents.ENTITY_DATA);
-        if (data != null) {
-            EntityType.updateCustomEntityTag(level, player, entity, data);
+        // Check backing block is solid
+        BlockState backingState = level.getBlockState(context.getClickedPos());
+        //noinspection deprecation
+        if (!backingState.isSolid()) {
+            return InteractionResult.PASS;
         }
 
-        entity.setItemStack(itemStack.copyWithCount(1));
-
         if (!level.isClientSide()) {
-            entity.onPlace();
-            level.gameEvent(player, GameEvent.ENTITY_PLACE, entity.position());
-            level.addFreshEntity(entity);
+            BlockState frameState = Camerapture.PICTURE_FRAME_BLOCK.defaultBlockState()
+                    .setValue(PictureFrameBlock.FACING, facing);
+            level.setBlock(pos, frameState, 3);
+
+            if (level.getBlockEntity(pos) instanceof PictureFrameBlockEntity blockEntity) {
+                blockEntity.setItemStack(itemStack.copyWithCount(1));
+            }
+
+            level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ITEM_FRAME_PLACE, net.minecraft.sounds.SoundSource.BLOCKS, 1f, 1f);
+            level.gameEvent(player, GameEvent.BLOCK_PLACE, pos);
         }
 
         itemStack.shrink(1);

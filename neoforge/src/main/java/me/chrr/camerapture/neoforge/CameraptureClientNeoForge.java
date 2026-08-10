@@ -8,6 +8,7 @@ import me.chrr.camerapture.gui.*;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.PictureTaker;
+import me.chrr.camerapture.render.PictureFrameBlockEntityRenderer;
 import me.chrr.camerapture.render.PictureFrameEntityRenderer;
 import me.chrr.camerapture.render.PictureItemRenderer;
 import me.chrr.camerapture.render.ShouldRenderPicture;
@@ -80,6 +81,7 @@ public class CameraptureClientNeoForge {
 
     @SubscribeEvent
     public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, PictureFrameBlockEntityRenderer::new);
         event.registerEntityRenderer(Camerapture.PICTURE_FRAME, PictureFrameEntityRenderer::new);
     }
 

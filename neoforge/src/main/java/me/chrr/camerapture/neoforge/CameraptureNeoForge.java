@@ -5,6 +5,8 @@ import me.chrr.camerapture.DownloadQueue;
 import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.config.SyncedConfig;
 import me.chrr.camerapture.entity.PictureFrameEntity;
+import me.chrr.camerapture.block.PictureFrameBlock;
+import me.chrr.camerapture.block.PictureFrameBlockEntity;
 import me.chrr.camerapture.item.AlbumItem;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
@@ -73,6 +75,12 @@ public class CameraptureNeoForge {
                 registry.register(Camerapture.id("album"), Camerapture.ALBUM_SCREEN_HANDLER));
         event.register(Registries.MENU, registry ->
                 registry.register(Camerapture.id("album_lectern"), Camerapture.ALBUM_LECTERN_SCREEN_HANDLER));
+
+        // Picture Frame Block
+        event.register(Registries.BLOCK, registry ->
+                registry.register(PictureFrameBlock.KEY, Camerapture.PICTURE_FRAME_BLOCK));
+        event.register(Registries.BLOCK_ENTITY_TYPE, registry ->
+                registry.register(PictureFrameBlockEntity.KEY, Camerapture.PICTURE_FRAME_BLOCK_ENTITY));
 
         // Picture Frame
         event.register(Registries.ENTITY_TYPE, registry ->
