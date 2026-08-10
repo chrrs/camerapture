@@ -45,6 +45,22 @@ public class PictureFrameBlockEntity extends BlockEntity implements MenuProvider
         super(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, pos, state);
     }
 
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (this.level != null && this.level.isClientSide()) {
+            me.chrr.camerapture.render.ClientPictureFrameTracker.remove(this);
+        }
+    }
+
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        if (this.level != null && this.level.isClientSide()) {
+            me.chrr.camerapture.render.ClientPictureFrameTracker.add(this);
+        }
+    }
+
     // === Getters and Setters ===
 
     public ItemStack getItemStack() {

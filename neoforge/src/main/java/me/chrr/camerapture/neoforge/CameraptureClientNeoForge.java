@@ -195,5 +195,14 @@ public class CameraptureClientNeoForge {
         public void onClientTick(ClientTickEvent.Pre event) {
             ClientPictureStore.getInstance().processQueue();
         }
+
+        /// Ensure picture frames are extracted even when their 1x1 block pos chunk section is culled.
+        @SubscribeEvent
+        public void onExtractLevelRenderState(ExtractLevelRenderStateEvent event) {
+            me.chrr.camerapture.render.ClientPictureFrameTracker.ensureFramesExtracted(
+                    event.getRenderState(),
+                    event.getDeltaTracker().getGameTimeDeltaPartialTick(false)
+            );
+        }
     }
 }

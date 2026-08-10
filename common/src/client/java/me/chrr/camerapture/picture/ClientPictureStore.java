@@ -44,6 +44,7 @@ public class ClientPictureStore {
             }
 
             pictures.clear();
+            me.chrr.camerapture.render.ClientPictureFrameTracker.clear();
         });
     }
 
