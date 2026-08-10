@@ -178,10 +178,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
     }
 
     public AABB getRenderBoundingBox(PictureFrameBlockEntity blockEntity) {
-        BlockPos pos = blockEntity.getBlockPos();
-        int width = blockEntity.getFrameWidth();
-        int height = blockEntity.getFrameHeight();
-        return new AABB(pos).inflate(width, height, width);
+        return new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
 
     public static class RenderState extends BlockEntityRenderState {
