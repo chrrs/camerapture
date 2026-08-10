@@ -73,12 +73,54 @@ public class PictureFrameBlock extends HorizontalDirectionalBlock implements Ent
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return switch (state.getValue(FACING)) {
-            case SOUTH -> SOUTH_SHAPE;
-            case EAST -> EAST_SHAPE;
-            case WEST -> WEST_SHAPE;
-            default -> NORTH_SHAPE;
-        };
+        Direction facing = state.getValue(FACING);
+        int width = 1;
+        int height = 1;
+
+        if (level.getBlockEntity(pos) instanceof PictureFrameBlockEntity blockEntity) {
+            width = blockEntity.getFrameWidth();
+            height = blockEntity.getFrameHeight();
+        }
+
+        double thickness = 0.0625;
+        double minX, minY = 0.0, minZ;
+        double maxX, maxY = (double) height, maxZ;
+
+        switch (facing) {
+            case SOUTH -> {
+                minX = -0.5;
+                maxX = (double) width - 0.5;
+                minZ = 0.0;
+                maxZ = thickness;
+            }
+            case EAST -> {
+                minX = 0.0;
+                maxX = thickness;
+                minZ = 0.5 - (double) width;
+                maxZ = 0.5;
+            }
+            case WEST -> {
+                minX = 1.0 - thickness;
+                maxX = 1.0;
+                minZ = -0.5;
+                maxZ = (double) width - 0.5;
+            }
+            default -> { // NORTH
+                minX = 0.5 - (double) width;
+                maxX = 0.5;
+                minZ = 1.0 - thickness;
+                maxZ = 1.0;
+            }
+        }
+
+        return Block.box(
+                Math.max(-256.0, minX * 16.0),
+                Math.max(-256.0, minY * 16.0),
+                Math.max(-256.0, minZ * 16.0),
+                Math.min(256.0, maxX * 16.0),
+                Math.min(256.0, maxY * 16.0),
+                Math.min(256.0, maxZ * 16.0)
+        );
     }
 
     @Nullable
