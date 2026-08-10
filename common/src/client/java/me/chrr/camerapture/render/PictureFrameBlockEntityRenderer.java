@@ -1,7 +1,6 @@
 package me.chrr.camerapture.render;
 
 import me.chrr.camerapture.block.PictureFrameBlockEntity;
-import me.chrr.camerapture.entity.ResizableDecorationEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
@@ -38,6 +37,7 @@ import java.util.UUID;
 
 public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<PictureFrameBlockEntity, PictureFrameBlockEntityRenderer.RenderState> {
     public static final double DISTANCE_FROM_WALL = 0.01;
+    public static final double FRAME_THICKNESS = 0.0625;
 
     public PictureFrameBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -80,7 +80,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         // Position at center of block, rotate facing outward from wall, and offset for frame dimensions
         poseStack.translate(0.5, 0.5, 0.5);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.facing.toYRot()));
-        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (ResizableDecorationEntity.THICKNESS / 2.0) + DISTANCE_FROM_WALL);
+        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (FRAME_THICKNESS / 2.0) + DISTANCE_FROM_WALL);
 
         if (state.shouldRenderOutline) {
             renderOutline(poseStack, collector, state.frameWidth, state.frameHeight);
@@ -140,14 +140,14 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
     }
 
     private void renderOutline(PoseStack poseStack, SubmitNodeCollector collector, float frameWidth, float frameHeight) {
-        VoxelShape shape = Shapes.box(0.0, 0.0, 0.0, frameWidth, frameHeight, ResizableDecorationEntity.THICKNESS);
+        VoxelShape shape = Shapes.box(0.0, 0.0, 0.0, frameWidth, frameHeight, FRAME_THICKNESS);
 
         int color = net.minecraft.util.ARGB.color(102, 0xff000000);
         collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (matrix, buffer) ->
                 shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> {
                     Vector3f vector3f = (new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1))).normalize();
-                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - ResizableDecorationEntity.THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
-                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - ResizableDecorationEntity.THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - FRAME_THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - FRAME_THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
                 }));
     }
 

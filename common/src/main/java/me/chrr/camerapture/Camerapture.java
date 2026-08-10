@@ -3,7 +3,6 @@ package me.chrr.camerapture;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import me.chrr.camerapture.config.ConfigManager;
-import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.gui.AlbumLecternMenu;
 import me.chrr.camerapture.gui.AlbumMenu;
 import me.chrr.camerapture.gui.PictureFrameMenu;
@@ -84,14 +83,6 @@ public class Camerapture {
     public static final Block PICTURE_FRAME_BLOCK = new PictureFrameBlock();
     public static final BlockEntityType<PictureFrameBlockEntity> PICTURE_FRAME_BLOCK_ENTITY =
             new BlockEntityType<>(PictureFrameBlockEntity::new, java.util.Set.of(PICTURE_FRAME_BLOCK));
-
-    // Picture Frame Entity (kept for migration — will be removed in a future version)
-    public static final EntityType<PictureFrameEntity> PICTURE_FRAME =
-            EntityType.Builder.<PictureFrameEntity>of(PictureFrameEntity::new, MobCategory.MISC)
-                    .clientTrackingRange(10)
-                    .sized(0.5F, 0.5F)
-                    .eyeHeight(0.0F)
-                    .build(PictureFrameEntity.KEY);
     public static final MenuType<PictureFrameMenu> PICTURE_FRAME_SCREEN_HANDLER =
             new MenuType<>((containerId, pi) -> new PictureFrameMenu(containerId), FeatureFlagSet.of());
 

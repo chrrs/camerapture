@@ -4,7 +4,6 @@ import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.DownloadQueue;
 import me.chrr.camerapture.config.Config;
 import me.chrr.camerapture.config.SyncedConfig;
-import me.chrr.camerapture.entity.PictureFrameEntity;
 import me.chrr.camerapture.block.PictureFrameBlock;
 import me.chrr.camerapture.block.PictureFrameBlockEntity;
 import me.chrr.camerapture.item.AlbumItem;
@@ -62,9 +61,6 @@ public class CameraptureFabric implements ModInitializer {
         // Picture Frame Block
         Registry.register(BuiltInRegistries.BLOCK, PictureFrameBlock.KEY, Camerapture.PICTURE_FRAME_BLOCK);
         Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, PictureFrameBlockEntity.KEY, Camerapture.PICTURE_FRAME_BLOCK_ENTITY);
-
-        // Picture Frame
-        Registry.register(BuiltInRegistries.ENTITY_TYPE, PictureFrameEntity.KEY, Camerapture.PICTURE_FRAME);
         Registry.register(BuiltInRegistries.MENU, Camerapture.id("picture_frame"), Camerapture.PICTURE_FRAME_SCREEN_HANDLER);
 
         // Data components
