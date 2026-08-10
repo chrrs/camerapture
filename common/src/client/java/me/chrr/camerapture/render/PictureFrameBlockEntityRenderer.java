@@ -177,6 +177,11 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         return 256;
     }
 
+    @Override
+    public boolean shouldRender(PictureFrameBlockEntity blockEntity, Vec3 cameraPos) {
+        return true;
+    }
+
     public AABB getRenderBoundingBox(PictureFrameBlockEntity blockEntity) {
         return new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
