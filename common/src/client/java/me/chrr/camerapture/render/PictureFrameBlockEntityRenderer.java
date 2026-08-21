@@ -153,23 +153,30 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                 renderPlaceholderQuad(poseStack, collector, state);
             }
         } else {
+            if (state.lod == PictureLod.FULL) {
+                CameraptureDebugStats.fullLodFrames.incrementAndGet();
+            } else {
+                CameraptureDebugStats.thumbnailLodFrames.incrementAndGet();
+            }
+
             PictureQuality targetQuality = (state.lod == PictureLod.FULL) ? PictureQuality.FULL : PictureQuality.THUMBNAIL;
             RemotePicture picture = ClientPictureStore.getInstance().getPicture(state.pictureId, targetQuality);
             PictureTexture texture = (picture != null) ? picture.getEffectiveTexture(targetQuality) : null;
 
             if (state.lod == PictureLod.THUMBNAIL) {
                 if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
-                    CameraptureDebugStats.thumbnailRenders.incrementAndGet();
+                    recordTextureRender(texture);
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
                     renderPicture(poseStack, collector, texture, state);
                 } else {
+                    CameraptureDebugStats.placeholderRenders.incrementAndGet();
                     renderPlaceholderQuad(poseStack, collector, state);
                 }
             } else { // FULL LOD
                 if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
                     // Seamless promotion & fallback: if full is ready, render full; if full is still loading
                     // but thumbnail is ready, getEffectiveTexture(FULL) returns thumbnail so it stays visible!
-                    CameraptureDebugStats.fullRenders.incrementAndGet();
+                    recordTextureRender(texture);
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
                     renderPicture(poseStack, collector, texture, state);
                 } else if (texture == null || texture.getStatus() == PictureTexture.Status.NOT_LOADED || texture.getStatus() == PictureTexture.Status.FETCHING) {
@@ -178,12 +185,21 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                 } else if (texture.getStatus() == PictureTexture.Status.ERROR) {
                     renderErrorText(poseStack, collector, state.lightCoords);
                 } else {
+                    CameraptureDebugStats.placeholderRenders.incrementAndGet();
                     renderPlaceholderQuad(poseStack, collector, state);
                 }
             }
         }
 
         poseStack.popPose();
+    }
+
+    private static void recordTextureRender(PictureTexture texture) {
+        if (texture.getQuality() == PictureQuality.FULL) {
+            CameraptureDebugStats.fullTextureRenders.incrementAndGet();
+        } else {
+            CameraptureDebugStats.thumbnailTextureRenders.incrementAndGet();
+        }
     }
 
     private void renderPicture(PoseStack poseStack, SubmitNodeCollector collector, PictureTexture texture, RenderState state) {

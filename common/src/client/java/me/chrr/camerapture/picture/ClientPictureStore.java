@@ -32,7 +32,7 @@ public class ClientPictureStore {
 
     private final Queue<QueuedBytes> byteQueue = new ConcurrentLinkedQueue<>();
     private final Map<UUID, RemotePicture> pictures = new ConcurrentHashMap<>();
-    private final Set<PictureKey> inFlightFetches = ConcurrentHashMap.newKeySet();
+    private final Set<PictureKey> inFlightNetworkRequests = ConcurrentHashMap.newKeySet();
 
     private final TextureCache fullCache = new TextureCache(PictureQuality.FULL);
     private final TextureCache thumbnailCache = new TextureCache(PictureQuality.THUMBNAIL);
@@ -71,42 +71,38 @@ public class ClientPictureStore {
 
     /// Request a picture with a specific quality from disk or the server.
     private void fetchPicture(UUID id, PictureQuality quality) {
-        PictureKey key = new PictureKey(id, quality);
-        if (!inFlightFetches.add(key)) {
-            return;
-        }
-
         Camerapture.EXECUTOR.execute(() -> {
-            try {
-                Path diskPath = getCacheFilePath(id, quality);
-                File file = diskPath.toFile();
+            Path diskPath = getCacheFilePath(id, quality);
+            File file = diskPath.toFile();
 
-                // Also check legacy flat cache directory for FULL quality
-                if (!file.exists() && quality == PictureQuality.FULL) {
-                    File legacyFile = getLegacyCacheFilePath(id).toFile();
-                    if (legacyFile.exists()) {
-                        file = legacyFile;
-                    }
+            // Also check legacy flat cache directory for FULL quality
+            if (!file.exists() && quality == PictureQuality.FULL) {
+                File legacyFile = getLegacyCacheFilePath(id).toFile();
+                if (legacyFile.exists()) {
+                    file = legacyFile;
                 }
-
-                if (file.exists()) {
-                    try {
-                        byte[] bytes = Files.readAllBytes(file.toPath());
-                        BufferedImage image = (quality == PictureQuality.FULL)
-                                ? decodeFullChecked(id, bytes)
-                                : decodeThumbnailChecked(id, bytes);
-                        processReceivedImage(id, quality, image);
-                        return;
-                    } catch (Exception e) {
-                        Camerapture.LOGGER.error("could not read cached picture {} ({})", id, quality, e);
-                    }
-                }
-
-                CameraptureDebugStats.recordRequest(quality);
-                Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
-            } finally {
-                inFlightFetches.remove(key);
             }
+
+            if (file.exists()) {
+                try {
+                    byte[] bytes = Files.readAllBytes(file.toPath());
+                    BufferedImage image = (quality == PictureQuality.FULL)
+                            ? decodeFullChecked(id, bytes)
+                            : decodeThumbnailChecked(id, bytes);
+                    processReceivedImage(id, quality, image);
+                    return;
+                } catch (Exception e) {
+                    Camerapture.LOGGER.error("could not read cached picture {} ({})", id, quality, e);
+                }
+            }
+
+            PictureKey key = new PictureKey(id, quality);
+            if (!inFlightNetworkRequests.add(key)) {
+                return;
+            }
+
+            CameraptureDebugStats.recordRequest(quality);
+            Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
         });
     }
 
@@ -146,6 +142,7 @@ public class ClientPictureStore {
         while ((item = byteQueue.poll()) != null) {
             final QueuedBytes queuedItem = item;
             Camerapture.EXECUTOR.execute(() -> {
+                PictureKey key = new PictureKey(queuedItem.id, queuedItem.quality);
                 try {
                     BufferedImage image = (queuedItem.quality == PictureQuality.FULL)
                             ? decodeFullChecked(queuedItem.id, queuedItem.bytes)
@@ -155,12 +152,15 @@ public class ClientPictureStore {
                 } catch (Exception e) {
                     Camerapture.LOGGER.error("failed to decode received image bytes for image {} ({})", queuedItem.id, queuedItem.quality, e);
                     processReceivedError(queuedItem.id, queuedItem.quality);
+                } finally {
+                    inFlightNetworkRequests.remove(key);
                 }
             });
         }
     }
 
     public void processReceivedError(UUID id, PictureQuality quality) {
+        inFlightNetworkRequests.remove(new PictureKey(id, quality));
         RemotePicture picture = pictures.get(id);
         if (picture != null) {
             picture.getTexture(quality).setStatus(PictureTexture.Status.ERROR);
@@ -191,7 +191,10 @@ public class ClientPictureStore {
             throw new IOException("picture " + id + " is not a readable WebP");
         }
 
-        int limit = Math.min(CameraptureClient.syncedConfig.maxImageResolution(), ABSOLUTE_MAX_RESOLUTION);
+        int limit = Math.min(
+                (CameraptureClient.syncedConfig != null) ? CameraptureClient.syncedConfig.maxImageResolution() : ABSOLUTE_MAX_RESOLUTION,
+                ABSOLUTE_MAX_RESOLUTION
+        );
         if (size.width() > limit || size.height() > limit) {
             throw new IOException("refusing to decode picture " + id + " at "
                     + size.width() + "x" + size.height() + ", over the " + limit + " limit");
@@ -200,15 +203,17 @@ public class ClientPictureStore {
         return ImageUtil.decodeImageFromWebP(bytes);
     }
 
-    /// Decode thumbnail WebP bytes with defensive bounds checks.
+    /// Decode thumbnail WebP bytes with defensive bounds checks against server synced config.
     private static BufferedImage decodeThumbnailChecked(UUID id, byte[] bytes) throws IOException {
         WebPHeader.Size size = WebPHeader.read(bytes);
         if (size == null) {
             throw new IOException("thumbnail " + id + " is not a readable WebP");
         }
 
-        int configuredMax = Camerapture.CONFIG_MANAGER.getConfig().client.thumbnailResolution * 2;
-        int limit = Math.min(Math.max(256, configuredMax), ABSOLUTE_MAX_THUMBNAIL_RESOLUTION);
+        int serverRes = (CameraptureClient.syncedConfig != null)
+                ? CameraptureClient.syncedConfig.thumbnailResolution() * 2
+                : 256;
+        int limit = Math.min(Math.max(256, serverRes), ABSOLUTE_MAX_THUMBNAIL_RESOLUTION);
         if (size.width() > limit || size.height() > limit) {
             throw new IOException("refusing to decode thumbnail " + id + " at "
                     + size.width() + "x" + size.height() + ", over the " + limit + " limit");
@@ -223,7 +228,7 @@ public class ClientPictureStore {
             fullCache.clear();
             thumbnailCache.clear();
             pictures.clear();
-            inFlightFetches.clear();
+            inFlightNetworkRequests.clear();
         });
     }
 
@@ -264,10 +269,13 @@ public class ClientPictureStore {
     private record QueuedBytes(UUID id, PictureQuality quality, byte[] bytes) {
     }
 
+    private record CacheEntry(PictureTexture texture, long accountedBytes) {
+    }
+
     /// An LRU cache managing GPU texture memory for a specific quality level.
     private static class TextureCache {
         private final PictureQuality quality;
-        private final LinkedHashMap<UUID, PictureTexture> entries = new LinkedHashMap<>(256, 0.75f, true);
+        private final LinkedHashMap<UUID, CacheEntry> entries = new LinkedHashMap<>(256, 0.75f, true);
         private long textureBytes = 0L;
 
         private TextureCache(PictureQuality quality) {
@@ -299,31 +307,32 @@ public class ClientPictureStore {
             List<Map.Entry<UUID, PictureTexture>> evicted = null;
 
             synchronized (this) {
-                PictureTexture previous = entries.put(id, texture);
-                if (previous != null) {
-                    textureBytes -= previous.getTextureBytes();
+                long newBytes = texture.getTextureBytes();
+                CacheEntry prev = entries.put(id, new CacheEntry(texture, newBytes));
+                if (prev != null) {
+                    textureBytes -= prev.accountedBytes();
                 }
-                textureBytes += texture.getTextureBytes();
+                textureBytes += newBytes;
                 texture.touch();
 
                 long now = System.currentTimeMillis();
                 long maxBytes = getMaxBytes();
                 long graceMs = getInUseGraceMs();
 
-                Iterator<Map.Entry<UUID, PictureTexture>> iterator = entries.entrySet().iterator();
+                Iterator<Map.Entry<UUID, CacheEntry>> iterator = entries.entrySet().iterator();
                 while (textureBytes > maxBytes && iterator.hasNext()) {
-                    Map.Entry<UUID, PictureTexture> eldest = iterator.next();
-                    if (now - eldest.getValue().getLastAccess() < graceMs) {
+                    Map.Entry<UUID, CacheEntry> eldest = iterator.next();
+                    if (now - eldest.getValue().texture().getLastAccess() < graceMs) {
                         break;
                     }
 
                     iterator.remove();
-                    textureBytes -= eldest.getValue().getTextureBytes();
+                    textureBytes -= eldest.getValue().accountedBytes();
 
                     if (evicted == null) {
                         evicted = new ArrayList<>();
                     }
-                    evicted.add(Map.entry(eldest.getKey(), eldest.getValue()));
+                    evicted.add(Map.entry(eldest.getKey(), eldest.getValue().texture()));
                 }
             }
 
@@ -349,9 +358,9 @@ public class ClientPictureStore {
         }
 
         public synchronized void clear() {
-            for (PictureTexture texture : entries.values()) {
-                texture.setStatus(PictureTexture.Status.NOT_LOADED);
-                Minecraft.getInstance().getTextureManager().release(texture.getTextureIdentifier());
+            for (CacheEntry entry : entries.values()) {
+                entry.texture().setStatus(PictureTexture.Status.NOT_LOADED);
+                Minecraft.getInstance().getTextureManager().release(entry.texture().getTextureIdentifier());
             }
             entries.clear();
             textureBytes = 0L;

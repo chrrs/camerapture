@@ -27,7 +27,6 @@ public class Config {
 
         /// When true, renders picture frames across loaded chunks with screen-space LOD culling.
         public boolean distantPictureRendering = true;
-        public int thumbnailResolution = 128;
         public int fullTextureBudgetMiB = 512;
         public int thumbnailTextureBudgetMiB = 64;
         public float fullLodPixels = 32.0f;
@@ -41,7 +40,6 @@ public class Config {
             }
             if (this.version < 5) {
                 this.distantPictureRendering = DEFAULT.client.distantPictureRendering;
-                this.thumbnailResolution = DEFAULT.client.thumbnailResolution;
                 this.fullTextureBudgetMiB = DEFAULT.client.fullTextureBudgetMiB;
                 this.thumbnailTextureBudgetMiB = DEFAULT.client.thumbnailTextureBudgetMiB;
                 this.fullLodPixels = DEFAULT.client.fullLodPixels;
@@ -59,9 +57,6 @@ public class Config {
             }
             if (this.thumbnailTextureBudgetMiB < 8) {
                 this.thumbnailTextureBudgetMiB = DEFAULT.client.thumbnailTextureBudgetMiB;
-            }
-            if (this.thumbnailResolution < 32 || this.thumbnailResolution > 512) {
-                this.thumbnailResolution = DEFAULT.client.thumbnailResolution;
             }
 
             this.version = DEFAULT.client.version;

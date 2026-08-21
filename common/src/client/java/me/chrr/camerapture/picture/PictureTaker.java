@@ -142,7 +142,9 @@ public class PictureTaker {
             ClientPictureStore.getInstance().cacheBytesToDisk(pictureId, PictureQuality.FULL, bytes);
 
             try {
-                int thumbRes = Camerapture.CONFIG_MANAGER.getConfig().client.thumbnailResolution;
+                int thumbRes = (CameraptureClient.syncedConfig != null)
+                        ? CameraptureClient.syncedConfig.thumbnailResolution()
+                        : 128;
                 BufferedImage thumb = ImageUtil.clampSize(picture, thumbRes);
                 byte[] thumbBytes = ImageUtil.compressIntoWebP(thumb, 0.8f);
                 ClientPictureStore.getInstance().processReceivedImage(pictureId, PictureQuality.THUMBNAIL, thumb);
