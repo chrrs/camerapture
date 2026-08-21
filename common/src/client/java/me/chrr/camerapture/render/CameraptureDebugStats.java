@@ -46,4 +46,13 @@ public final class CameraptureDebugStats {
         fullRenders.set(0);
         missingPictures.set(0);
     }
+
+    public static String getSummary() {
+        return String.format(
+                "Camerapture Stats: [Extracted: %d, Submitted: %d, Frustum Culled: %d, Subpixel Culled: %d, Thumbs Rendered: %d, Full Rendered: %d] | [Uploads: %d, Evictions: %d, Thumb Req: %d, Full Req: %d, Net Bytes: %d]",
+                extractedFrames.get(), submittedFrames.get(), frustumRejected.get(), subpixelRejected.get(),
+                thumbnailRenders.get(), fullRenders.get(), textureUploads.get(), textureEvictions.get(),
+                thumbnailRequests.get(), fullRequests.get(), networkBytes.get()
+        );
+    }
 }
