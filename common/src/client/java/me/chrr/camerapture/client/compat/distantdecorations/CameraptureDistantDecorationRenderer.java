@@ -32,6 +32,11 @@ public class CameraptureDistantDecorationRenderer implements DecorationClientRen
     }
 
     @Override
+    public double cullBelowProjectedPixelSize() {
+        return 0.01;
+    }
+
+    @Override
     public DecorationType<CameraptureDistantData> type() {
         return CameraptureDistantDecorationProvider.TYPE;
     }
@@ -63,6 +68,17 @@ public class CameraptureDistantDecorationRenderer implements DecorationClientRen
 
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - data.facing().toYRot()));
         poseStack.translate(0.5 - data.width() / 2.0, -0.5 + data.height() / 2.0, 0.5 - (FRAME_THICKNESS / 2.0) + DISTANCE_FROM_WALL);
+
+        // Far-LOD visual footprint scaling: ensure subpixel quad maintains ~1px rasterizable footprint
+        double targetMinPixelSize = 1.0;
+        double visualScale = 1.0;
+        if (projectedPixelSize > 0 && projectedPixelSize < targetMinPixelSize) {
+            visualScale = Math.min(16.0, targetMinPixelSize / projectedPixelSize);
+            me.justbecause.distantdecorations.telemetry.TelemetryMetrics.clientFarLodScaledRenders++;
+        }
+        if (visualScale > 1.0) {
+            poseStack.scale((float) visualScale, (float) visualScale, 1.0F);
+        }
 
         if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
             if (data.rotation() != 0) {
