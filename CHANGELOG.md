@@ -2,6 +2,7 @@
 
 - **Entity to Block Conversion**:
   - Refactored picture frames from entities (`PictureFrameEntity` and `ResizableDecorationEntity`) to a single-block anchor system (`PictureFrameBlock` and `PictureFrameBlockEntity`).
+  - **Anchoring & Resize Behavior**: The 1x1 anchor block position remains fixed in the world. Resizing now expands or shrinks the frame geometry outward from the stationary anchor block rather than shifting the attachment position in the world grid.
   - Added dynamic `VoxelShape` computation matching frame dimensions (up to 16x16) and facing orientation.
   - Updated Jade compatibility plugin for inspecting picture frame block entities.
   - Removed legacy entity classes, inline NBT data fixers, and unneeded mixins.
