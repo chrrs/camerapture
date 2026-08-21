@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -22,18 +21,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /// The client-side picture store. It manages picture resources on the client side,
-/// separating Full and Thumbnail texture caches with independent VRAM budgets and LRU tracking.
+/// separating Full and Thumbnail texture caches with independent VRAM budgets, grace periods,
+/// and LRU tracking.
 public class ClientPictureStore {
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
-    /// Pictures asked for more recently than this are treated as on-screen and are never evicted.
-    private static final long IN_USE_GRACE_MS = 5_000L;
-
     /// An absolute ceiling on what we'll decode.
     private static final int ABSOLUTE_MAX_RESOLUTION = 8192;
+    private static final int ABSOLUTE_MAX_THUMBNAIL_RESOLUTION = 512;
 
     private final Queue<QueuedBytes> byteQueue = new ConcurrentLinkedQueue<>();
     private final Map<UUID, RemotePicture> pictures = new ConcurrentHashMap<>();
+    private final Set<PictureKey> inFlightFetches = ConcurrentHashMap.newKeySet();
 
     private final TextureCache fullCache = new TextureCache(PictureQuality.FULL);
     private final TextureCache thumbnailCache = new TextureCache(PictureQuality.THUMBNAIL);
@@ -72,44 +71,52 @@ public class ClientPictureStore {
 
     /// Request a picture with a specific quality from disk or the server.
     private void fetchPicture(UUID id, PictureQuality quality) {
+        PictureKey key = new PictureKey(id, quality);
+        if (!inFlightFetches.add(key)) {
+            return;
+        }
+
         Camerapture.EXECUTOR.execute(() -> {
-            Path diskPath = getCacheFilePath(id, quality);
-            File file = diskPath.toFile();
+            try {
+                Path diskPath = getCacheFilePath(id, quality);
+                File file = diskPath.toFile();
 
-            // Also check legacy flat cache directory for FULL quality
-            if (!file.exists() && quality == PictureQuality.FULL) {
-                File legacyFile = getLegacyCacheFilePath(id).toFile();
-                if (legacyFile.exists()) {
-                    file = legacyFile;
+                // Also check legacy flat cache directory for FULL quality
+                if (!file.exists() && quality == PictureQuality.FULL) {
+                    File legacyFile = getLegacyCacheFilePath(id).toFile();
+                    if (legacyFile.exists()) {
+                        file = legacyFile;
+                    }
                 }
-            }
 
-            if (file.exists()) {
-                try {
-                    byte[] bytes = Files.readAllBytes(file.toPath());
-                    BufferedImage image = (quality == PictureQuality.FULL)
-                            ? decodeChecked(id, bytes)
-                            : ImageUtil.decodeImageFromWebP(bytes);
-                    processReceivedImage(id, quality, image);
-                    return;
-                } catch (Exception e) {
-                    Camerapture.LOGGER.error("could not read cached picture {} ({})", id, quality, e);
+                if (file.exists()) {
+                    try {
+                        byte[] bytes = Files.readAllBytes(file.toPath());
+                        BufferedImage image = (quality == PictureQuality.FULL)
+                                ? decodeFullChecked(id, bytes)
+                                : decodeThumbnailChecked(id, bytes);
+                        processReceivedImage(id, quality, image);
+                        return;
+                    } catch (Exception e) {
+                        Camerapture.LOGGER.error("could not read cached picture {} ({})", id, quality, e);
+                    }
                 }
-            }
 
-            CameraptureDebugStats.recordRequest(quality);
-            Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
+                CameraptureDebugStats.recordRequest(quality);
+                Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
+            } finally {
+                inFlightFetches.remove(key);
+            }
         });
     }
 
     /// Update the stored texture with the given BufferedImage and upload to GPU.
+    /// Byte accounting is handled strictly by TextureCache#put when the texture is uploaded.
     public void processReceivedImage(UUID id, PictureQuality quality, BufferedImage image) {
         RemotePicture picture = pictures.computeIfAbsent(id, RemotePicture::new);
         PictureTexture texture = picture.getTexture(quality);
 
-        long previousBytes = texture.getTextureBytes();
         texture.setSize(image.getWidth(), image.getHeight());
-        getCache(quality).resized(texture, previousBytes);
 
         @SuppressWarnings("resource") NativeImage nativeImage = NativeImageUtil.toNativeImage(image);
 
@@ -141,8 +148,8 @@ public class ClientPictureStore {
             Camerapture.EXECUTOR.execute(() -> {
                 try {
                     BufferedImage image = (queuedItem.quality == PictureQuality.FULL)
-                            ? decodeChecked(queuedItem.id, queuedItem.bytes)
-                            : ImageUtil.decodeImageFromWebP(queuedItem.bytes);
+                            ? decodeFullChecked(queuedItem.id, queuedItem.bytes)
+                            : decodeThumbnailChecked(queuedItem.id, queuedItem.bytes);
                     processReceivedImage(queuedItem.id, queuedItem.quality, image);
                     cacheBytesToDisk(queuedItem.id, queuedItem.quality, queuedItem.bytes);
                 } catch (Exception e) {
@@ -177,8 +184,8 @@ public class ClientPictureStore {
         }
     }
 
-    /// Decode WebP bytes with header safety checks.
-    private static BufferedImage decodeChecked(UUID id, byte[] bytes) throws IOException {
+    /// Decode full WebP bytes with header safety checks.
+    private static BufferedImage decodeFullChecked(UUID id, byte[] bytes) throws IOException {
         WebPHeader.Size size = WebPHeader.read(bytes);
         if (size == null) {
             throw new IOException("picture " + id + " is not a readable WebP");
@@ -193,12 +200,30 @@ public class ClientPictureStore {
         return ImageUtil.decodeImageFromWebP(bytes);
     }
 
+    /// Decode thumbnail WebP bytes with defensive bounds checks.
+    private static BufferedImage decodeThumbnailChecked(UUID id, byte[] bytes) throws IOException {
+        WebPHeader.Size size = WebPHeader.read(bytes);
+        if (size == null) {
+            throw new IOException("thumbnail " + id + " is not a readable WebP");
+        }
+
+        int configuredMax = Camerapture.CONFIG_MANAGER.getConfig().client.thumbnailResolution * 2;
+        int limit = Math.min(Math.max(256, configuredMax), ABSOLUTE_MAX_THUMBNAIL_RESOLUTION);
+        if (size.width() > limit || size.height() > limit) {
+            throw new IOException("refusing to decode thumbnail " + id + " at "
+                    + size.width() + "x" + size.height() + ", over the " + limit + " limit");
+        }
+
+        return ImageUtil.decodeImageFromWebP(bytes);
+    }
+
     /// Clear all pictures from the store and destroy all textures.
     public void clear() {
         Minecraft.getInstance().executeIfPossible(() -> {
             fullCache.clear();
             thumbnailCache.clear();
             pictures.clear();
+            inFlightFetches.clear();
         });
     }
 
@@ -256,6 +281,11 @@ public class ClientPictureStore {
             return Math.max(8L, budgetMiB) * 1024L * 1024L;
         }
 
+        private long getInUseGraceMs() {
+            // Thumbnails are small and useful across distant scenes, so they have a longer grace period.
+            return (quality == PictureQuality.THUMBNAIL) ? 30_000L : 5_000L;
+        }
+
         public synchronized long getTextureBytes() {
             return textureBytes;
         }
@@ -263,10 +293,6 @@ public class ClientPictureStore {
         public synchronized void touch(UUID id, PictureTexture texture) {
             texture.touch();
             entries.get(id); // Access in LinkedHashMap moves to MRU end
-        }
-
-        public synchronized void resized(PictureTexture texture, long previousBytes) {
-            textureBytes += texture.getTextureBytes() - previousBytes;
         }
 
         public void put(UUID id, PictureTexture texture) {
@@ -282,10 +308,12 @@ public class ClientPictureStore {
 
                 long now = System.currentTimeMillis();
                 long maxBytes = getMaxBytes();
+                long graceMs = getInUseGraceMs();
+
                 Iterator<Map.Entry<UUID, PictureTexture>> iterator = entries.entrySet().iterator();
                 while (textureBytes > maxBytes && iterator.hasNext()) {
                     Map.Entry<UUID, PictureTexture> eldest = iterator.next();
-                    if (now - eldest.getValue().getLastAccess() < IN_USE_GRACE_MS) {
+                    if (now - eldest.getValue().getLastAccess() < graceMs) {
                         break;
                     }
 

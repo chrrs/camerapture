@@ -56,8 +56,6 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         CameraptureDebugStats.extractedFrames.incrementAndGet();
 
         state.renderBox = blockEntity.getRenderBox();
-        state.blockEntity = blockEntity;
-        state.lastLod = blockEntity.lastLod;
         state.facing = blockEntity.getFacing();
         state.frameWidth = blockEntity.getFrameWidth();
         state.frameHeight = blockEntity.getFrameHeight();
@@ -78,39 +76,19 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                 && CameraItem.find(client.player, true) == null
                 && client.hitResult instanceof BlockHitResult blockHit
                 && blockHit.getBlockPos().equals(blockEntity.getBlockPos());
-    }
 
-    @Override
-    public void submit(RenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState) {
-        CameraptureDebugStats.submittedFrames.incrementAndGet();
-
-        // 1. Frustum Culling: Test the frame's world-space AABB before any store access or computation.
-        if (cameraState.cullFrustum != null && !cameraState.cullFrustum.isVisible(state.renderBox)) {
-            CameraptureDebugStats.frustumRejected.incrementAndGet();
-            return;
-        }
-
-        // 2. Screen-space Projected Size & LOD Classification with Hysteresis
-        Vec3 camPos = cameraState.pos;
-        if (camPos == null) {
-            camPos = Minecraft.getInstance().gameRenderer.mainCamera().position();
-        }
-        double distSq = state.renderBox.distanceToSqr(camPos);
+        // Screen-space Projected Size & LOD Classification with Hysteresis during extraction
+        double distSq = state.renderBox.distanceToSqr(cameraPos);
         double distance = Math.max(0.1, Math.sqrt(distSq));
-
-        int viewportHeight = Minecraft.getInstance().getWindow().getHeight();
-        double fovDeg = Minecraft.getInstance().options.fov().get();
-        double fovRad = Math.toRadians(fovDeg);
-        double focalLengthPixels = (viewportHeight / 2.0) / Math.tan(fovRad / 2.0);
-
+        double focalLengthPixels = RenderMetrics.getFocalLengthPixels();
         float worldSize = Math.max(state.frameWidth, state.frameHeight);
         float projectedPixels = (float) (worldSize / distance * focalLengthPixels);
 
-        float minPixels = Camerapture.CONFIG_MANAGER.getConfig().client.minimumRenderPixels;
-        float fullThreshold = Camerapture.CONFIG_MANAGER.getConfig().client.fullLodPixels;
+        float minPixels = Math.max(0.5f, Camerapture.CONFIG_MANAGER.getConfig().client.minimumRenderPixels);
+        float fullThreshold = Math.max(minPixels + 1.0f, Camerapture.CONFIG_MANAGER.getConfig().client.fullLodPixels);
 
         PictureLod lod;
-        PictureLod prev = state.lastLod;
+        PictureLod prev = blockEntity.lastLod;
         if (prev == PictureLod.FULL) {
             if (projectedPixels < minPixels * 0.75f) {
                 lod = PictureLod.SKIP;
@@ -137,12 +115,22 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
             }
         }
 
-        if (state.blockEntity != null) {
-            state.blockEntity.lastLod = lod;
-        }
+        blockEntity.lastLod = lod;
         state.lod = lod;
+    }
 
-        if (lod == PictureLod.SKIP) {
+    @Override
+    public void submit(RenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState) {
+        CameraptureDebugStats.submittedFrames.incrementAndGet();
+
+        // 1. Frustum Culling: Test the frame's world-space AABB before any store access or submission.
+        if (cameraState.cullFrustum != null && !cameraState.cullFrustum.isVisible(state.renderBox)) {
+            CameraptureDebugStats.frustumRejected.incrementAndGet();
+            return;
+        }
+
+        // 2. Skip subpixel frames entirely without touching picture store
+        if (state.lod == PictureLod.SKIP) {
             CameraptureDebugStats.subpixelRejected.incrementAndGet();
             return;
         }
@@ -178,14 +166,19 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                     renderPlaceholderQuad(poseStack, collector, state);
                 }
             } else { // FULL LOD
-                if (texture == null || texture.getStatus() == PictureTexture.Status.NOT_LOADED || texture.getStatus() == PictureTexture.Status.FETCHING) {
+                if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
+                    // Seamless promotion & fallback: if full is ready, render full; if full is still loading
+                    // but thumbnail is ready, getEffectiveTexture(FULL) returns thumbnail so it stays visible!
+                    CameraptureDebugStats.fullRenders.incrementAndGet();
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                    renderPicture(poseStack, collector, texture, state);
+                } else if (texture == null || texture.getStatus() == PictureTexture.Status.NOT_LOADED || texture.getStatus() == PictureTexture.Status.FETCHING) {
+                    // Only show loading animation if neither full nor thumbnail is available
                     renderFetching(poseStack, collector, state.lightCoords);
                 } else if (texture.getStatus() == PictureTexture.Status.ERROR) {
                     renderErrorText(poseStack, collector, state.lightCoords);
                 } else {
-                    CameraptureDebugStats.fullRenders.incrementAndGet();
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
-                    renderPicture(poseStack, collector, texture, state);
+                    renderPlaceholderQuad(poseStack, collector, state);
                 }
             }
         }
@@ -310,9 +303,6 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
 
     public static class RenderState extends BlockEntityRenderState {
         public AABB renderBox;
-        @Nullable
-        public PictureFrameBlockEntity blockEntity;
-        public PictureLod lastLod = PictureLod.SKIP;
         public PictureLod lod = PictureLod.SKIP;
 
         @Nullable

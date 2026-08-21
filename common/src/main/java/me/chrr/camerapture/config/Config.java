@@ -39,6 +39,30 @@ public class Config {
                 // certainly never changed it deliberately.
                 this.cachePictures = DEFAULT.client.cachePictures;
             }
+            if (this.version < 5) {
+                this.distantPictureRendering = DEFAULT.client.distantPictureRendering;
+                this.thumbnailResolution = DEFAULT.client.thumbnailResolution;
+                this.fullTextureBudgetMiB = DEFAULT.client.fullTextureBudgetMiB;
+                this.thumbnailTextureBudgetMiB = DEFAULT.client.thumbnailTextureBudgetMiB;
+                this.fullLodPixels = DEFAULT.client.fullLodPixels;
+                this.minimumRenderPixels = DEFAULT.client.minimumRenderPixels;
+            }
+
+            if (this.minimumRenderPixels < 0.5f) {
+                this.minimumRenderPixels = DEFAULT.client.minimumRenderPixels;
+            }
+            if (this.fullLodPixels <= this.minimumRenderPixels) {
+                this.fullLodPixels = DEFAULT.client.fullLodPixels;
+            }
+            if (this.fullTextureBudgetMiB < 32) {
+                this.fullTextureBudgetMiB = DEFAULT.client.fullTextureBudgetMiB;
+            }
+            if (this.thumbnailTextureBudgetMiB < 8) {
+                this.thumbnailTextureBudgetMiB = DEFAULT.client.thumbnailTextureBudgetMiB;
+            }
+            if (this.thumbnailResolution < 32 || this.thumbnailResolution > 512) {
+                this.thumbnailResolution = DEFAULT.client.thumbnailResolution;
+            }
 
             this.version = DEFAULT.client.version;
         }
@@ -63,6 +87,19 @@ public class Config {
         public void upgrade() {
             if (this.version < 5) {
                 this.permissionLevels.upload = this.allowUploading ? 0 : 4;
+            }
+            if (this.version < 6) {
+                this.thumbnailResolution = DEFAULT.server.thumbnailResolution;
+            }
+
+            if (this.maxImageBytes < 10_000) {
+                this.maxImageBytes = DEFAULT.server.maxImageBytes;
+            }
+            if (this.maxImageResolution < 64) {
+                this.maxImageResolution = DEFAULT.server.maxImageResolution;
+            }
+            if (this.thumbnailResolution < 32 || this.thumbnailResolution > 512) {
+                this.thumbnailResolution = DEFAULT.server.thumbnailResolution;
             }
 
             this.version = DEFAULT.server.version;
