@@ -17,10 +17,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -32,14 +30,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.UUID;
 
 public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<PictureFrameBlockEntity, PictureFrameBlockEntityRenderer.RenderState> {
     public static final double DISTANCE_FROM_WALL = 0.01;
-    public static final double FRAME_THICKNESS = 0.0625;
 
     public PictureFrameBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -146,7 +142,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         // Position at center of block, rotate facing outward from wall, and offset for frame dimensions
         poseStack.translate(0.5, 0.5, 0.5);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.facing.toYRot()));
-        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (PictureFrameGeometry.FRAME_DEPTH / 2.0) + DISTANCE_FROM_WALL);
+        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - PictureFrameGeometry.HALF_FRAME_DEPTH + DISTANCE_FROM_WALL);
 
         // Render backing first (unrotated by state.rotation)
         if (state.lod == PictureLod.FULL) {
@@ -222,8 +218,8 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (matrix, buffer) ->
                 shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> {
                     Vector3f vector3f = (new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1))).normalize();
-                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - PictureFrameGeometry.FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
-                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - PictureFrameGeometry.FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - PictureFrameGeometry.HALF_FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - PictureFrameGeometry.HALF_FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
                 }));
     }
 

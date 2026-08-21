@@ -12,9 +12,23 @@ import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 
 public class PictureFrameGeometry {
-    public static final float FRAME_DEPTH = (float) PictureFrameBlock.FRAME_THICKNESS;
-    public static final float PICTURE_Z = 0.001F;
-    public static final float BACK_Z = -FRAME_DEPTH;
+    public static final float FRAME_DEPTH =
+            (float) PictureFrameBlock.FRAME_THICKNESS;
+
+    public static final float HALF_FRAME_DEPTH =
+            FRAME_DEPTH / 2.0F;
+
+    // Outward / player-facing surface
+    public static final float FRONT_Z =
+            -HALF_FRAME_DEPTH;
+
+    // Wall-facing surface
+    public static final float BACK_Z =
+            HALF_FRAME_DEPTH;
+
+    // Put photo a hair in front of the physical board.
+    public static final float PICTURE_Z =
+            FRONT_Z - 0.001F;
 
     public static final Identifier PICTURE_BACK_TEXTURE = Camerapture.id("textures/block/picture_back.png");
 
@@ -37,11 +51,11 @@ public class PictureFrameGeometry {
             float y1 = -frameHeight / 2.0f;
             float y2 = frameHeight / 2.0f;
 
-            // BACK (-Z)
-            buffer.addVertex(position, x2, y1, BACK_Z).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x2, y2, BACK_Z).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x1, y2, BACK_Z).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x1, y1, BACK_Z).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
+            // BACK (+Z in local coords, facing wall)
+            buffer.addVertex(position, x2, y1, BACK_Z).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x2, y2, BACK_Z).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y2, BACK_Z).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y1, BACK_Z).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
         });
     }
 
@@ -60,14 +74,14 @@ public class PictureFrameGeometry {
             float x2 = frameWidth / 2.0f;
             float y1 = -frameHeight / 2.0f;
             float y2 = frameHeight / 2.0f;
-            float zFront = 0.0f;
+            float zFront = FRONT_Z;
             float zBack = BACK_Z;
 
-            // 1. BACK (-Z)
-            buffer.addVertex(position, x2, y1, zBack).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x2, y2, zBack).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x1, y2, zBack).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
-            buffer.addVertex(position, x1, y1, zBack).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, -1f);
+            // 1. BACK (+Z in local coords, facing wall)
+            buffer.addVertex(position, x2, y1, zBack).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x2, y2, zBack).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y2, zBack).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y1, zBack).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 0f, 1f);
 
             // 2. TOP (+Y)
             buffer.addVertex(position, x1, y2, zFront).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(lightCoords).setNormal(matrix, 0f, 1f, 0f);
@@ -140,10 +154,10 @@ public class PictureFrameGeometry {
 
         collector.submitCustomGeometry(poseStack, renderType, (matrix, buffer) -> {
             Matrix4f position = matrix.pose();
-            buffer.addVertex(position, x1, y1, PICTURE_Z).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x1, y2, PICTURE_Z).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y2, PICTURE_Z).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y1, PICTURE_Z).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y1, PICTURE_Z).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x1, y2, PICTURE_Z).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x2, y2, PICTURE_Z).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x2, y1, PICTURE_Z).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
         });
     }
 
@@ -165,10 +179,10 @@ public class PictureFrameGeometry {
 
         collector.submitCustomGeometry(poseStack, RenderTypes.textBackground(), (matrix, buffer) -> {
             Matrix4f position = matrix.pose();
-            buffer.addVertex(position, x1, y1, PICTURE_Z).setColor(color).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x1, y2, PICTURE_Z).setColor(color).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y2, PICTURE_Z).setColor(color).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y1, PICTURE_Z).setColor(color).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y1, PICTURE_Z).setColor(color).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x1, y2, PICTURE_Z).setColor(color).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x2, y2, PICTURE_Z).setColor(color).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
+            buffer.addVertex(position, x2, y1, PICTURE_Z).setColor(color).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, -1f);
         });
     }
 }

@@ -22,7 +22,6 @@ import net.minecraft.world.phys.Vec3;
 public class CameraptureDistantDecorationRenderer implements DecorationClientRenderer<CameraptureDistantData> {
 
     public static final double DISTANCE_FROM_WALL = 0.01;
-    public static final double FRAME_THICKNESS = PictureFrameGeometry.FRAME_DEPTH;
 
     public static void init() {
         ClientDecorationRegistry.registerRenderer(new CameraptureDistantDecorationRenderer());
@@ -64,7 +63,7 @@ public class CameraptureDistantDecorationRenderer implements DecorationClientRen
         poseStack.translate(0.5, 0.5, 0.5);
 
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - data.facing().toYRot()));
-        poseStack.translate(0.5 - data.width() / 2.0, -0.5 + data.height() / 2.0, 0.5 - (PictureFrameGeometry.FRAME_DEPTH / 2.0) + DISTANCE_FROM_WALL);
+        poseStack.translate(0.5 - data.width() / 2.0, -0.5 + data.height() / 2.0, 0.5 - PictureFrameGeometry.HALF_FRAME_DEPTH + DISTANCE_FROM_WALL);
 
         // Far-LOD visual footprint scaling: ensure subpixel quad maintains ~1px rasterizable footprint
         double targetMinPixelSize = 1.0;
