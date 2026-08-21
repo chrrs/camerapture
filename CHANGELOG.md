@@ -24,12 +24,19 @@
 - **Quality-Aware Networking & Concurrency**:
   - Overhauled download protocol with quality-aware packets (`RequestDownloadPacket`, `DownloadPartialPicturePacket`, `PictureErrorPacket`) keyed by `(UUID, PictureQuality)`.
   - Added thread-safe round-robin `DownloadQueue` and per-resource load locks to collapse duplicate concurrent disk reads.
+  - Added end-to-end in-flight network request lifecycle tracking with transport error recovery.
   - Implemented lightweight `WebPHeader` parser to validate image dimensions before full decoding.
+  - Synchronized server-authoritative `thumbnailResolution` to clients via `SyncedConfig` with defensive decode bounds checks.
   - Enforced server and client-side `maxImageResolution` and `maxImageBytes` security limits.
 
+- **Render State Safety & Performance**:
+  - Decoupled `BlockEntityRenderState` from live block entity references, ensuring `submit()` operates as a pure, immutable rendering consumer.
+  - Added `RenderMetrics` to cache projection constants and track dynamic camera FOV during zoom and FOV modifier effects.
+  - Hardened texture cache byte accounting with immutable `CacheEntry` weight records.
+
 - **Configuration & Instrumentation**:
-  - Added config options for distant LOD rendering, VRAM cache budgets, thumbnail resolution, and LOD thresholds with Cloth Config integration.
-  - Added internal debug counters (`CameraptureDebugStats`) for monitoring frustum culling, LOD, cache residency, and network streaming.
+  - Added config options for distant LOD rendering, VRAM cache budgets, and LOD thresholds with Cloth Config integration.
+  - Added multidimensional telemetry (`CameraptureDebugStats`) tracking frame LOD decisions, actual rendered texture qualities, placeholder quads, dynamic VRAM residency (MiB), cache activity, and network transfer volume.
 
 ## 1.10.15
 
