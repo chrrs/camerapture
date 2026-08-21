@@ -18,12 +18,14 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class CameraptureDistantDecorationRenderer implements DecorationClientRenderer<CameraptureDistantData> {
+
+    public static final double DISTANCE_FROM_WALL = 0.01;
+    public static final double FRAME_THICKNESS = 0.0625;
 
     public static void init() {
         ClientDecorationRegistry.registerRenderer(new CameraptureDistantDecorationRenderer());
@@ -50,22 +52,22 @@ public class CameraptureDistantDecorationRenderer implements DecorationClientRen
 
         // Strictly request thumbnail quality (32x32) for distant decorations
         RemotePicture picture = ClientPictureStore.getInstance().getPicture(data.pictureId(), PictureQuality.THUMBNAIL);
-        PictureTexture texture = picture != null ? picture.getTexture(PictureQuality.THUMBNAIL) : null;
+        PictureTexture texture = (picture != null) ? picture.getEffectiveTexture(PictureQuality.THUMBNAIL) : null;
 
+        BlockPos anchorPos = record.pos();
         Vec3 cameraPos = camera.position();
-        AABB bounds = record.bounds();
-        Vec3 center = bounds.getCenter();
 
         poseStack.pushPose();
-        poseStack.translate(center.x - cameraPos.x, center.y - cameraPos.y, center.z - cameraPos.z);
+        poseStack.translate(anchorPos.getX() - cameraPos.x, anchorPos.getY() - cameraPos.y, anchorPos.getZ() - cameraPos.z);
+        poseStack.translate(0.5, 0.5, 0.5);
 
-        Direction facing = data.facing();
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot()));
-        if (data.rotation() != 0) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(data.rotation() * 90.0F));
-        }
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - data.facing().toYRot()));
+        poseStack.translate(0.5 - data.width() / 2.0, -0.5 + data.height() / 2.0, 0.5 - (FRAME_THICKNESS / 2.0) + DISTANCE_FROM_WALL);
 
         if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
+            if (data.rotation() != 0) {
+                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F * data.rotation()));
+            }
             renderPicture(poseStack, submitNodeCollector, texture, data);
         } else {
             renderPlaceholderQuad(poseStack, submitNodeCollector, data);
