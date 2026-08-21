@@ -207,25 +207,25 @@ public class Camerapture {
             }
         });
 
-        // Client requests a picture with a certain UUID
+        // Client requests a picture with a certain UUID and quality
         NETWORK.onReceiveFromClient(RequestDownloadPacket.class, (packet, player) -> {
             // Packet handlers run on the server thread on both loaders, and a cache miss here reads the
             // picture off the disk. Do that on the executor instead, like uploads already do — nothing
             // below touches game state, and DownloadQueue does the actual sending on its own thread.
             EXECUTOR.execute(() -> {
                 try {
-                    StoredPicture picture = ServerPictureStore.getInstance().get(player.server, packet.uuid());
+                    StoredPicture picture = ServerPictureStore.getInstance().get(player.server, packet.uuid(), packet.quality());
 
                     if (picture == null) {
-                        LOGGER.warn("{} requested a picture with an unknown UUID", player.getName().getString());
-                        NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid()));
+                        LOGGER.warn("{} requested a picture with an unknown UUID: {} ({})", player.getName().getString(), packet.uuid(), packet.quality());
+                        NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid(), packet.quality()));
                         return;
                     }
 
-                    DownloadQueue.getInstance().send(player, packet.uuid(), picture);
+                    DownloadQueue.getInstance().send(player, packet.uuid(), packet.quality(), picture);
                 } catch (Exception e) {
-                    LOGGER.error("failed to load picture for {}", player.getName().getString(), e);
-                    NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid()));
+                    LOGGER.error("failed to load picture for {} ({}): {}", player.getName().getString(), packet.uuid(), packet.quality(), e);
+                    NETWORK.sendToClient(player, new PictureErrorPacket(packet.uuid(), packet.quality()));
                 }
             });
         });

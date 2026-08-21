@@ -1,10 +1,14 @@
 package me.chrr.camerapture.render;
 
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.block.PictureFrameBlockEntity;
 import me.chrr.camerapture.item.CameraItem;
 import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
+import me.chrr.camerapture.picture.PictureQuality;
+import me.chrr.camerapture.picture.PictureTexture;
 import me.chrr.camerapture.picture.RemotePicture;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.LoadingDotsText;
@@ -17,8 +21,6 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -51,6 +53,11 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
     public void extractRenderState(PictureFrameBlockEntity blockEntity, RenderState state, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.@Nullable CrumblingOverlay crumblingOverlay) {
         BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTick, cameraPos, crumblingOverlay);
 
+        CameraptureDebugStats.extractedFrames.incrementAndGet();
+
+        state.renderBox = blockEntity.getRenderBox();
+        state.blockEntity = blockEntity;
+        state.lastLod = blockEntity.lastLod;
         state.facing = blockEntity.getFacing();
         state.frameWidth = blockEntity.getFrameWidth();
         state.frameHeight = blockEntity.getFrameHeight();
@@ -75,6 +82,71 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
 
     @Override
     public void submit(RenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState) {
+        CameraptureDebugStats.submittedFrames.incrementAndGet();
+
+        // 1. Frustum Culling: Test the frame's world-space AABB before any store access or computation.
+        if (cameraState.cullFrustum != null && !cameraState.cullFrustum.isVisible(state.renderBox)) {
+            CameraptureDebugStats.frustumRejected.incrementAndGet();
+            return;
+        }
+
+        // 2. Screen-space Projected Size & LOD Classification with Hysteresis
+        Vec3 camPos = cameraState.pos;
+        if (camPos == null) {
+            camPos = Minecraft.getInstance().gameRenderer.mainCamera().position();
+        }
+        double distSq = state.renderBox.distanceToSqr(camPos);
+        double distance = Math.max(0.1, Math.sqrt(distSq));
+
+        int viewportHeight = Minecraft.getInstance().getWindow().getHeight();
+        double fovDeg = Minecraft.getInstance().options.fov().get();
+        double fovRad = Math.toRadians(fovDeg);
+        double focalLengthPixels = (viewportHeight / 2.0) / Math.tan(fovRad / 2.0);
+
+        float worldSize = Math.max(state.frameWidth, state.frameHeight);
+        float projectedPixels = (float) (worldSize / distance * focalLengthPixels);
+
+        float minPixels = Camerapture.CONFIG_MANAGER.getConfig().client.minimumRenderPixels;
+        float fullThreshold = Camerapture.CONFIG_MANAGER.getConfig().client.fullLodPixels;
+
+        PictureLod lod;
+        PictureLod prev = state.lastLod;
+        if (prev == PictureLod.FULL) {
+            if (projectedPixels < minPixels * 0.75f) {
+                lod = PictureLod.SKIP;
+            } else if (projectedPixels < fullThreshold * 0.85f) {
+                lod = PictureLod.THUMBNAIL;
+            } else {
+                lod = PictureLod.FULL;
+            }
+        } else if (prev == PictureLod.THUMBNAIL) {
+            if (projectedPixels < minPixels * 0.75f) {
+                lod = PictureLod.SKIP;
+            } else if (projectedPixels >= fullThreshold * 1.15f) {
+                lod = PictureLod.FULL;
+            } else {
+                lod = PictureLod.THUMBNAIL;
+            }
+        } else {
+            if (projectedPixels >= fullThreshold * 1.15f) {
+                lod = PictureLod.FULL;
+            } else if (projectedPixels >= minPixels * 1.25f) {
+                lod = PictureLod.THUMBNAIL;
+            } else {
+                lod = PictureLod.SKIP;
+            }
+        }
+
+        if (state.blockEntity != null) {
+            state.blockEntity.lastLod = lod;
+        }
+        state.lod = lod;
+
+        if (lod == PictureLod.SKIP) {
+            CameraptureDebugStats.subpixelRejected.incrementAndGet();
+            return;
+        }
+
         poseStack.pushPose();
 
         // Position at center of block, rotate facing outward from wall, and offset for frame dimensions
@@ -82,42 +154,66 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.facing.toYRot()));
         poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (FRAME_THICKNESS / 2.0) + DISTANCE_FROM_WALL);
 
-        if (state.shouldRenderOutline) {
+        if (state.shouldRenderOutline && state.lod == PictureLod.FULL) {
             renderOutline(poseStack, collector, state.frameWidth, state.frameHeight);
         }
 
         if (state.pictureId == null) {
-            renderErrorText(poseStack, collector, state.lightCoords);
-        } else {
-            RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(state.pictureId);
-            if (picture == null || picture.getStatus() == RemotePicture.Status.ERROR) {
+            if (state.lod == PictureLod.FULL) {
                 renderErrorText(poseStack, collector, state.lightCoords);
-            } else if (picture.getStatus() == RemotePicture.Status.FETCHING) {
-                renderFetching(poseStack, collector, state.lightCoords);
             } else {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
-                renderPicture(poseStack, collector, picture, state);
+                renderPlaceholderQuad(poseStack, collector, state);
+            }
+        } else {
+            PictureQuality targetQuality = (state.lod == PictureLod.FULL) ? PictureQuality.FULL : PictureQuality.THUMBNAIL;
+            RemotePicture picture = ClientPictureStore.getInstance().getPicture(state.pictureId, targetQuality);
+            PictureTexture texture = (picture != null) ? picture.getEffectiveTexture(targetQuality) : null;
+
+            if (state.lod == PictureLod.THUMBNAIL) {
+                if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
+                    CameraptureDebugStats.thumbnailRenders.incrementAndGet();
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                    renderPicture(poseStack, collector, texture, state);
+                } else {
+                    renderPlaceholderQuad(poseStack, collector, state);
+                }
+            } else { // FULL LOD
+                if (texture == null || texture.getStatus() == PictureTexture.Status.NOT_LOADED || texture.getStatus() == PictureTexture.Status.FETCHING) {
+                    renderFetching(poseStack, collector, state.lightCoords);
+                } else if (texture.getStatus() == PictureTexture.Status.ERROR) {
+                    renderErrorText(poseStack, collector, state.lightCoords);
+                } else {
+                    CameraptureDebugStats.fullRenders.incrementAndGet();
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                    renderPicture(poseStack, collector, texture, state);
+                }
             }
         }
 
         poseStack.popPose();
     }
 
-    private void renderPicture(PoseStack poseStack, SubmitNodeCollector collector, RemotePicture picture, RenderState state) {
-        float pictureWidth = picture.getWidth();
-        float pictureHeight = picture.getHeight();
+    private void renderPicture(PoseStack poseStack, SubmitNodeCollector collector, PictureTexture texture, RenderState state) {
+        float pictureWidth = texture.getWidth();
+        float pictureHeight = texture.getHeight();
+
+        if (pictureWidth <= 0 || pictureHeight <= 0) {
+            pictureWidth = 1f;
+            pictureHeight = 1f;
+        }
 
         if (state.rotation % 2 == 1) {
-            pictureWidth = picture.getHeight();
-            pictureHeight = picture.getWidth();
+            float temp = pictureWidth;
+            pictureWidth = pictureHeight;
+            pictureHeight = temp;
         }
 
         float scaledWidth = state.frameWidth / pictureWidth;
         float scaleHeight = state.frameHeight / pictureHeight;
         float scale = Math.min(scaledWidth, scaleHeight);
 
-        float width = picture.getWidth() * scale;
-        float height = picture.getHeight() * scale;
+        float width = (state.rotation % 2 == 1 ? texture.getHeight() : texture.getWidth()) * scale;
+        float height = (state.rotation % 2 == 1 ? texture.getWidth() : texture.getHeight()) * scale;
 
         float x1 = -width / 2f;
         float x2 = width / 2f;
@@ -125,8 +221,8 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         float y2 = height / 2f;
 
         RenderType renderType = state.isPictureGlowing
-                ? RenderTypes.text(picture.getTextureIdentifier())
-                : RenderTypes.entityCutoutCull(picture.getTextureIdentifier());
+                ? RenderTypes.text(texture.getTextureIdentifier())
+                : RenderTypes.entityCutoutCull(texture.getTextureIdentifier());
 
         collector.submitCustomGeometry(poseStack, renderType, (matrix, buffer) -> {
             Matrix4f position = matrix.pose();
@@ -136,6 +232,24 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
             buffer.addVertex(position, x1, y2, 0f).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
             buffer.addVertex(position, x2, y2, 0f).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
             buffer.addVertex(position, x2, y1, 0f).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+        });
+    }
+
+    private void renderPlaceholderQuad(PoseStack poseStack, SubmitNodeCollector collector, RenderState state) {
+        float x1 = -state.frameWidth / 2f;
+        float x2 = state.frameWidth / 2f;
+        float y1 = -state.frameHeight / 2f;
+        float y2 = state.frameHeight / 2f;
+        int color = 0xff2b2b2b;
+
+        collector.submitCustomGeometry(poseStack, RenderTypes.textBackground(), (matrix, buffer) -> {
+            Matrix4f position = matrix.pose();
+            int effectiveLight = state.isPictureGlowing ? 0xff : state.lightCoords;
+
+            buffer.addVertex(position, x1, y1, 0f).setColor(color).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x1, y2, 0f).setColor(color).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x2, y2, 0f).setColor(color).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
+            buffer.addVertex(position, x2, y1, 0f).setColor(color).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
         });
     }
 
@@ -172,44 +286,35 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         collector.submitText(poseStack, x - width / 2f, y, Component.translationArg(text).getVisualOrderText(), false, Font.DisplayMode.NORMAL, light, color, 0, 0);
     }
 
-    /// Deliberately far below the 256 a beacon uses. Because we render off-screen, every frame inside
-    /// this radius is extracted and submitted every tick with no frustum culling on Fabric, so on a
-    /// server with thousands of posters in one area this radius directly sets the per-frame cost. A
-    /// picture is long unreadable by 96 blocks out.
     @Override
     public int getViewDistance() {
-        return 96;
+        return Integer.MAX_VALUE;
     }
 
-    /// Rejected before any render state is allocated. Measured against the whole frame rather than the
-    /// anchor block, since a wide frame reaches well past its anchor — which is the entire reason we
-    /// render off-screen in the first place.
     @Override
     public boolean shouldRender(PictureFrameBlockEntity blockEntity, Vec3 cameraPos) {
-        double viewDistance = getViewDistance();
-        return blockEntity.getRenderBox().distanceToSqr(cameraPos) <= viewDistance * viewDistance;
+        if (!Camerapture.CONFIG_MANAGER.getConfig().client.distantPictureRendering) {
+            return blockEntity.getRenderBox().distanceToSqr(cameraPos) <= 96.0 * 96.0;
+        }
+        return true;
     }
 
-    /// A frame is anchored by a single 1x1 block but can render up to 16x16 blocks away from it. If we let the
-    /// normal path handle us, [net.minecraft.client.renderer.extract.LevelExtractor] only ever looks at block
-    /// entities inside *visible chunk sections*, so standing next to a wide frame and turning away from the anchor
-    /// pushes the anchor's section out of the frustum and the whole picture vanishes.
-    ///
-    /// Rendering off-screen puts us in `ClientLevel#getGloballyRenderedBlockEntities`, which is extracted every
-    /// frame regardless of section culling. This is the same mechanism beacons use.
     @Override
     public boolean shouldRenderOffScreen() {
         return true;
     }
 
-    /// The area this frame actually draws into, in world space. NeoForge frustum-culls globally rendered
-    /// block entities against this; see `NeoPictureFrameBlockEntityRenderer`. Vanilla/Fabric has no
-    /// equivalent hook, which is why `shouldRender` above carries the distance check on both loaders.
     public static AABB getFrameRenderBox(PictureFrameBlockEntity blockEntity) {
         return blockEntity.getRenderBox();
     }
 
     public static class RenderState extends BlockEntityRenderState {
+        public AABB renderBox;
+        @Nullable
+        public PictureFrameBlockEntity blockEntity;
+        public PictureLod lastLod = PictureLod.SKIP;
+        public PictureLod lod = PictureLod.SKIP;
+
         @Nullable
         public UUID pictureId;
         public boolean isPictureGlowing;

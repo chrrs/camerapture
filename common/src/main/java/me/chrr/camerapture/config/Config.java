@@ -1,6 +1,5 @@
 package me.chrr.camerapture.config;
 
-
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.permissions.Permission;
@@ -15,7 +14,7 @@ public class Config {
 
     /// Client-specific config options.
     public static class Client {
-        public int version = 4;
+        public int version = 5;
 
         /// On by default since v4. Without it a client re-downloads every picture it looks at, every
         /// session — on a server with a few thousand posters that's hundreds of megabytes per player
@@ -25,6 +24,14 @@ public class Config {
         public boolean saveScreenshot = false;
         public boolean simpleCameraHud = false;
         public float zoomMouseSensitivity = 0.5f;
+
+        /// When true, renders picture frames across loaded chunks with screen-space LOD culling.
+        public boolean distantPictureRendering = true;
+        public int thumbnailResolution = 128;
+        public int fullTextureBudgetMiB = 512;
+        public int thumbnailTextureBudgetMiB = 64;
+        public float fullLodPixels = 32.0f;
+        public float minimumRenderPixels = 1.5f;
 
         public void upgrade() {
             if (this.version < 4) {
@@ -39,10 +46,11 @@ public class Config {
 
     /// Server-specific config options.
     public static class Server {
-        public int version = 5;
+        public int version = 6;
 
         public int maxImageBytes = 500_000;
         public int maxImageResolution = 1920;
+        public int thumbnailResolution = 128;
         public int msPerPicture = 20;
         public boolean canRotatePictures = true;
         public boolean checkFramePosition = false;
@@ -88,7 +96,7 @@ public class Config {
                         new Permission.HasCommandLevel(PermissionLevel.byId(this.upload)));
             }
 
-                                          @Override
+            @Override
             public String toString() {
                 return "{takePicture=" + takePicture +
                         ", upload=" + upload +

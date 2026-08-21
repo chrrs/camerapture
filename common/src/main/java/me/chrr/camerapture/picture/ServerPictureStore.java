@@ -1,6 +1,7 @@
 package me.chrr.camerapture.picture;
 
 import me.chrr.camerapture.Camerapture;
+import me.chrr.camerapture.util.ImageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
@@ -11,11 +12,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/// The server-side picture store. It is actually a bit of a misnomer, as this
-/// picture store can store any byte files, and does not do any image parsing.
-///
-/// Pictures put in the store will be stored on the disk in the world folder.
-/// The store also manages picture UUID's.
+/// The server-side picture store. It manages picture storage, thumbnail generation,
+/// and disk caching in the world folder. Pictures are identified by UUID and PictureQuality.
 public class ServerPictureStore {
     /// The cache is bounded by bytes rather than by entry count. Pictures vary hugely in size, so a
     /// fixed entry count either wastes memory on small ones or thrashes on large ones — and a world
@@ -29,11 +27,11 @@ public class ServerPictureStore {
     private final Set<UUID> reservedIds = ConcurrentHashMap.newKeySet();
 
     /// Access-ordered LRU guarded by its own monitor, with `cacheBytes` tracking its total weight.
-    private final LinkedHashMap<UUID, StoredPicture> pictureCache = new LinkedHashMap<>(256, 0.75f, true);
+    private final LinkedHashMap<PictureKey, StoredPicture> pictureCache = new LinkedHashMap<>(512, 0.75f, true);
     private long cacheBytes = 0L;
 
-    /// Per-picture load locks, so concurrent misses for the same picture collapse into one disk read.
-    private final Map<UUID, Object> loadLocks = new ConcurrentHashMap<>();
+    /// Per-resource load locks, so concurrent misses for the same picture key collapse into one disk read.
+    private final Map<PictureKey, Object> loadLocks = new ConcurrentHashMap<>();
 
     /// Use {@link #getInstance()} instead of creating a new one.
     private ServerPictureStore() {
@@ -78,59 +76,96 @@ public class ServerPictureStore {
                     + ", larger than " + maxImageResolution + " in at least one dimension");
         }
 
-        cache(id, picture);
+        // Store original
+        PictureKey fullKey = new PictureKey(id, PictureQuality.FULL);
+        cache(fullKey, picture);
 
-        Path path = getFilePath(server, id);
-        Files.createDirectories(path.getParent());
-        Files.write(path, picture.bytes());
+        Path fullPath = getFilePath(server, id, PictureQuality.FULL);
+        Files.createDirectories(fullPath.getParent());
+        Files.write(fullPath, picture.bytes());
+
+        // Generate and store thumbnail
+        try {
+            int thumbRes = Camerapture.CONFIG_MANAGER.getConfig().server.thumbnailResolution;
+            byte[] thumbBytes = ImageUtil.createThumbnail(picture.bytes(), thumbRes);
+            StoredPicture thumbPicture = new StoredPicture(thumbBytes);
+
+            PictureKey thumbKey = new PictureKey(id, PictureQuality.THUMBNAIL);
+            cache(thumbKey, thumbPicture);
+
+            Path thumbPath = getFilePath(server, id, PictureQuality.THUMBNAIL);
+            Files.write(thumbPath, thumbBytes);
+        } catch (Exception e) {
+            Camerapture.LOGGER.error("failed to generate thumbnail for picture {}", id, e);
+        }
     }
 
     @Nullable
-    public StoredPicture get(MinecraftServer server, UUID id) throws IOException {
-        StoredPicture cached = getCached(id);
+    public StoredPicture get(MinecraftServer server, UUID id, PictureQuality quality) throws IOException {
+        PictureKey key = new PictureKey(id, quality);
+        StoredPicture cached = getCached(key);
         if (cached != null) {
             return cached;
         }
 
-        // Collapse concurrent misses for the same picture. When a crowd walks into the same area they
+        // Collapse concurrent misses for the same picture key. When a crowd walks into the same area they
         // all ask for the same posters at once; without this, every one of those requests would do its
         // own disk read and allocate its own copy of the bytes.
-        Object loadLock = loadLocks.computeIfAbsent(id, key -> new Object());
+        Object loadLock = loadLocks.computeIfAbsent(key, k -> new Object());
         try {
             synchronized (loadLock) {
-                cached = getCached(id);
+                cached = getCached(key);
                 if (cached != null) {
                     return cached;
                 }
 
-                Path path = getFilePath(server, id);
-                if (!Files.exists(path)) {
-                    return null;
+                Path path = getFilePath(server, id, quality);
+                if (Files.exists(path)) {
+                    StoredPicture picture = new StoredPicture(Files.readAllBytes(path));
+                    cache(key, picture);
+                    return picture;
                 }
 
-                StoredPicture picture = new StoredPicture(Files.readAllBytes(path));
-                cache(id, picture);
-                return picture;
+                // If thumbnail requested but missing, check if original exists and generate lazily (migration)
+                if (quality == PictureQuality.THUMBNAIL) {
+                    Path fullPath = getFilePath(server, id, PictureQuality.FULL);
+                    if (Files.exists(fullPath)) {
+                        try {
+                            byte[] originalBytes = Files.readAllBytes(fullPath);
+                            int thumbRes = Camerapture.CONFIG_MANAGER.getConfig().server.thumbnailResolution;
+                            byte[] thumbBytes = ImageUtil.createThumbnail(originalBytes, thumbRes);
+                            StoredPicture thumbPicture = new StoredPicture(thumbBytes);
+
+                            Files.write(path, thumbBytes);
+                            cache(key, thumbPicture);
+                            return thumbPicture;
+                        } catch (Exception e) {
+                            Camerapture.LOGGER.error("failed to generate lazy thumbnail for picture {}", id, e);
+                        }
+                    }
+                }
+
+                return null;
             }
         } finally {
-            loadLocks.remove(id, loadLock);
+            loadLocks.remove(key, loadLock);
         }
     }
 
     @Nullable
-    private StoredPicture getCached(UUID id) {
+    private StoredPicture getCached(PictureKey key) {
         synchronized (pictureCache) {
             // Has to be a single lookup: containsKey/get is not atomic, so a concurrent eviction between
             // the two would report the picture as missing. It also keeps the LRU honest — the cache is
             // access-ordered, and containsKey does not count as an access.
-            return pictureCache.get(id);
+            return pictureCache.get(key);
         }
     }
 
     /// Add a picture to the cache, evicting least-recently-used entries until it fits.
-    private void cache(UUID id, StoredPicture picture) {
+    private void cache(PictureKey key, StoredPicture picture) {
         synchronized (pictureCache) {
-            StoredPicture previous = pictureCache.put(id, picture);
+            StoredPicture previous = pictureCache.put(key, picture);
             if (previous != null) {
                 cacheBytes -= previous.bytes().length;
             }
@@ -138,18 +173,22 @@ public class ServerPictureStore {
 
             // Access order puts the least recently used entry first. The entry we just inserted is the
             // most recent, so it's last and only evicted if it alone is over the cap.
-            Iterator<Map.Entry<UUID, StoredPicture>> iterator = pictureCache.entrySet().iterator();
+            Iterator<Map.Entry<PictureKey, StoredPicture>> iterator = pictureCache.entrySet().iterator();
             while (cacheBytes > MAX_CACHE_BYTES && pictureCache.size() > 1 && iterator.hasNext()) {
-                Map.Entry<UUID, StoredPicture> eldest = iterator.next();
+                Map.Entry<PictureKey, StoredPicture> eldest = iterator.next();
                 cacheBytes -= eldest.getValue().bytes().length;
                 iterator.remove();
             }
         }
     }
 
-    private Path getFilePath(MinecraftServer server, UUID uuid) {
+    private Path getFilePath(MinecraftServer server, UUID uuid, PictureQuality quality) {
         Path dataFolder = server.getWorldPath(LevelResource.ROOT).resolve("camerapture");
-        return dataFolder.resolve(uuid + ".webp");
+        if (quality == PictureQuality.THUMBNAIL) {
+            return dataFolder.resolve(uuid + ".thumb.webp");
+        } else {
+            return dataFolder.resolve(uuid + ".webp");
+        }
     }
 
     public static ServerPictureStore getInstance() {

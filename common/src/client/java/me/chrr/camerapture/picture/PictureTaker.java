@@ -95,7 +95,7 @@ public class PictureTaker {
 
         // Take a screenshot while the HUD was hidden.
         Screenshot.takeScreenshot(minecraft.gameRenderer.mainRenderTarget(), (nativeImage) -> {
-            this.picture = ImageUtil.fromNativeImage(nativeImage);
+            this.picture = me.chrr.camerapture.util.NativeImageUtil.fromNativeImage(nativeImage);
             nativeImage.close();
 
             // Request a new picture ID from the server.
@@ -137,9 +137,20 @@ public class PictureTaker {
             ByteCollector.split(bytes, Camerapture.CLIENT_SECTION_SIZE, (section, bytesLeft) ->
                     Camerapture.NETWORK.sendToServer(new UploadPartialPicturePacket(pictureId, section, bytesLeft)));
 
-            // Client-side, we cache the picture directly. This avoids an unnecessary round trip.
-            ClientPictureStore.getInstance().processReceivedImage(pictureId, picture);
-            ClientPictureStore.getInstance().cacheBytesToDisk(pictureId, bytes);
+            // Client-side, we cache both full and thumbnail directly to avoid unnecessary round trips.
+            ClientPictureStore.getInstance().processReceivedImage(pictureId, PictureQuality.FULL, picture);
+            ClientPictureStore.getInstance().cacheBytesToDisk(pictureId, PictureQuality.FULL, bytes);
+
+            try {
+                int thumbRes = Camerapture.CONFIG_MANAGER.getConfig().client.thumbnailResolution;
+                BufferedImage thumb = ImageUtil.clampSize(picture, thumbRes);
+                byte[] thumbBytes = ImageUtil.compressIntoWebP(thumb, 0.8f);
+                ClientPictureStore.getInstance().processReceivedImage(pictureId, PictureQuality.THUMBNAIL, thumb);
+                ClientPictureStore.getInstance().cacheBytesToDisk(pictureId, PictureQuality.THUMBNAIL, thumbBytes);
+            } catch (Exception e) {
+                Camerapture.LOGGER.error("failed to generate local thumbnail for {}", pictureId, e);
+            }
+
             this.picture = null;
         } catch (Exception e) {
             Camerapture.LOGGER.error("failed to send picture to server", e);

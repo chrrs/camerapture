@@ -50,30 +50,31 @@ public class CameraptureClient {
         Camerapture.NETWORK.onReceiveFromServer(RequestUploadPacket.class, (packet) ->
                 Camerapture.EXECUTOR.execute(() -> PictureTaker.getInstance().uploadStoredPicture(packet.uuid())));
 
-        // Server sends back a picture following a picture request by UUID
-        Map<UUID, ByteCollector> collectors = new ConcurrentHashMap<>();
+        // Server sends back a picture following a picture request by UUID and quality
+        Map<me.chrr.camerapture.picture.PictureKey, ByteCollector> collectors = new ConcurrentHashMap<>();
         Camerapture.NETWORK.onReceiveFromServer(DownloadPartialPicturePacket.class, (packet) -> {
+            me.chrr.camerapture.picture.PictureKey key = new me.chrr.camerapture.picture.PictureKey(packet.uuid(), packet.quality());
             ByteCollector collector;
 
             synchronized (collectors) {
-                collector = collectors.computeIfAbsent(packet.uuid(), (uuid) -> new ByteCollector((bytes) -> {
-                    collectors.remove(uuid);
-                    Camerapture.EXECUTOR.execute(() -> ClientPictureStore.getInstance().processReceivedBytes(uuid, bytes));
+                collector = collectors.computeIfAbsent(key, (k) -> new ByteCollector((bytes) -> {
+                    collectors.remove(key);
+                    Camerapture.EXECUTOR.execute(() -> ClientPictureStore.getInstance().processReceivedBytes(packet.uuid(), packet.quality(), bytes));
                 }));
             }
 
             synchronized (collector) {
                 if (!collector.push(packet.bytes(), packet.bytesLeft())) {
-                    Camerapture.LOGGER.error("received malformed byte section from server");
-                    ClientPictureStore.getInstance().processReceivedError(packet.uuid());
+                    Camerapture.LOGGER.error("received malformed byte section from server for {}", key);
+                    ClientPictureStore.getInstance().processReceivedError(packet.uuid(), packet.quality());
                 }
             }
         });
 
-        // Server sends back an error following a picture request by UUID
+        // Server sends back an error following a picture request by UUID and quality
         Camerapture.NETWORK.onReceiveFromServer(PictureErrorPacket.class, (packet) -> {
-            ClientPictureStore.getInstance().processReceivedError(packet.uuid());
-            collectors.remove(packet.uuid());
+            ClientPictureStore.getInstance().processReceivedError(packet.uuid(), packet.quality());
+            collectors.remove(new me.chrr.camerapture.picture.PictureKey(packet.uuid(), packet.quality()));
         });
 
         // Server sends over the server-side config

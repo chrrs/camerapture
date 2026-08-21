@@ -44,6 +44,9 @@ public class PictureFrameBlockEntity extends BlockEntity implements MenuProvider
     private int frameWidth = 1;
     private int frameHeight = 1;
 
+    /// Transient field for client-side LOD hysteresis.
+    public me.chrr.camerapture.render.PictureLod lastLod = me.chrr.camerapture.render.PictureLod.SKIP;
+
     public PictureFrameBlockEntity(BlockPos pos, BlockState state) {
         super(Camerapture.PICTURE_FRAME_BLOCK_ENTITY, pos, state);
     }

@@ -25,8 +25,8 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
             return false;
         }
 
-        RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(pictureData.id());
-        return picture.getStatus() == RemotePicture.Status.SUCCESS;
+        RemotePicture picture = ClientPictureStore.getInstance().getPicture(pictureData.id(), me.chrr.camerapture.picture.PictureQuality.FULL);
+        return picture.getFull().getStatus() == me.chrr.camerapture.picture.PictureTexture.Status.SUCCESS;
     }
 
     @Override
@@ -35,7 +35,11 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
             return;
         }
 
-        RemotePicture picture = ClientPictureStore.getInstance().getServerPicture(data);
+        RemotePicture picture = ClientPictureStore.getInstance().getPicture(data, me.chrr.camerapture.picture.PictureQuality.FULL);
+        me.chrr.camerapture.picture.PictureTexture texture = picture.getEffectiveTexture(me.chrr.camerapture.picture.PictureQuality.FULL);
+        if (texture.getStatus() != me.chrr.camerapture.picture.PictureTexture.Status.SUCCESS) {
+            return;
+        }
 
         poseStack.pushPose();
 
@@ -45,18 +49,18 @@ public class PictureItemRenderer implements SpecialModelRenderer<UUID> {
         poseStack.scale(14 / 16f, 14 / 16f, 14 / 16f);
 
         // Scale down the picture to fit.
-        if (picture.getWidth() > picture.getHeight()) {
-            float height = (float) picture.getHeight() / (float) picture.getWidth();
+        if (texture.getWidth() > texture.getHeight()) {
+            float height = (float) texture.getHeight() / (float) texture.getWidth();
             poseStack.translate(0f, (1f - height) / 2f, 0f);
             poseStack.scale(1f, height, 1f);
         } else {
-            float width = (float) picture.getWidth() / (float) picture.getHeight();
+            float width = (float) texture.getWidth() / (float) texture.getHeight();
             poseStack.translate((1f - width) / 2f, 0f, 0f);
             poseStack.scale(width, 1f, 1f);
         }
 
         // Render the picture.
-        RenderType renderLayer = RenderTypes.entityCutout(picture.getTextureIdentifier());
+        RenderType renderLayer = RenderTypes.entityCutout(texture.getTextureIdentifier());
         collector.submitCustomGeometry(poseStack, renderLayer, (matrix, buffer) -> {
             Matrix4f matrix4f = matrix.pose();
             buffer.addVertex(matrix4f, 1f, 0f, 0f).setColor(0xffffffff).setUv(1f, 1f).setOverlay(overlay).setLight(light).setNormal(matrix, 0f, 0f, 1f);

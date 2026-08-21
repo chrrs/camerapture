@@ -3,11 +3,14 @@ package me.chrr.camerapture.picture;
 import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.CameraptureClient;
 import me.chrr.camerapture.net.serverbound.RequestDownloadPacket;
+import me.chrr.camerapture.render.CameraptureDebugStats;
 import me.chrr.camerapture.util.ImageUtil;
+import me.chrr.camerapture.util.NativeImageUtil;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -15,155 +18,166 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/// The client-side picture store. This class manages picture son the client side.
-/// Its cache is cleared when you leave a world. It also manages caching pictures
-/// to disk when that's enabled, and converts them to NativeImages for Minecraft
-/// to understand. To the outside, this class works with BufferedImages.
+/// The client-side picture store. It manages picture resources on the client side,
+/// separating Full and Thumbnail texture caches with independent VRAM budgets and LRU tracking.
 public class ClientPictureStore {
     private static final ClientPictureStore INSTANCE = new ClientPictureStore();
 
-    /// Roughly how much VRAM we're willing to hold in picture textures. Bounded by bytes rather than by
-    /// picture count because sizes vary enormously — a single picture can be maxImageResolution² (1920²
-    /// by default, about 15MB as RGBA), so any fixed count is either wasteful or far too tight.
-    private static final long MAX_TEXTURE_BYTES = 512L * 1024L * 1024L;
-
-    /// A picture asked for more recently than this is treated as on-screen and is never evicted. Without
-    /// this, standing in an area holding more pictures than the budget would evict textures that are
-    /// about to be drawn again next frame, and each eviction costs a fresh request to the server — a
-    /// thrash loop far more expensive than simply going over budget. Exceeding the budget is the safer
-    /// failure, so that's the one we choose.
+    /// Pictures asked for more recently than this are treated as on-screen and are never evicted.
     private static final long IN_USE_GRACE_MS = 5_000L;
 
-    private final Queue<QueuedBytes> byteQueue = new ConcurrentLinkedQueue<>();
+    /// An absolute ceiling on what we'll decode.
+    private static final int ABSOLUTE_MAX_RESOLUTION = 8192;
 
-    /// Access-ordered, guarded by its own monitor. Always go through the helpers below so eviction stays
-    /// paired with releasing the texture.
-    private final LinkedHashMap<UUID, RemotePicture> pictures = new LinkedHashMap<>(256, 0.75f, true);
-    private long textureBytes = 0L;
+    private final Queue<QueuedBytes> byteQueue = new ConcurrentLinkedQueue<>();
+    private final Map<UUID, RemotePicture> pictures = new ConcurrentHashMap<>();
+
+    private final TextureCache fullCache = new TextureCache(PictureQuality.FULL);
+    private final TextureCache thumbnailCache = new TextureCache(PictureQuality.THUMBNAIL);
 
     private ClientPictureStore() {
     }
 
-    /// Look a picture up, marking it as recently used.
-    private RemotePicture getCached(UUID id) {
-        synchronized (pictures) {
-            RemotePicture picture = pictures.get(id);
-            if (picture != null) {
-                picture.touch();
-            }
-            return picture;
-        }
+    private TextureCache getCache(PictureQuality quality) {
+        return (quality == PictureQuality.THUMBNAIL) ? thumbnailCache : fullCache;
     }
 
-    /// Store a picture, then evict least-recently-used entries until we're back under budget. The
-    /// eviction is completed before any texture is released, so a release can never be issued for an
-    /// entry still in the map.
-    private void putCached(UUID id, RemotePicture picture) {
-        List<Map.Entry<UUID, RemotePicture>> evicted = null;
+    /// Retrieve or create a RemotePicture entry and request the specified quality if not yet loaded.
+    public RemotePicture getPicture(@NotNull UUID id, @NotNull PictureQuality quality) {
+        RemotePicture picture = pictures.computeIfAbsent(id, RemotePicture::new);
+        PictureTexture texture = picture.getTexture(quality);
 
-        synchronized (pictures) {
-            RemotePicture previous = pictures.put(id, picture);
-            if (previous != null) {
-                textureBytes -= previous.getTextureBytes();
-            }
-            textureBytes += picture.getTextureBytes();
+        if (texture.getStatus() == PictureTexture.Status.SUCCESS) {
+            getCache(quality).touch(id, texture);
+        } else if (texture.getStatus() == PictureTexture.Status.NOT_LOADED) {
+            texture.setStatus(PictureTexture.Status.FETCHING);
+            fetchPicture(id, quality);
+        }
 
-            long now = System.currentTimeMillis();
-            Iterator<Map.Entry<UUID, RemotePicture>> iterator = pictures.entrySet().iterator();
-            while (textureBytes > MAX_TEXTURE_BYTES && iterator.hasNext()) {
-                // Access order puts the least recently used entry first, so once we reach one that's
-                // still in use every remaining entry is newer still and there's nothing left to free.
-                Map.Entry<UUID, RemotePicture> eldest = iterator.next();
-                if (now - eldest.getValue().getLastAccess() < IN_USE_GRACE_MS) {
-                    break;
+        return picture;
+    }
+
+    /// Legacy compatibility helper: requests full quality picture.
+    public RemotePicture getServerPicture(@NotNull UUID id) {
+        return getPicture(id, PictureQuality.FULL);
+    }
+
+    /// Legacy compatibility helper: ensures full quality picture is requested.
+    public RemotePicture ensureRemotePicture(@NotNull UUID id) {
+        return getPicture(id, PictureQuality.FULL);
+    }
+
+    /// Request a picture with a specific quality from disk or the server.
+    private void fetchPicture(UUID id, PictureQuality quality) {
+        Camerapture.EXECUTOR.execute(() -> {
+            Path diskPath = getCacheFilePath(id, quality);
+            File file = diskPath.toFile();
+
+            // Also check legacy flat cache directory for FULL quality
+            if (!file.exists() && quality == PictureQuality.FULL) {
+                File legacyFile = getLegacyCacheFilePath(id).toFile();
+                if (legacyFile.exists()) {
+                    file = legacyFile;
                 }
+            }
 
-                iterator.remove();
-                textureBytes -= eldest.getValue().getTextureBytes();
-
-                if (evicted == null) {
-                    evicted = new ArrayList<>();
+            if (file.exists()) {
+                try {
+                    byte[] bytes = Files.readAllBytes(file.toPath());
+                    BufferedImage image = (quality == PictureQuality.FULL)
+                            ? decodeChecked(id, bytes)
+                            : ImageUtil.decodeImageFromWebP(bytes);
+                    processReceivedImage(id, quality, image);
+                    return;
+                } catch (Exception e) {
+                    Camerapture.LOGGER.error("could not read cached picture {} ({})", id, quality, e);
                 }
-                evicted.add(Map.entry(eldest.getKey(), eldest.getValue()));
             }
-        }
 
-        if (evicted != null) {
-            for (Map.Entry<UUID, RemotePicture> entry : evicted) {
-                releaseTexture(entry.getKey(), entry.getValue());
-            }
-        }
+            CameraptureDebugStats.recordRequest(quality);
+            Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
+        });
     }
 
-    /// A picture's size isn't known until its bytes are decoded, so the budget has to be corrected once
-    /// the real dimensions arrive.
-    private void resized(RemotePicture picture, long previousBytes) {
-        synchronized (pictures) {
-            textureBytes += picture.getTextureBytes() - previousBytes;
-        }
-    }
+    /// Update the stored texture with the given BufferedImage and upload to GPU.
+    public void processReceivedImage(UUID id, PictureQuality quality, BufferedImage image) {
+        RemotePicture picture = pictures.computeIfAbsent(id, RemotePicture::new);
+        PictureTexture texture = picture.getTexture(quality);
 
-    /// Free an evicted picture's texture on the render thread.
-    private void releaseTexture(UUID id, RemotePicture picture) {
-        if (picture.getTextureIdentifier() == null) {
-            return;
-        }
+        long previousBytes = texture.getTextureBytes();
+        texture.setSize(image.getWidth(), image.getHeight());
+        getCache(quality).resized(texture, previousBytes);
+
+        @SuppressWarnings("resource") NativeImage nativeImage = NativeImageUtil.toNativeImage(image);
 
         Minecraft.getInstance().executeIfPossible(() -> {
-            // If it was requested again between eviction and now, that fetch owns the texture identifier
-            // and its own registration will replace whatever is there. Leave it alone.
-            if (getCached(id) != null) {
-                return;
-            }
-
+            DynamicTexture dynamicTexture = new DynamicTexture(
+                    () -> "camerapture/" + quality.getSerializedName() + "/" + id,
+                    nativeImage
+            );
             Minecraft.getInstance()
                     .getTextureManager()
-                    .release(picture.getTextureIdentifier());
+                    .register(texture.getTextureIdentifier(), dynamicTexture);
+
+            texture.setStatus(PictureTexture.Status.SUCCESS);
+            getCache(quality).put(id, texture);
+            CameraptureDebugStats.textureUploads.incrementAndGet();
         });
     }
 
-    /// Clear all the pictures from the picture store, and destroy all textures.
-    public void clear() {
-        Minecraft.getInstance().executeIfPossible(() -> {
-            synchronized (pictures) {
-                for (RemotePicture picture : pictures.values()) {
-                    if (picture.getTextureIdentifier() != null) {
-                        Minecraft.getInstance()
-                                .getTextureManager()
-                                .release(picture.getTextureIdentifier());
-                    }
+    /// Process bytes received from the server by adding them to the queue.
+    public void processReceivedBytes(UUID id, PictureQuality quality, byte[] bytes) {
+        byteQueue.add(new QueuedBytes(id, quality, bytes));
+    }
+
+    /// Processes all images from the queue.
+    public void processQueue() {
+        QueuedBytes item;
+        while ((item = byteQueue.poll()) != null) {
+            final QueuedBytes queuedItem = item;
+            Camerapture.EXECUTOR.execute(() -> {
+                try {
+                    BufferedImage image = (queuedItem.quality == PictureQuality.FULL)
+                            ? decodeChecked(queuedItem.id, queuedItem.bytes)
+                            : ImageUtil.decodeImageFromWebP(queuedItem.bytes);
+                    processReceivedImage(queuedItem.id, queuedItem.quality, image);
+                    cacheBytesToDisk(queuedItem.id, queuedItem.quality, queuedItem.bytes);
+                } catch (Exception e) {
+                    Camerapture.LOGGER.error("failed to decode received image bytes for image {} ({})", queuedItem.id, queuedItem.quality, e);
+                    processReceivedError(queuedItem.id, queuedItem.quality);
                 }
-
-                pictures.clear();
-                textureBytes = 0L;
-            }
-        });
+            });
+        }
     }
 
-    public void processReceivedError(UUID id) {
-        RemotePicture picture = getCached(id);
-        if (picture == null) {
+    public void processReceivedError(UUID id, PictureQuality quality) {
+        RemotePicture picture = pictures.get(id);
+        if (picture != null) {
+            picture.getTexture(quality).setStatus(PictureTexture.Status.ERROR);
+        }
+        CameraptureDebugStats.missingPictures.incrementAndGet();
+        Camerapture.LOGGER.error("remote error for image {} ({})", id, quality);
+    }
+
+    /// Cache picture bytes to disk.
+    public void cacheBytesToDisk(UUID id, PictureQuality quality, byte[] bytes) {
+        if (!shouldCacheToDisk()) {
             return;
         }
 
-        picture.setStatus(RemotePicture.Status.ERROR);
-        Camerapture.LOGGER.error("remote error for image {}", id);
+        try {
+            Path path = getCacheFilePath(id, quality);
+            Files.createDirectories(path.getParent());
+            Files.write(path, bytes);
+        } catch (IOException e) {
+            Camerapture.LOGGER.error("could not cache picture {} ({})", id, quality, e);
+        }
     }
 
-    /// An absolute ceiling on what we'll decode, whatever the server says its limit is. The server's
-    /// limit arrives over the network, so it isn't something a client should stake its process on: at
-    /// WebP's 16383 maximum a single picture costs over a gigabyte of heap plus as much again natively,
-    /// which is not survivable. 8192 is far past any sensible poster and stays recoverable.
-    private static final int ABSOLUTE_MAX_RESOLUTION = 8192;
-
-    /// Decode WebP bytes, refusing anything whose header declares a size we don't want to allocate for.
-    ///
-    /// The server rejects oversized uploads, but that only covers pictures stored after the check
-    /// existed — a world carried over from before it can still hold one, and a client shouldn't take
-    /// the server's word for it in any case. Reading the header is cheap; being wrong is not.
+    /// Decode WebP bytes with header safety checks.
     private static BufferedImage decodeChecked(UUID id, byte[] bytes) throws IOException {
         WebPHeader.Size size = WebPHeader.read(bytes);
         if (size == null) {
@@ -179,143 +193,140 @@ public class ClientPictureStore {
         return ImageUtil.decodeImageFromWebP(bytes);
     }
 
-    /// Request a picture with an ID to be fetched from the server.
-    private void fetchPicture(UUID id) {
-        Camerapture.EXECUTOR.execute(() -> {
-            File file = getCacheFilePath(id).toFile();
-            if (file.exists()) {
-                try {
-                    byte[] bytes = Files.readAllBytes(file.toPath());
-                    processReceivedImage(id, decodeChecked(id, bytes));
-                    return;
-                } catch (IOException e) {
-                    // If this fails, we fall through to requesting the picture from the server.
-                    Camerapture.LOGGER.error("could not read cached picture {}", id, e);
-                }
-            }
-
-            Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id));
-        });
-    }
-
-    /// Cache picture as bytes on the client side to be re-used later.
-    public void cacheBytesToDisk(UUID id, byte[] bytes) {
-        if (!shouldCacheToDisk()) {
-            return;
-        }
-
-        try {
-            Path path = getCacheFilePath(id);
-            Files.createDirectories(path.getParent());
-            Files.write(path, bytes);
-        } catch (IOException e) {
-            Camerapture.LOGGER.error("could not cache picture {}", id, e);
-        }
-    }
-
-    /// Update the stored remote picture with the given ID to correspond to
-    /// the given BufferedImage. This function will convert it to a native
-    /// image, upload it as a texture and change the status of the remote picture.
-    public void processReceivedImage(UUID id, BufferedImage image) {
-        RemotePicture picture = ensureCached(id);
-
-        long previousBytes = picture.getTextureBytes();
-        picture.setSize(image.getWidth(), image.getHeight());
-        resized(picture, previousBytes);
-
-        @SuppressWarnings("resource") NativeImage nativeImage = ImageUtil.toNativeImage(image);
-
+    /// Clear all pictures from the store and destroy all textures.
+    public void clear() {
         Minecraft.getInstance().executeIfPossible(() -> {
-            DynamicTexture texture = new DynamicTexture(() -> "camerapture/" + id, nativeImage);
-            Minecraft.getInstance()
-                    .getTextureManager()
-                    .register(picture.getTextureIdentifier(), texture);
-            picture.setStatus(RemotePicture.Status.SUCCESS);
+            fullCache.clear();
+            thumbnailCache.clear();
+            pictures.clear();
         });
     }
 
-    /// Process the bytes received from the server, and update the stored picture.
-    public void processReceivedBytes(UUID id, byte[] bytes) {
-        byteQueue.add(new QueuedBytes(id, bytes));
+    public long getFullTextureBytes() {
+        return fullCache.getTextureBytes();
     }
 
-    /// Get a picture by UUID, fetching it from the server if we don't have it yet.
-    /// This method returns null if the input UUID is null.
-    ///
-    /// If the corresponding picture has an error status on the client-side, this
-    /// method will force-retry fetching the picture from the server.
-    public RemotePicture ensureRemotePicture(@NotNull UUID id) {
-        RemotePicture picture = getCached(id);
-        if (picture == null || picture.getStatus() == RemotePicture.Status.ERROR) {
-            picture = new RemotePicture(id);
-            putCached(id, picture);
-            fetchPicture(id);
-        }
-
-        return picture;
-    }
-
-    /// Get an existing entry, or create a pending one without kicking off a fetch.
-    private RemotePicture ensureCached(UUID id) {
-        synchronized (pictures) {
-            RemotePicture existing = pictures.get(id);
-            if (existing != null) {
-                return existing;
-            }
-        }
-
-        RemotePicture picture = new RemotePicture(id);
-        putCached(id, picture);
-        return picture;
-    }
-
-    /// Get a picture by UUID, fetching it from the server if we don't have it yet.
-    /// This method returns null if the input UUID is null.
-    ///
-    /// This is called every frame for every visible picture, which is what keeps rendered pictures at the
-    /// recently-used end of the cache and therefore safe from eviction.
-    public RemotePicture getServerPicture(@NotNull UUID id) {
-        return Optional.ofNullable(getCached(id))
-                .orElseGet(() -> ensureRemotePicture(id));
-    }
-
-    /// Processes all images from the queue.
-    public void processQueue() {
-        QueuedBytes item;
-        while ((item = byteQueue.poll()) != null) {
-            final QueuedBytes queuedItem = item;
-            Camerapture.EXECUTOR.execute(() -> {
-                try {
-                    processReceivedImage(queuedItem.id, decodeChecked(queuedItem.id, queuedItem.bytes));
-                    cacheBytesToDisk(queuedItem.id, queuedItem.bytes);
-                } catch (Exception e) {
-                    Camerapture.LOGGER.error("failed to decode received image bytes for image {}", queuedItem.id, e);
-                    RemotePicture picture = ensureCached(queuedItem.id);
-                    picture.setStatus(RemotePicture.Status.ERROR);
-                }
-            });
-        }
+    public long getThumbnailTextureBytes() {
+        return thumbnailCache.getTextureBytes();
     }
 
     private static boolean shouldCacheToDisk() {
-        // We enable single-player picture caching when Replay Mod is installed.
         return CameraptureClient.replayModInstalled
                 || (Camerapture.CONFIG_MANAGER.getConfig().client.cachePictures
                 && !Minecraft.getInstance().hasSingleplayerServer());
     }
 
-    private Path getCacheFilePath(UUID uuid) {
-        Path cacheFolder = Camerapture.PLATFORM.getGameFolder()
+    private Path getCacheFilePath(UUID uuid, PictureQuality quality) {
+        String subfolder = (quality == PictureQuality.THUMBNAIL) ? "thumbnails" : "full";
+        return Camerapture.PLATFORM.getGameFolder()
                 .resolve("camerapture")
-                .resolve("picture-cache");
+                .resolve("picture-cache")
+                .resolve(subfolder)
+                .resolve(uuid + ".webp");
+    }
 
-        return cacheFolder.resolve(uuid + ".webp");
+    private Path getLegacyCacheFilePath(UUID uuid) {
+        return Camerapture.PLATFORM.getGameFolder()
+                .resolve("camerapture")
+                .resolve("picture-cache")
+                .resolve(uuid + ".webp");
     }
 
     public static ClientPictureStore getInstance() {
         return INSTANCE;
     }
 
-    private record QueuedBytes(UUID id, byte[] bytes) {
+    private record QueuedBytes(UUID id, PictureQuality quality, byte[] bytes) {
+    }
+
+    /// An LRU cache managing GPU texture memory for a specific quality level.
+    private static class TextureCache {
+        private final PictureQuality quality;
+        private final LinkedHashMap<UUID, PictureTexture> entries = new LinkedHashMap<>(256, 0.75f, true);
+        private long textureBytes = 0L;
+
+        private TextureCache(PictureQuality quality) {
+            this.quality = quality;
+        }
+
+        private long getMaxBytes() {
+            long budgetMiB = (quality == PictureQuality.THUMBNAIL)
+                    ? Camerapture.CONFIG_MANAGER.getConfig().client.thumbnailTextureBudgetMiB
+                    : Camerapture.CONFIG_MANAGER.getConfig().client.fullTextureBudgetMiB;
+            return Math.max(8L, budgetMiB) * 1024L * 1024L;
+        }
+
+        public synchronized long getTextureBytes() {
+            return textureBytes;
+        }
+
+        public synchronized void touch(UUID id, PictureTexture texture) {
+            texture.touch();
+            entries.get(id); // Access in LinkedHashMap moves to MRU end
+        }
+
+        public synchronized void resized(PictureTexture texture, long previousBytes) {
+            textureBytes += texture.getTextureBytes() - previousBytes;
+        }
+
+        public void put(UUID id, PictureTexture texture) {
+            List<Map.Entry<UUID, PictureTexture>> evicted = null;
+
+            synchronized (this) {
+                PictureTexture previous = entries.put(id, texture);
+                if (previous != null) {
+                    textureBytes -= previous.getTextureBytes();
+                }
+                textureBytes += texture.getTextureBytes();
+                texture.touch();
+
+                long now = System.currentTimeMillis();
+                long maxBytes = getMaxBytes();
+                Iterator<Map.Entry<UUID, PictureTexture>> iterator = entries.entrySet().iterator();
+                while (textureBytes > maxBytes && iterator.hasNext()) {
+                    Map.Entry<UUID, PictureTexture> eldest = iterator.next();
+                    if (now - eldest.getValue().getLastAccess() < IN_USE_GRACE_MS) {
+                        break;
+                    }
+
+                    iterator.remove();
+                    textureBytes -= eldest.getValue().getTextureBytes();
+
+                    if (evicted == null) {
+                        evicted = new ArrayList<>();
+                    }
+                    evicted.add(Map.entry(eldest.getKey(), eldest.getValue()));
+                }
+            }
+
+            if (evicted != null) {
+                for (Map.Entry<UUID, PictureTexture> entry : evicted) {
+                    releaseTexture(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        private void releaseTexture(UUID id, PictureTexture texture) {
+            CameraptureDebugStats.textureEvictions.incrementAndGet();
+            texture.setStatus(PictureTexture.Status.NOT_LOADED);
+
+            Minecraft.getInstance().executeIfPossible(() -> {
+                synchronized (this) {
+                    if (entries.containsKey(id)) {
+                        return;
+                    }
+                }
+                Minecraft.getInstance().getTextureManager().release(texture.getTextureIdentifier());
+            });
+        }
+
+        public synchronized void clear() {
+            for (PictureTexture texture : entries.values()) {
+                texture.setStatus(PictureTexture.Status.NOT_LOADED);
+                Minecraft.getInstance().getTextureManager().release(texture.getTextureIdentifier());
+            }
+            entries.clear();
+            textureBytes = 0L;
+        }
     }
 }

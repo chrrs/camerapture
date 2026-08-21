@@ -60,6 +60,32 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.client.simpleCameraHud = value)
                 .build());
 
+        client.add(builder.startBooleanToggle(
+                        Component.translatable("config.camerapture.option.distant_picture_rendering"),
+                        config.client.distantPictureRendering
+                )
+                .setDefaultValue(Config.DEFAULT.client.distantPictureRendering)
+                .setSaveConsumer((value) -> config.client.distantPictureRendering = value)
+                .build());
+
+        client.add(builder.startIntField(
+                        Component.translatable("config.camerapture.option.full_texture_budget"),
+                        config.client.fullTextureBudgetMiB
+                )
+                .setDefaultValue(Config.DEFAULT.client.fullTextureBudgetMiB)
+                .setMin(64)
+                .setSaveConsumer((value) -> config.client.fullTextureBudgetMiB = value)
+                .build());
+
+        client.add(builder.startIntField(
+                        Component.translatable("config.camerapture.option.thumbnail_texture_budget"),
+                        config.client.thumbnailTextureBudgetMiB
+                )
+                .setDefaultValue(Config.DEFAULT.client.thumbnailTextureBudgetMiB)
+                .setMin(16)
+                .setSaveConsumer((value) -> config.client.thumbnailTextureBudgetMiB = value)
+                .build());
+
         client.add(builder.startIntSlider(
                         Component.translatable("config.camerapture.option.zoom_mouse_sensitivity"),
                         (int) (config.client.zoomMouseSensitivity * 100f),

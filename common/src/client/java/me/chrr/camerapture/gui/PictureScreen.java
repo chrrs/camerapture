@@ -104,11 +104,11 @@ public class PictureScreen extends Screen {
     public NativeImage getNativeImage() {
         if (this.minecraft == null ||
                 this.picture == null
-                || this.picture.getStatus() != RemotePicture.Status.SUCCESS) {
+                || this.picture.getFull().getStatus() != me.chrr.camerapture.picture.PictureTexture.Status.SUCCESS) {
             return null;
         }
 
-        AbstractTexture texture = minecraft.getTextureManager().getTexture(this.picture.getTextureIdentifier());
+        AbstractTexture texture = minecraft.getTextureManager().getTexture(this.picture.getFull().getTextureIdentifier());
         if (!(texture instanceof DynamicTexture backedTexture)) {
             return null;
         }

@@ -1,6 +1,8 @@
 package me.chrr.camerapture;
 
 import me.chrr.camerapture.net.clientbound.DownloadPartialPicturePacket;
+import me.chrr.camerapture.picture.PictureKey;
+import me.chrr.camerapture.picture.PictureQuality;
 import me.chrr.camerapture.picture.StoredPicture;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -20,10 +22,7 @@ import java.util.concurrent.TimeUnit;
 /// at the same time, for example when someone logs in.
 ///
 /// Pictures are held in a separate queue per player and drained round-robin, one picture per
-/// interval. A single global queue would let one player asking for a large area monopolise the
-/// server's entire picture bandwidth — at the default 20ms interval that's 50 pictures a second
-/// shared by everyone, so a player loading a few thousand posters would stall every other player
-/// for a minute or more. Round-robin bounds a player's impact to their own share.
+/// interval. Round-robin bounds a player's impact to their own share.
 public class DownloadQueue {
     private static final DownloadQueue INSTANCE = new DownloadQueue();
 
@@ -41,7 +40,7 @@ public class DownloadQueue {
     /// Schedule a picture to be sent. Requesting a picture that's already queued for the same player
     /// is a no-op, so a client that asks repeatedly while its first request is still in flight
     /// doesn't multiply the work.
-    public void send(ServerPlayer player, UUID id, StoredPicture picture) {
+    public void send(ServerPlayer player, UUID id, PictureQuality quality, StoredPicture picture) {
         synchronized (lock) {
             PlayerQueue queue = byPlayer.get(player.getUUID());
             if (queue == null) {
@@ -50,11 +49,12 @@ public class DownloadQueue {
                 rotation.add(queue);
             }
 
-            if (!queue.pendingIds.add(id)) {
+            PictureKey key = new PictureKey(id, quality);
+            if (!queue.pendingKeys.add(key)) {
                 return;
             }
 
-            queue.pending.add(new QueuedPicture(id, picture));
+            queue.pending.add(new QueuedPicture(id, quality, picture));
         }
     }
 
@@ -102,7 +102,7 @@ public class DownloadQueue {
                     continue;
                 }
 
-                queue.pendingIds.remove(item.id);
+                queue.pendingKeys.remove(new PictureKey(item.id(), item.quality()));
                 recipient = queue.player;
 
                 // Back of the rotation, so every other waiting player gets a turn first.
@@ -120,7 +120,7 @@ public class DownloadQueue {
         final ServerPlayer target = recipient;
         final QueuedPicture sending = item;
         ByteCollector.split(sending.picture().bytes(), Camerapture.SERVER_SECTION_SIZE, (section, bytesLeft) ->
-                Camerapture.NETWORK.sendToClient(target, new DownloadPartialPicturePacket(sending.id(), section, bytesLeft)));
+                Camerapture.NETWORK.sendToClient(target, new DownloadPartialPicturePacket(sending.id(), sending.quality(), section, bytesLeft)));
     }
 
     public static DownloadQueue getInstance() {
@@ -130,13 +130,13 @@ public class DownloadQueue {
     private static class PlayerQueue {
         private final ServerPlayer player;
         private final Deque<QueuedPicture> pending = new ArrayDeque<>();
-        private final Set<UUID> pendingIds = new HashSet<>();
+        private final Set<PictureKey> pendingKeys = new HashSet<>();
 
         private PlayerQueue(ServerPlayer player) {
             this.player = player;
         }
     }
 
-    private record QueuedPicture(UUID id, StoredPicture picture) {
+    private record QueuedPicture(UUID id, PictureQuality quality, StoredPicture picture) {
     }
 }

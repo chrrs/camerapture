@@ -1,70 +1,76 @@
 package me.chrr.camerapture.picture;
 
-import me.chrr.camerapture.Camerapture;
 import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 
-/// A picture that we assume exists on the server. A remote picture
-/// can either be still fetching, successfully fetched or failed to
-/// fetch. If a picture is fetched, we also know the texture identifier.
+/// Represents a remote picture on the client. It separates metadata from individual texture qualities
+/// (THUMBNAIL vs FULL), enabling independent residency, promotion, and fallback.
 public class RemotePicture {
-    private Status status = Status.FETCHING;
-
-    private final Identifier textureIdentifier;
-
-    private int width = 0;
-    private int height = 0;
-
-    /// When this picture was last asked for. The store uses it to tell pictures that are currently on
-    /// screen apart from ones merely still cached, so it never evicts a texture that's in use.
-    private volatile long lastAccess = System.currentTimeMillis();
+    private final UUID id;
+    private final PictureTexture thumbnail;
+    private final PictureTexture full;
 
     public RemotePicture(UUID id) {
-        this.textureIdentifier = Camerapture.id("pictures/" + id.toString());
+        this.id = id;
+        this.thumbnail = new PictureTexture(id, PictureQuality.THUMBNAIL);
+        this.full = new PictureTexture(id, PictureQuality.FULL);
     }
 
-    void touch() {
-        this.lastAccess = System.currentTimeMillis();
+    public UUID getId() {
+        return id;
     }
 
-    long getLastAccess() {
-        return lastAccess;
+    public PictureTexture getThumbnail() {
+        return thumbnail;
     }
 
-    /// Roughly what this picture costs on the GPU, as RGBA. Zero until the size is known.
-    long getTextureBytes() {
-        return (long) width * height * 4L;
+    public PictureTexture getFull() {
+        return full;
     }
 
-    public Status getStatus() {
-        return status;
+    public PictureTexture getTexture(PictureQuality quality) {
+        return (quality == PictureQuality.THUMBNAIL) ? thumbnail : full;
     }
 
-    public Identifier getTextureIdentifier() {
-        return textureIdentifier;
+    /// Returns the best available texture for the requested quality:
+    /// - If FULL is requested: returns full if SUCCESS, else thumbnail if SUCCESS (seamless fallback while promotion is pending), else full.
+    /// - If THUMBNAIL is requested: returns thumbnail if SUCCESS, else full if SUCCESS, else thumbnail.
+    public PictureTexture getEffectiveTexture(PictureQuality requestedQuality) {
+        if (requestedQuality == PictureQuality.FULL) {
+            if (full.getStatus() == PictureTexture.Status.SUCCESS) {
+                return full;
+            }
+            if (thumbnail.getStatus() == PictureTexture.Status.SUCCESS) {
+                return thumbnail;
+            }
+            return full;
+        } else {
+            if (thumbnail.getStatus() == PictureTexture.Status.SUCCESS) {
+                return thumbnail;
+            }
+            if (full.getStatus() == PictureTexture.Status.SUCCESS) {
+                return full;
+            }
+            return thumbnail;
+        }
+    }
+
+    public PictureTexture.Status getStatus() {
+        return full.getStatus();
     }
 
     public int getWidth() {
-        return width;
+        if (full.getWidth() > 0) return full.getWidth();
+        return thumbnail.getWidth();
     }
 
     public int getHeight() {
-        return height;
+        if (full.getHeight() > 0) return full.getHeight();
+        return thumbnail.getHeight();
     }
 
-    void setStatus(Status status) {
-        this.status = status;
-    }
-
-    void setSize(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
-    public enum Status {
-        FETCHING,
-        SUCCESS,
-        ERROR,
+    public Identifier getTextureIdentifier() {
+        return full.getTextureIdentifier();
     }
 }
