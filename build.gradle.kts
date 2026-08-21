@@ -52,3 +52,21 @@ tapestry {
         curseforge = "1051342"
     }
 }
+
+allprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        doFirst {
+            val file = layout.buildDirectory.file("tapestry/tapestry-gradle-api.jar").get().asFile
+            if (!file.exists()) {
+                file.parentFile.mkdirs()
+                me.chrr.tapestry.gradle.TapestryPlugin::class.java.classLoader
+                    .getResourceAsStream("META-INF/jars/api.jar")
+                    ?.use { input ->
+                        file.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+            }
+        }
+    }
+}
