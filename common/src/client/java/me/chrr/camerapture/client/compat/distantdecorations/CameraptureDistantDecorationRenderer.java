@@ -2,6 +2,7 @@ package me.chrr.camerapture.client.compat.distantdecorations;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import me.chrr.camerapture.Camerapture;
 import me.chrr.camerapture.compat.distantdecorations.CameraptureDistantData;
 import me.chrr.camerapture.compat.distantdecorations.CameraptureDistantDecorationProvider;
 import me.chrr.camerapture.picture.ClientPictureStore;
@@ -78,8 +79,10 @@ public class CameraptureDistantDecorationRenderer implements DecorationClientRen
 
         int lightCoords = 0x00F000F0;
 
-        // Render rear quad for distant decorations
-        PictureFrameGeometry.submitBackQuad(poseStack, submitNodeCollector, data.width(), data.height(), lightCoords);
+        // Render rear quad for distant decorations if enabled in client config
+        if (Camerapture.CONFIG_MANAGER.getConfig().client.renderPictureFrameBacking) {
+            PictureFrameGeometry.submitBackQuad(poseStack, submitNodeCollector, data.width(), data.height(), lightCoords);
+        }
 
         if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
             poseStack.pushPose();

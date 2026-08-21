@@ -57,6 +57,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         state.frameHeight = blockEntity.getFrameHeight();
         state.isPictureGlowing = blockEntity.isPictureGlowing();
         state.rotation = blockEntity.getRotation();
+        state.renderBacking = Camerapture.CONFIG_MANAGER.getConfig().client.renderPictureFrameBacking;
 
         state.pictureId = null;
         ItemStack stack = blockEntity.getItemStack();
@@ -144,11 +145,13 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.facing.toYRot()));
         poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - PictureFrameGeometry.HALF_FRAME_DEPTH + DISTANCE_FROM_WALL);
 
-        // Render backing first (unrotated by state.rotation)
-        if (state.lod == PictureLod.FULL) {
-            PictureFrameGeometry.submitFullBacking(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
-        } else {
-            PictureFrameGeometry.submitBackQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
+        // Render backing first (unrotated by state.rotation) if enabled in client config
+        if (state.renderBacking) {
+            if (state.lod == PictureLod.FULL) {
+                PictureFrameGeometry.submitFullBacking(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
+            } else {
+                PictureFrameGeometry.submitBackQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
+            }
         }
 
         if (state.shouldRenderOutline && state.lod == PictureLod.FULL) {
@@ -274,6 +277,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         public UUID pictureId;
         public boolean isPictureGlowing;
         public boolean shouldRenderOutline;
+        public boolean renderBacking;
         public int frameWidth;
         public int frameHeight;
         public int rotation;

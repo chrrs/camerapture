@@ -34,6 +34,8 @@
     "config.camerapture.option.save_screenshot": "Сохранять фотки как скриншоты",
     "config.camerapture.option.simple_camera_hud": "Простой HUD камеры",
     "config.camerapture.option.zoom_mouse_sensitivity": "Чувствительность камеры в приближении",
+    "config.camerapture.option.render_picture_frame_backing": "3D-задник рамки картины",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "Отображает текстурированную заднюю часть и физические края у размещённых картин.",
     "config.camerapture.option.max_image_bytes": "Макс. размер фото (байты)",
     "config.camerapture.option.max_image_resolution": "Максимальное квадратное разрешение изображения",
     "config.camerapture.option.ms_per_picture": "Задержка между отправленными изображениями (миллисекунды)",

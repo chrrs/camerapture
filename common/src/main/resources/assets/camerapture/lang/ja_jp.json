@@ -34,6 +34,8 @@
     "config.camerapture.option.save_screenshot": "撮影した写真をスクリーンショットとして保存します",
     "config.camerapture.option.simple_camera_hud": "シンプルなカメラHUD",
     "config.camerapture.option.zoom_mouse_sensitivity": "ズームのマウス感度",
+    "config.camerapture.option.render_picture_frame_backing": "額縁の3D背面",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "配置された写真にテクスチャ付きの背面と物理的なフチを描画します。",
     "config.camerapture.option.max_image_bytes": "最大画像サイズ（バイト）",
     "config.camerapture.option.max_image_resolution": "最大正方形画像解像度",
     "config.camerapture.option.ms_per_picture": "画像送信の間の遅延（ms）",

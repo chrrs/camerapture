@@ -31,6 +31,8 @@
     "config.camerapture.category.server": "서버",
     "config.camerapture.option.cache_pictures": "디스크에 로컬로 사진을 캐시에 저장",
     "config.camerapture.option.save_screenshot": "촬영한 사진을 스크린샷으로써 저장",
+    "config.camerapture.option.render_picture_frame_backing": "3D 액자 뒷판",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "배치된 사진에 텍스처가 적용된 뒷면과 물리적인 모서리를 렌더링합니다.",
     "config.camerapture.option.max_image_bytes": "최대 사진 크기 (바이트)",
     "config.camerapture.option.max_image_resolution": "최대 사진 해상도",
     "config.camerapture.option.ms_per_picture": "사진을 보내는데 걸리는 지연시간 (ms)",

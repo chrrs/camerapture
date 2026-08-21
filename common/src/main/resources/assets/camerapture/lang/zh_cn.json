@@ -34,6 +34,8 @@
     "config.camerapture.option.save_screenshot": "将拍摄的照片保存为截图",
     "config.camerapture.option.simple_camera_hud": "简洁相机界面",
     "config.camerapture.option.zoom_mouse_sensitivity": "变焦时鼠标灵敏度",
+    "config.camerapture.option.render_picture_frame_backing": "3D相框背板",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "为放置的照片渲染纹理背板和物理边框。",
     "config.camerapture.option.max_image_bytes": "最大图像大小（字节）",
     "config.camerapture.option.max_image_resolution": "最大图像分辨率（像素）",
     "config.camerapture.option.ms_per_picture": "照片发送间隔（毫秒）",

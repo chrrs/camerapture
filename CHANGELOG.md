@@ -36,6 +36,7 @@
 
 - **Configuration & Instrumentation**:
   - Added config options for distant LOD rendering, VRAM cache budgets, and LOD thresholds with Cloth Config integration.
+  - Added an optional client-side "3D Picture Frame Backing" setting (`renderPictureFrameBacking`, default `false`). When enabled, placed pictures render a textured wood/canvas rear surface and physical frame edges instead of disappearing when viewed from behind.
   - Added multidimensional telemetry (`CameraptureDebugStats`) tracking frame LOD decisions, actual rendered texture qualities, placeholder quads, dynamic VRAM residency (MiB), cache activity, and network transfer volume.
 
 ## 1.10.15

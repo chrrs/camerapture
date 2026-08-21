@@ -31,6 +31,8 @@
     "config.camerapture.category.server": "Servidor",
     "config.camerapture.option.cache_pictures": "Guardar imágenes en caché localmente en el disco",
     "config.camerapture.option.save_screenshot": "Guardar imágenes tomadas como capturas de pantalla",
+    "config.camerapture.option.render_picture_frame_backing": "Respaldo 3D para Marcos de Fotos",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "Renderiza una parte posterior texturizada y bordes físicos en las imágenes colocadas.",
     "config.camerapture.option.max_image_bytes": "Tamaño máximo de imagen (bytes)",
     "config.camerapture.option.max_image_resolution": "Resolución máxima de imagen cuadrada",
     "config.camerapture.option.ms_per_picture": "Retraso entre imágenes enviadas (ms)",

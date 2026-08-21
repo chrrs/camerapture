@@ -14,7 +14,7 @@ public class Config {
 
     /// Client-specific config options.
     public static class Client {
-        public int version = 5;
+        public int version = 6;
 
         /// On by default since v4. Without it a client re-downloads every picture it looks at, every
         /// session — on a server with a few thousand posters that's hundreds of megabytes per player
@@ -27,6 +27,10 @@ public class Config {
 
         /// When true, renders picture frames across loaded chunks with screen-space LOD culling.
         public boolean distantPictureRendering = true;
+        /// When enabled, placed pictures render a physical backing and side edges.
+        /// Disabled by default to preserve the original flat-picture appearance.
+        public boolean renderPictureFrameBacking = false;
+
         public int fullTextureBudgetMiB = 512;
         public int thumbnailTextureBudgetMiB = 64;
         public float fullLodPixels = 32.0f;
@@ -44,6 +48,9 @@ public class Config {
                 this.thumbnailTextureBudgetMiB = DEFAULT.client.thumbnailTextureBudgetMiB;
                 this.fullLodPixels = DEFAULT.client.fullLodPixels;
                 this.minimumRenderPixels = DEFAULT.client.minimumRenderPixels;
+            }
+            if (this.version < 6) {
+                this.renderPictureFrameBacking = DEFAULT.client.renderPictureFrameBacking;
             }
 
             if (this.minimumRenderPixels < 0.5f) {

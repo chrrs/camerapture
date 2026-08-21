@@ -36,6 +36,8 @@
     "config.camerapture.option.simple_camera_hud": "Simple camera HUD",
     "config.camerapture.option.zoom_mouse_sensitivity": "Zoomed mouse sensitivity",
     "config.camerapture.option.distant_picture_rendering": "Distant Picture Rendering (LOD)",
+    "config.camerapture.option.render_picture_frame_backing": "3D Picture Frame Backing",
+    "config.camerapture.option.render_picture_frame_backing.tooltip": "Renders a textured back and physical edges on placed pictures.",
     "config.camerapture.option.full_texture_budget": "Full texture VRAM budget (MiB)",
     "config.camerapture.option.thumbnail_texture_budget": "Thumbnail texture VRAM budget (MiB)",
     "config.camerapture.option.thumbnail_resolution": "Thumbnail resolution (pixels)",

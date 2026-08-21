@@ -68,6 +68,15 @@ public enum ClothConfigScreenFactory {
                 .setSaveConsumer((value) -> config.client.distantPictureRendering = value)
                 .build());
 
+        client.add(builder.startBooleanToggle(
+                        Component.translatable("config.camerapture.option.render_picture_frame_backing"),
+                        config.client.renderPictureFrameBacking
+                )
+                .setDefaultValue(Config.DEFAULT.client.renderPictureFrameBacking)
+                .setTooltip(Component.translatable("config.camerapture.option.render_picture_frame_backing.tooltip"))
+                .setSaveConsumer((value) -> config.client.renderPictureFrameBacking = value)
+                .build());
+
         client.add(builder.startIntField(
                         Component.translatable("config.camerapture.option.full_texture_budget"),
                         config.client.fullTextureBudgetMiB
