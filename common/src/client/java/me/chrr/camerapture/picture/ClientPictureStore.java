@@ -101,8 +101,17 @@ public class ClientPictureStore {
                 return;
             }
 
-            CameraptureDebugStats.recordRequest(quality);
-            Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
+            try {
+                CameraptureDebugStats.recordRequest(quality);
+                Camerapture.NETWORK.sendToServer(new RequestDownloadPacket(id, quality));
+            } catch (Exception e) {
+                inFlightNetworkRequests.remove(key);
+                RemotePicture picture = pictures.get(id);
+                if (picture != null) {
+                    picture.getTexture(quality).setStatus(PictureTexture.Status.NOT_LOADED);
+                }
+                Camerapture.LOGGER.error("failed to send request for picture {} ({})", id, quality, e);
+            }
         });
     }
 
@@ -210,10 +219,10 @@ public class ClientPictureStore {
             throw new IOException("thumbnail " + id + " is not a readable WebP");
         }
 
-        int serverRes = (CameraptureClient.syncedConfig != null)
+        int permittedResolution = (CameraptureClient.syncedConfig != null)
                 ? CameraptureClient.syncedConfig.thumbnailResolution() * 2
                 : 256;
-        int limit = Math.min(Math.max(256, serverRes), ABSOLUTE_MAX_THUMBNAIL_RESOLUTION);
+        int limit = Math.min(Math.max(256, permittedResolution), ABSOLUTE_MAX_THUMBNAIL_RESOLUTION);
         if (size.width() > limit || size.height() > limit) {
             throw new IOException("refusing to decode thumbnail " + id + " at "
                     + size.width() + "x" + size.height() + ", over the " + limit + " limit");

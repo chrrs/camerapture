@@ -57,20 +57,20 @@ public final class CameraptureDebugStats {
     }
 
     public static String getSummary() {
-        long fullVramMiB = ClientPictureStore.getInstance().getFullTextureBytes() / (1024L * 1024L);
-        long thumbVramKiB = ClientPictureStore.getInstance().getThumbnailTextureBytes() / 1024L;
+        double fullVramMiB = ClientPictureStore.getInstance().getFullTextureBytes() / (1024.0 * 1024.0);
+        double thumbVramMiB = ClientPictureStore.getInstance().getThumbnailTextureBytes() / (1024.0 * 1024.0);
         double netMiB = networkBytes.get() / (1024.0 * 1024.0);
 
         return String.format(
                 "Camerapture Telemetry:\n" +
                 "  Frames: [Extracted: %d, Frustum Culled: %d, Subpixel Culled: %d, Thumb LOD: %d, Full LOD: %d]\n" +
                 "  Renders: [Thumb Textures: %d, Full Textures: %d, Placeholders: %d]\n" +
-                "  VRAM: [Full: %d MiB, Thumb: %d KiB] | Cache: [Uploads: %d, Evictions: %d]\n" +
+                "  VRAM: [Full: %.2f MiB, Thumb: %.2f MiB] | Cache: [Uploads: %d, Evictions: %d]\n" +
                 "  Network: [Thumb Req: %d, Full Req: %d, Transferred: %.2f MiB]",
                 extractedFrames.get(), frustumRejected.get(), subpixelRejected.get(),
                 thumbnailLodFrames.get(), fullLodFrames.get(),
                 thumbnailTextureRenders.get(), fullTextureRenders.get(), placeholderRenders.get(),
-                fullVramMiB, thumbVramKiB, textureUploads.get(), textureEvictions.get(),
+                fullVramMiB, thumbVramMiB, textureUploads.get(), textureEvictions.get(),
                 thumbnailRequests.get(), fullRequests.get(), netMiB
         );
     }

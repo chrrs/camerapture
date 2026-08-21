@@ -135,6 +135,12 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
             return;
         }
 
+        if (state.lod == PictureLod.FULL) {
+            CameraptureDebugStats.fullLodFrames.incrementAndGet();
+        } else {
+            CameraptureDebugStats.thumbnailLodFrames.incrementAndGet();
+        }
+
         poseStack.pushPose();
 
         // Position at center of block, rotate facing outward from wall, and offset for frame dimensions
@@ -153,12 +159,6 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                 renderPlaceholderQuad(poseStack, collector, state);
             }
         } else {
-            if (state.lod == PictureLod.FULL) {
-                CameraptureDebugStats.fullLodFrames.incrementAndGet();
-            } else {
-                CameraptureDebugStats.thumbnailLodFrames.incrementAndGet();
-            }
-
             PictureQuality targetQuality = (state.lod == PictureLod.FULL) ? PictureQuality.FULL : PictureQuality.THUMBNAIL;
             RemotePicture picture = ClientPictureStore.getInstance().getPicture(state.pictureId, targetQuality);
             PictureTexture texture = (picture != null) ? picture.getEffectiveTexture(targetQuality) : null;
@@ -169,7 +169,6 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
                     renderPicture(poseStack, collector, texture, state);
                 } else {
-                    CameraptureDebugStats.placeholderRenders.incrementAndGet();
                     renderPlaceholderQuad(poseStack, collector, state);
                 }
             } else { // FULL LOD
@@ -185,7 +184,6 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
                 } else if (texture.getStatus() == PictureTexture.Status.ERROR) {
                     renderErrorText(poseStack, collector, state.lightCoords);
                 } else {
-                    CameraptureDebugStats.placeholderRenders.incrementAndGet();
                     renderPlaceholderQuad(poseStack, collector, state);
                 }
             }
@@ -245,6 +243,8 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
     }
 
     private void renderPlaceholderQuad(PoseStack poseStack, SubmitNodeCollector collector, RenderState state) {
+        CameraptureDebugStats.placeholderRenders.incrementAndGet();
+
         float x1 = -state.frameWidth / 2f;
         float x2 = state.frameWidth / 2f;
         float y1 = -state.frameHeight / 2f;
