@@ -1,16 +1,34 @@
 ## 2.0.0
 
-- Refactored picture frames from entities (`PictureFrameEntity`) to blocks (`PictureFrameBlock` and `PictureFrameBlockEntity`).
-- Added dynamic VoxelShape computation matching frame dimensions and facing orientation.
-- Fixed frustum culling and view distance issues for large off-screen picture frames.
-- Implemented byte-bounded LRU caching in `ServerPictureStore` (capped at 256MB) and per-picture load locks to collapse duplicate concurrent disk reads.
-- Implemented client-side LRU memory caching and automatic texture resource disposal.
-- Enabled client-side disk caching by default in client config (version 4) to save multiplayer bandwidth.
-- Added lightweight `WebPHeader` parser to validate image dimensions before full decoding.
-- Added server and client-side maximum resolution checks (`maxImageResolution`) to prevent memory exhaustion.
-- Improved network packet handling and thread-safe download queue processing.
-- Updated Jade compatibility plugin for block entities.
-- Removed legacy entity system code, inline NBT data fixers, and unneeded mixins.
+- **Entity to Block Conversion**:
+  - Refactored picture frames from entities (`PictureFrameEntity` and `ResizableDecorationEntity`) to a single-block anchor system (`PictureFrameBlock` and `PictureFrameBlockEntity`).
+  - Added dynamic `VoxelShape` computation matching frame dimensions (up to 16x16) and facing orientation.
+  - Updated Jade compatibility plugin for inspecting picture frame block entities.
+  - Removed legacy entity classes, inline NBT data fixers, and unneeded mixins.
+
+- **Frustum Culling & Distant LOD Rendering**:
+  - Implemented full-frame world-space AABB frustum culling on both Fabric and NeoForge, fixing large multi-block frames vanishing when their anchor chunk section leaves the frustum.
+  - Replaced the fixed 96-block cutoff with projected-screen-size LOD classification (`SKIP`, `THUMBNAIL`, `FULL`), allowing picture frames to remain visible across all loaded client chunks.
+  - Added subpixel rejection to skip frames smaller than ~1.5 projected pixels before accessing storage or submitting geometry.
+  - Added LOD hysteresis to prevent quality flickering and cache thrashing at boundary distances.
+  - Replaced distant missing/error font rendering with lightweight neutral placeholder quads to eliminate font layout overhead at long range.
+
+- **Thumbnails & Dual VRAM Texture Caches**:
+  - Added server-side WebP thumbnail generation (128px default) on image upload, with automatic lazy thumbnail generation and persistence for existing worlds.
+  - Separated client VRAM into independent Full (~512 MiB) and Thumbnail (~64 MiB) LRU texture caches.
+  - Ensured thumbnail rendering never touches the Full-resolution LRU, preventing distant frames from pinning high-res textures in VRAM.
+  - Implemented seamless quality promotion (thumbnail displayed while full-resolution loads) and instant fallback to thumbnail on full texture VRAM eviction.
+  - Added segmented client-side disk caching (`camerapture/picture-cache/full` and `camerapture/picture-cache/thumbnails`).
+
+- **Quality-Aware Networking & Concurrency**:
+  - Overhauled download protocol with quality-aware packets (`RequestDownloadPacket`, `DownloadPartialPicturePacket`, `PictureErrorPacket`) keyed by `(UUID, PictureQuality)`.
+  - Added thread-safe round-robin `DownloadQueue` and per-resource load locks to collapse duplicate concurrent disk reads.
+  - Implemented lightweight `WebPHeader` parser to validate image dimensions before full decoding.
+  - Enforced server and client-side `maxImageResolution` and `maxImageBytes` security limits.
+
+- **Configuration & Instrumentation**:
+  - Added config options for distant LOD rendering, VRAM cache budgets, thumbnail resolution, and LOD thresholds with Cloth Config integration.
+  - Added internal debug counters (`CameraptureDebugStats`) for monitoring frustum culling, LOD, cache residency, and network streaming.
 
 ## 1.10.15
 
