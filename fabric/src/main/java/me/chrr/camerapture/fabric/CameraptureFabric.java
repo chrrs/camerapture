@@ -36,6 +36,10 @@ public class CameraptureFabric implements ModInitializer {
         this.registerContent();
         this.registerPackets();
         this.registerEvents();
+
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("distantdecorations")) {
+            me.chrr.camerapture.compat.distantdecorations.CameraptureDistantDecorationProvider.init();
+        }
     }
 
     public void registerContent() {

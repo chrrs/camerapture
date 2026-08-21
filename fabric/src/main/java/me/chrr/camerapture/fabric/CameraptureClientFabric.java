@@ -33,6 +33,10 @@ public class CameraptureClientFabric implements ClientModInitializer {
         CameraptureClient.registerPacketHandlers();
 
         CameraptureClient.init();
+
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("distantdecorations")) {
+            me.chrr.camerapture.client.compat.distantdecorations.CameraptureDistantDecorationRenderer.init();
+        }
     }
 
     public void registerClientContent() {
