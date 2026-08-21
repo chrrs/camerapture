@@ -146,7 +146,14 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         // Position at center of block, rotate facing outward from wall, and offset for frame dimensions
         poseStack.translate(0.5, 0.5, 0.5);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.facing.toYRot()));
-        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (FRAME_THICKNESS / 2.0) + DISTANCE_FROM_WALL);
+        poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.5 - (PictureFrameGeometry.FRAME_DEPTH / 2.0) + DISTANCE_FROM_WALL);
+
+        // Render backing first (unrotated by state.rotation)
+        if (state.lod == PictureLod.FULL) {
+            PictureFrameGeometry.submitFullBacking(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
+        } else {
+            PictureFrameGeometry.submitBackQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.lightCoords);
+        }
 
         if (state.shouldRenderOutline && state.lod == PictureLod.FULL) {
             renderOutline(poseStack, collector, state.frameWidth, state.frameHeight);
@@ -156,7 +163,7 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
             if (state.lod == PictureLod.FULL) {
                 renderErrorText(poseStack, collector, state.lightCoords);
             } else {
-                renderPlaceholderQuad(poseStack, collector, state);
+                PictureFrameGeometry.renderPlaceholderQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.isPictureGlowing, state.lightCoords);
             }
         } else {
             PictureQuality targetQuality = (state.lod == PictureLod.FULL) ? PictureQuality.FULL : PictureQuality.THUMBNAIL;
@@ -166,25 +173,33 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
             if (state.lod == PictureLod.THUMBNAIL) {
                 if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
                     recordTextureRender(texture);
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
-                    renderPicture(poseStack, collector, texture, state);
+                    poseStack.pushPose();
+                    if (state.rotation != 0) {
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                    }
+                    PictureFrameGeometry.renderPicture(poseStack, collector, texture, state.frameWidth, state.frameHeight, state.rotation, state.isPictureGlowing, state.lightCoords);
+                    poseStack.popPose();
                 } else {
-                    renderPlaceholderQuad(poseStack, collector, state);
+                    PictureFrameGeometry.renderPlaceholderQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.isPictureGlowing, state.lightCoords);
                 }
             } else { // FULL LOD
                 if (texture != null && texture.getStatus() == PictureTexture.Status.SUCCESS) {
                     // Seamless promotion & fallback: if full is ready, render full; if full is still loading
                     // but thumbnail is ready, getEffectiveTexture(FULL) returns thumbnail so it stays visible!
                     recordTextureRender(texture);
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
-                    renderPicture(poseStack, collector, texture, state);
+                    poseStack.pushPose();
+                    if (state.rotation != 0) {
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                    }
+                    PictureFrameGeometry.renderPicture(poseStack, collector, texture, state.frameWidth, state.frameHeight, state.rotation, state.isPictureGlowing, state.lightCoords);
+                    poseStack.popPose();
                 } else if (texture == null || texture.getStatus() == PictureTexture.Status.NOT_LOADED || texture.getStatus() == PictureTexture.Status.FETCHING) {
                     // Only show loading animation if neither full nor thumbnail is available
                     renderFetching(poseStack, collector, state.lightCoords);
                 } else if (texture.getStatus() == PictureTexture.Status.ERROR) {
                     renderErrorText(poseStack, collector, state.lightCoords);
                 } else {
-                    renderPlaceholderQuad(poseStack, collector, state);
+                    PictureFrameGeometry.renderPlaceholderQuad(poseStack, collector, state.frameWidth, state.frameHeight, state.isPictureGlowing, state.lightCoords);
                 }
             }
         }
@@ -200,77 +215,15 @@ public class PictureFrameBlockEntityRenderer implements BlockEntityRenderer<Pict
         }
     }
 
-    private void renderPicture(PoseStack poseStack, SubmitNodeCollector collector, PictureTexture texture, RenderState state) {
-        float pictureWidth = texture.getWidth();
-        float pictureHeight = texture.getHeight();
-
-        if (pictureWidth <= 0 || pictureHeight <= 0) {
-            pictureWidth = 1f;
-            pictureHeight = 1f;
-        }
-
-        if (state.rotation % 2 == 1) {
-            float temp = pictureWidth;
-            pictureWidth = pictureHeight;
-            pictureHeight = temp;
-        }
-
-        float scaledWidth = state.frameWidth / pictureWidth;
-        float scaleHeight = state.frameHeight / pictureHeight;
-        float scale = Math.min(scaledWidth, scaleHeight);
-
-        float width = (state.rotation % 2 == 1 ? texture.getHeight() : texture.getWidth()) * scale;
-        float height = (state.rotation % 2 == 1 ? texture.getWidth() : texture.getHeight()) * scale;
-
-        float x1 = -width / 2f;
-        float x2 = width / 2f;
-        float y1 = -height / 2f;
-        float y2 = height / 2f;
-
-        RenderType renderType = state.isPictureGlowing
-                ? RenderTypes.text(texture.getTextureIdentifier())
-                : RenderTypes.entityCutoutCull(texture.getTextureIdentifier());
-
-        collector.submitCustomGeometry(poseStack, renderType, (matrix, buffer) -> {
-            Matrix4f position = matrix.pose();
-            int effectiveLight = state.isPictureGlowing ? 0xff : state.lightCoords;
-
-            buffer.addVertex(position, x1, y1, 0f).setColor(0xffffffff).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x1, y2, 0f).setColor(0xffffffff).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y2, 0f).setColor(0xffffffff).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y1, 0f).setColor(0xffffffff).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-        });
-    }
-
-    private void renderPlaceholderQuad(PoseStack poseStack, SubmitNodeCollector collector, RenderState state) {
-        CameraptureDebugStats.placeholderRenders.incrementAndGet();
-
-        float x1 = -state.frameWidth / 2f;
-        float x2 = state.frameWidth / 2f;
-        float y1 = -state.frameHeight / 2f;
-        float y2 = state.frameHeight / 2f;
-        int color = 0xff2b2b2b;
-
-        collector.submitCustomGeometry(poseStack, RenderTypes.textBackground(), (matrix, buffer) -> {
-            Matrix4f position = matrix.pose();
-            int effectiveLight = state.isPictureGlowing ? 0xff : state.lightCoords;
-
-            buffer.addVertex(position, x1, y1, 0f).setColor(color).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x1, y2, 0f).setColor(color).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y2, 0f).setColor(color).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-            buffer.addVertex(position, x2, y1, 0f).setColor(color).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(effectiveLight).setNormal(matrix, 0f, 0f, 1f);
-        });
-    }
-
     private void renderOutline(PoseStack poseStack, SubmitNodeCollector collector, float frameWidth, float frameHeight) {
-        VoxelShape shape = Shapes.box(0.0, 0.0, 0.0, frameWidth, frameHeight, FRAME_THICKNESS);
+        VoxelShape shape = Shapes.box(0.0, 0.0, 0.0, frameWidth, frameHeight, PictureFrameGeometry.FRAME_DEPTH);
 
         int color = net.minecraft.util.ARGB.color(102, 0xff000000);
         collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (matrix, buffer) ->
                 shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> {
                     Vector3f vector3f = (new Vector3f((float) (x2 - x1), (float) (y2 - y1), (float) (z2 - z1))).normalize();
-                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - FRAME_THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
-                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - FRAME_THICKNESS / 2f)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x1 - frameWidth / 2), (float) (y1 - frameHeight / 2), (float) (z1 - PictureFrameGeometry.FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
+                    buffer.addVertex(matrix, (float) (x2 - frameWidth / 2), (float) (y2 - frameHeight / 2), (float) (z2 - PictureFrameGeometry.FRAME_DEPTH)).setColor(color).setNormal(matrix, vector3f).setLineWidth(2.0f);
                 }));
     }
 
