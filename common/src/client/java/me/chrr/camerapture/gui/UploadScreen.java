@@ -13,8 +13,10 @@ import net.minecraft.util.CommonColors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.sdl.SDLDialog;
+import org.lwjgl.sdl.SDLError;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -83,18 +85,25 @@ public class UploadScreen extends Screen {
                 filter.put(stack.UTF8("*"));
                 filter.flip();
 
-                String path = TinyFileDialogs.tinyfd_openFileDialog("Open Image", "", filter, "Image File", false);
-                if (path == null) {
-                    return;
-                }
-
-                try {
-                    if (tryUpload(Path.of(path))) {
-                        Minecraft.getInstance().executeIfPossible(this::onClose);
+                SDLDialog.SDL_ShowOpenFileDialog((_, filelist, _) -> {
+                    if (filelist == 0L) {
+                        Camerapture.LOGGER.error("failed to select file: {}", SDLError.SDL_GetError());
+                        return;
                     }
-                } catch (InvalidPathException e) {
-                    Camerapture.LOGGER.error("tinyfd returned invalid path", e);
-                }
+
+                    long str = MemoryUtil.memGetAddress(filelist);
+                    if (str == 0L) {
+                        return;
+                    }
+
+                    try {
+                        if (tryUpload(Path.of(MemoryUtil.memUTF8(str)))) {
+                            Minecraft.getInstance().executeIfPossible(this::onClose);
+                        }
+                    } catch (InvalidPathException e) {
+                        Camerapture.LOGGER.error("SDL returned invalid path", e);
+                    }
+                }, 0L, Minecraft.getInstance().getWindow().handle(), null, (CharSequence) null, false);
             }
         }).start();
     }

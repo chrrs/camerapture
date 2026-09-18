@@ -48,7 +48,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
 
         poseStack.translate(this.getRenderOffset(state).reverse());
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.yRot));
+        poseStack.rotate(Axis.YP.rotationDegrees(180.0F - state.yRot));
         poseStack.translate(0.5 - state.frameWidth / 2.0, -0.5 + state.frameHeight / 2.0, 0.0);
 
         if (state.shouldRenderOutline) {
@@ -69,7 +69,7 @@ public class PictureFrameEntityRenderer extends EntityRenderer<PictureFrameEntit
                 renderFetching(poseStack, collector, state.lightCoords);
             } else {
                 // Picture should be rendered.
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90f * state.rotation));
+                poseStack.rotate(Axis.ZP.rotationDegrees(90f * state.rotation));
                 renderPicture(poseStack, collector, picture, state);
             }
         }

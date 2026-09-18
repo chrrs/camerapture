@@ -5,6 +5,7 @@ import me.chrr.camerapture.item.PictureItem;
 import me.chrr.camerapture.picture.ClientPictureStore;
 import me.chrr.camerapture.picture.RemotePicture;
 import me.chrr.camerapture.util.PictureDrawingUtil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
@@ -18,10 +19,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.*;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -102,9 +102,7 @@ public class PictureScreen extends Screen {
 
     @Nullable
     public NativeImage getNativeImage() {
-        if (this.minecraft == null ||
-                this.picture == null
-                || this.picture.getStatus() != RemotePicture.Status.SUCCESS) {
+        if (this.picture == null || this.picture.getStatus() != RemotePicture.Status.SUCCESS) {
             return null;
         }
 
@@ -118,19 +116,19 @@ public class PictureScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
+        if (event.key() == SDLScancode.SDL_SCANCODE_LCTRL) {
             this.ctrlHeld = true;
-        } else if (event.key() == GLFW.GLFW_KEY_S && event.hasControlDown()) {
+        } else if (event.key() == SDLScancode.SDL_SCANCODE_S && event.hasControlDown()) {
             // On Ctrl-S, we prompt the user to save the image.
             NativeImage image = this.getNativeImage();
             if (image != null) {
                 saveAs(image);
                 return true;
             }
-        } else if (event.key() == GLFW.GLFW_KEY_LEFT) {
+        } else if (event.key() == SDLScancode.SDL_SCANCODE_LEFT) {
             this.changeIndexBy(-1);
             return true;
-        } else if (event.key() == GLFW.GLFW_KEY_RIGHT) {
+        } else if (event.key() == SDLScancode.SDL_SCANCODE_RIGHT) {
             this.changeIndexBy(1);
             return true;
         }
@@ -141,7 +139,7 @@ public class PictureScreen extends Screen {
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL) {
+        if (event.key() == SDLScancode.SDL_SCANCODE_LCTRL) {
             this.ctrlHeld = false;
         }
 
@@ -194,20 +192,30 @@ public class PictureScreen extends Screen {
     private void saveAs(NativeImage image) {
         new Thread(() -> {
             try (MemoryStack stack = MemoryStack.stackPush()) {
-                PointerBuffer filter = stack.mallocPointer(1);
-                filter.put(stack.UTF8("png"));
-                filter.flip();
+                SDL_DialogFileFilter.Buffer filters = SDL_DialogFileFilter.create(1);
+                filters.name(stack.UTF8("Picture")).pattern(stack.UTF8("png"));
 
-                String path = TinyFileDialogs.tinyfd_saveFileDialog("Save Picture", "picture.png", filter, "*.png");
-                if (path == null) {
-                    return;
-                }
+                SDLDialog.SDL_ShowSaveFileDialog((_, filelist, _) -> {
+                    if (filelist == 0L) {
+                        Camerapture.LOGGER.error("failed to save picture to disk: {}", SDLError.SDL_GetError());
+                        return;
+                    }
 
-                try {
-                    image.writeToFile(Path.of(path));
-                } catch (IOException e) {
-                    Camerapture.LOGGER.error("failed to save picture to disk", e);
-                }
+                    long str = MemoryUtil.memGetAddress(filelist);
+                    if (str == 0L) {
+                        return;
+                    }
+
+                    try {
+                        Path path = Path.of(MemoryUtil.memUTF8(str));
+                        if (!path.endsWith(".png"))
+                            path = path.resolveSibling(path.getFileName() + ".png");
+
+                        image.writeToFile(path);
+                    } catch (IOException e) {
+                        Camerapture.LOGGER.error("failed to save picture to disk", e);
+                    }
+                }, 0L, Minecraft.getInstance().getWindow().handle(), filters, (CharSequence) null);
             }
         }, "Save prompter").start();
     }

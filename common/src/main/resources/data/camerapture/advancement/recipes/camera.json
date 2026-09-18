@@ -13,7 +13,7 @@
         },
         "has_the_recipe": {
             "conditions": {
-                "recipe": "camerapture:camera"
+                "recipes": ["camerapture:camera"]
             },
             "trigger": "minecraft:recipe_unlocked"
         }

@@ -26,6 +26,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -34,6 +35,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,7 +119,7 @@ public class Camerapture {
 
             CameraItem.setActive(camera.stack(), false);
             player.getCooldowns().addCooldown(camera.stack(), 20 * 3);
-            player.swing(camera.hand(), true);
+            player.swing(camera.hand(), SwingAnimation.DEFAULT, true);
 
             player.awardStat(PICTURES_TAKEN);
 
@@ -151,7 +153,7 @@ public class Camerapture {
                             ItemStack picture = PictureItem.create(player.getName().getString(), uuid);
 
                             // We have to do this on a separate thread, because it might spawn an item entity.
-                            server.execute(() -> player.getInventory().placeItemBackInInventory(picture));
+                            server.execute(() -> player.getInventory().placeItemBackInInventory(picture, Prediction.PREDICTED));
                         } catch (Exception e) {
                             LOGGER.error("failed to save picture from {}", player.getName().getString(), e);
                             player.sendSystemMessage(Component.translatable("text.camerapture.picture_failed").withStyle(ChatFormatting.RED), false);

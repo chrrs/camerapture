@@ -1,6 +1,7 @@
 package me.chrr.camerapture.gui;
 
 import me.chrr.camerapture.Camerapture;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
@@ -41,7 +42,7 @@ public class AlbumLecternMenu extends AbstractContainerMenu {
         ItemStack itemStack = this.inventory.removeItemNoUpdate(0);
         this.inventory.setChanged();
         if (!player.getInventory().add(itemStack)) {
-            player.drop(itemStack, false);
+            player.drop(itemStack, false, Prediction.PREDICTED);
         }
 
         return true;
